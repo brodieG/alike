@@ -1,4 +1,3 @@
-#' @rdname alike
 #' @export
 
 attributes_alike <- function(
@@ -7,8 +6,7 @@ attributes_alike <- function(
 ) {
   UseMethod("attributes_alike")
 }
-#' @method attributes_alike default
-#' @S3method attributes_alike default
+#' @export
 
 attributes_alike.default <- function(
   obj.reference, obj, special.attrs=TRUE, all.attrs=FALSE,
@@ -92,14 +90,12 @@ attributes_alike.default <- function(
   } } } }
   TRUE
 }
-#' @rdname alike
 #' @export
 
 class_alike <- function(obj.reference, obj, class.mode="common.ancestry", comp.fun=all_equal, ...) {
   UseMethod("class_alike")
 }
-#' @method class_alike default
-#' @S3method class_alike default
+#' @export
 
 class_alike.default <- function(obj.reference, obj, class.mode="common.ancestry", comp.fun=all_equal, ...) {
   valid.class.modes <- c("equal", "common.ancestry")

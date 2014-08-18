@@ -1,10 +1,3 @@
-# ARE THERE ANY PROBLEMS WHEN TESTING EXPRESSIONS? I.E. ARE WE TESTING THE
-# EXPRESSION THE USER PASSED AS AN ARGUMENT, OR THE EVALUATION OF THAT
-# EXPRESSION?  I ACTUALLY DON'T THINK THIS IS A PROBLEM BECAUSE IN THIS
-# CASE WE'RE NOT TRYING TO RETRIEVE THE UNEVALUATED EXPRESSION, BUT NEED 
-# TO MAKE SURE DUE TO WEIRD STUFF SUCH AS 5 ACTUALLY BEING AN EXPRESSION
-# IN ADDITION TO AN INTEGER.
-
 #' Compare R Objects
 #' 
 #' The \code{`*_alike`} functions facilitate the comparison of object structure 
@@ -165,12 +158,12 @@
 #'   (so if your custom method compares your object values and attributes,
 #'   we're still going to compare the attributes separately).
 #' 
-#' @aliases alike, struct_alike, class_alike, attributes_alike, type_alike, type_of
+#' @aliases alike struct_alike class_alike attributes_alike type_alike type_of
 #'
 #' @export
 #' @param obj an R object
 #' @param obj.reference an R object
-#' @param int.strict 1 length int %in% 0:2(see "Low Level Comparisons" in details)
+#' @param int.strict 1 length int in \code{`0:2`} (see "Low Level Comparisons" in details)
 #' @param special.attrs 1 length logical (see \code{`attributes_alike`} section 
 #'   in details)
 #' @param all.attrs 1 length logical (see \code{`attributes_alike`} section 
@@ -214,15 +207,8 @@
 
 alike <- function(obj.reference, obj,  ...) {
   UseMethod("alike")
-}
-
-# NEED TO TEST ALL MODIFICATIONS TO alike.default AND alike.call.  FOR THE LATTER NEED
-# TO CHECK THAT reduce_to_funs DOESN'T STRIP ATTRIBUTES, ETC.  ALSO, NEED TO CHECK
-# THAT WE GET DESIRED OUTCOMES FOR ALL THE ALIKE METHODS
-# 
-#' @rdname alike
-#' @method alike default
-#' @S3method alike default
+} 
+#' @export
 
 alike.default <- function(
   obj.reference, obj, int.strict=0L, class.mode="common.ancestry", 

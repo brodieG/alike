@@ -84,8 +84,7 @@
 index_structure <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
   UseMethod("index_structure")
 }
-#' @method index_structure default
-#' @S3method index_structure default
+#' @export
 
 index_structure.default <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
    
@@ -104,29 +103,25 @@ index_structure.default <- function(x, terminal.nodes.only=TRUE, recurse.exclude
     stop(err)    
   } 
 }
-#' @method index_structure list
-#' @S3method index_structure list
+#' @export
 
 index_structure.list <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
   if(!is.list(x)) stop("Argument `x` must be a list.")
   index_structure_common(x, terminal.nodes.only=terminal.nodes.only, recurse.exclude=recurse.exclude, recurse.include=is.list, ...)
 }
-#' @method index_structure call
-#' @S3method index_structure call
+#' @export
 
 index_structure.call <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
   if(!is.call(x)) stop("Argument `x` must be a call.")
   index_structure_common(x, terminal.nodes.only=terminal.nodes.only, recurse.exclude=recurse.exclude, recurse.include=is.call, ...)
 }
-#' @method index_structure formula
-#' @S3method index_structure formula
+#' @export
 
 index_structure.formula <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
   if(!is.call(x) || !inherits(x, "formula")) stop("Argument `x` must be a formula.")
   index_structure_common(x, terminal.nodes.only=terminal.nodes.only, recurse.exclude=recurse.exclude, recurse.include=is.call, ...)
 }
-#' @method index_structure expression
-#' @S3method index_structure expression
+#' @export
 
 index_structure.expression <- function(x, terminal.nodes.only=TRUE, recurse.exclude=function(y) FALSE, ...) {
   stop("Not implemented yet.")

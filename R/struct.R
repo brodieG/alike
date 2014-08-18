@@ -1,4 +1,3 @@
-#' @rdname alike
 #' @export
 
 struct_alike <- function(
@@ -6,8 +5,7 @@ struct_alike <- function(
 ) {
   UseMethod("struct_alike")
 }
-#' @method struct_alike function
-#' @S3method struct_alike function
+#' @export
 
 struct_alike.function <- function(
   obj.reference, obj, special.attrs=TRUE, int.strict=0L, ...
@@ -20,8 +18,7 @@ struct_alike.function <- function(
   }
   NextMethod("struct_alike")
 }
-#' @method struct_alike call
-#' @S3method struct_alike call
+#' @export
 
 struct_alike.call <- function(
   obj.reference, obj, special.attrs=TRUE, int.strict=TRUE, ...
@@ -34,9 +31,7 @@ struct_alike.call <- function(
   } }
   NextMethod("struct_alike")
 }
-
-#' @method struct_alike default
-#' @S3method struct_alike default
+#' @export
 
 struct_alike.default <- function(
   obj.reference, obj, special.attrs=TRUE, int.strict=TRUE, ...

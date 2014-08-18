@@ -1,5 +1,5 @@
 #' alike
-#'
-#' @name alike
+#' 
+#' @name alike-package
 #' @docType package
 NULL

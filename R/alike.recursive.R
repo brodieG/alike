@@ -21,14 +21,12 @@
 
 NULL
 
-#' @method alike recursive_terminal_index_list
-#' @S3method alike recursive_terminal_index_list
+#' @export
 
 alike.recursive_terminal_index_list <- function(obj.reference, obj, strict=FALSE, ...) {
   NextMethod()
 }
-#' @method alike recursive_index_list
-#' @S3method alike recursive_index_list
+#' @export
 
 alike.recursive_full_index_list <- function(obj.reference, obj, strict=FALSE, ...) {
   if(!is.logical(strict) || length(strict) != 1L) stop("Argument `strict` must be a one length logical.")
@@ -42,8 +40,7 @@ alike.recursive_full_index_list <- function(obj.reference, obj, strict=FALSE, ..
   }
   NextMethod()    
 }
-#' @method alike recursive_index_list
-#' @S3method alike recursive_index_list
+#' @export
 
 alike.recursive_index_list <- function(obj.reference, obj, ...) {
   tryCatch(
@@ -51,8 +48,7 @@ alike.recursive_index_list <- function(obj.reference, obj, ...) {
     error=function(e) stop(conditionMessage(e))
   )
 }
-#' @method all.equal recursive_index_list
-#' @S3method all.equal recursive_index_list
+#' @export
 
 all.equal.recursive_index_list <- function(target, current, ...) {
   tryCatch(

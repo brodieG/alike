@@ -1,13 +1,9 @@
-# NEED TO FIX THE ERROR THROWING IN CHECKARGS TO TAKE ADVANTAGE OF EDITING CONDITIONS!!!
-
-#' @rdname index_structure
 #' @export
 
 extract_with_index <- function(x, index, ...) {
   UseMethod("extract_with_index")
 }
-#' @method extract_with_index default
-#' @S3method extract_with_index default
+#' @export
 
 extract_with_index.default <- function(x, index, ...) {
   if(!is.numeric(index) || length(index) < 1L || any(index < 0)) stop("Argument `index` must be positive numeric and contain at least one value")
@@ -17,14 +13,12 @@ extract_with_index.default <- function(x, index, ...) {
   for(i in seq_along(index)) x.call <- call("[[", x.call, index[[i]])
   eval(x.call)
 }
-#' @rdname index_structure
 #' @export
 
 extract_with_indices <- function(x, index.list, ...) {
   UseMethod("extract_with_indices")
 }
-#' @method extract_with_indices default
-#' @S3method extract_with_indices default
+#' @export
 
 extract_with_indices.default <- function(x, index.list, ...) {
   if(!is.list(index.list)) stop("Argument `index.list` must be a list")

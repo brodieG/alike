@@ -53,8 +53,7 @@
 #'   calls that are equivalent and only different due to parense (e.g
 #'   \code{(1 + 1)} vs \code{1 + 1L}) will not be considered different
 #' @seealso alike
-#' @method alike call
-#' @S3method alike call
+#' @export
 #' @return TRUE if alike, character string describing first discrepancy otherwise
 #' @examples
 #' alike(x ~ y, z ~ w)                # TRUE
@@ -165,8 +164,7 @@ alike.call <- function(
   }
   TRUE
 }
-#' @method alike formula
-#' @S3method alike formula
+#' @export
 
 alike.formula <- function(
   obj.reference, obj, compare.mode="all.equal", class.mode="common.ancestry", 
@@ -192,8 +190,7 @@ alike.formula <- function(
 
   if(!isTRUE(msg <- alike_recurse(obj.reference, obj, comp_fun, comp_fun, compare.terminal.nodes.only=TRUE))) c(msg) else TRUE
 }
-#' @method alike expression
-#' @S3method alike expression
+#' @export
 
 alike.expression <- function(
   obj.reference, obj, compare.mode="all.equal", class.mode="common.ancestry", 

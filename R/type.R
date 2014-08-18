@@ -1,11 +1,9 @@
-#' @rdname alike
 #' @export
 
 type_alike <- function(obj.reference, obj, int.strict=0L, ...) {
   UseMethod("type_alike")
 }
-#' @method type_alike default
-#' @S3method type_alike default
+#' @export
 
 type_alike.default <- function(obj.reference, obj, int.strict=0L, ...) {
   if(
@@ -25,7 +23,6 @@ type_alike.default <- function(obj.reference, obj, int.strict=0L, ...) {
   }
   return(typeof(obj) == typeof(obj.reference))
 }
-#' @rdname alike
 #' @export
 
 type_of <- function(obj, int.strict=0L) {
