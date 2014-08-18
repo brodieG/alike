@@ -1,0 +1,130 @@
+library(alike)
+
+unitizer_sect("Atomic", {
+  alike(integer(), 1:3)    # TRUE
+  alike(integer(5L), 1:3)  # FALSE
+  alike(integer(3L), 1:3)  # TRUE
+  alike(integer(), 1:3, int.strict=1L)        # TRUE, b/c `:` coerces to integer
+  alike(integer(), c(1, 2, 3),int.strict=1L)  # FALSE (compare to above)
+  alike(numeric(), c(1, 2, 3))         # TRUE
+  alike(numeric(), 1L)                 # TRUE
+  alike(numeric(), 1L, int.strict=2L)  # FALSE
+  alike(integer(3L), 1:3 + .01)
+  alike(integer(3L), 1:3 + .Machine$double.eps)      # FALSE, integer like Numerics must be under this
+  alike(integer(3L), 1:3 + .Machine$double.eps / 2)  # TRUE
+  alike(integer(4L), letters[1:4])  
+  alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
+} )
+unitizer_sect("Matrix & Data Frames", {
+  alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
+  alike(matrix(integer(), nrow=3), matrix(1:21, nrow=3))
+  alike(matrix(character(), nrow=3), matrix(1:21, nrow=3))
+  alike(matrix(integer(), nrow=4), matrix(1:21, nrow=3))
+  alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(c("R", "G", "B"), c("bacon", "turkey", "bravo"))))
+  alike(data.frame(), data.frame(a=1:3, b=letters[1:3]))  # TRUE
+  alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))    # TRUE, note this is recursive
+  alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))     # "has structure mis-match at index [[1]]; item should have class \"factor\""
+  
+  # TRUE, more complex nested structure
+
+  alike(
+    list(integer(), data.frame(a=integer(), b=numeric()), matrix(integer(), nrow=3)),
+    list(1:10, data.frame(a=1:200, b=runif(20)), matrix(1:27, nrow=3))
+  )
+} )
+unitizer_sect("Functions", {
+  alike(sd, median)                     # TRUE
+  alike(sd, cor)                        # "does not have the expected formals structure"
+} )
+unitizer_sect("Class Matching", {
+  obj2 <- structure(numeric())
+  obj1 <- structure(numeric(), class="hello")
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c(letters[10:12], letters[1:3], letters[8:9]))
+  obj1 <- structure(numeric(), class=letters[1:3])
+  alike(obj1, obj2)
+  alike(obj2, obj1)
+  obj2 <- structure(numeric(), class=c("b", "a", "c"))
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c("a", "b", "x", "c"))
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c("a", "b", "c"))
+  alike(obj1, obj2)      # TRUE 
+  obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
+  alike(obj1, obj2)      # TRUE
+} )
+unitizer_sect("S4", {
+  setClass("foo", representation(a = "character", b = "numeric"))
+  setClass("bar", representation(d = "numeric", c = "numeric"))
+
+  x <- new("foo")
+  y <- new("foo")
+  z <- new("bar")
+  w <- structure(list(a=character(), b=numeric()), class="foo")
+
+  alike(x, y)
+  alike(x, z)
+  alike(x, w)
+  alike(w, x)
+
+  # Include those defined in different environments
+  
+  env <- new.env()
+  setClass("foo", representation(A = "character", B = "numeric"), where=env)
+  u <- new(getClass("foo", where=env))
+  alike(x, u)
+} )
+unitizer_sect("Non-Standard Class", {
+  # Basically ensure that stuff still recurses even if they are lists/calls
+  # but have another class
+   
+  var.1 <- list(1, 2, 3)
+  var.2 <- list("hello", list(1, 2, 3), 5)
+  class(var.1) <- "marbles"
+  class(var.2) <- "marbles"
+  alike(var.1, var.2)        # "mis-match at index [[1]]: should be integer instead of character"
+} )
+unitizer_sect("Calls / Formulas", {
+  alike:::reduce_to_funs(quote(1 + x + y))                     # 
+  alike:::reduce_to_funs(quote(fun(8, 9, fun2(fun3(), 9))))
+
+  alike(quote(1 + 1), quote(x + y))
+  alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
+  alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
+
+  if(exists("fun")) rm(fun)
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))   # sub-optimal error message, but necessary to handle cases that engage match.call
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1))) # clearer what's going on here
+  fun <- function(a, b, c) NULL
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))  # Because fun defined, uses match.call() to re-arrange args
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)))
+  alike(quote(fun(a=1)), quote(fun(b=1)))
+
+  alike(quote(fun(1, 2)), quote(fun(1)))
+  alike(quote(fun(1)), quote(fun(1, 2)))
+
+  alike(quote(fun(1, 2)), quote(fun2(1, 2)))
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))
+
+  alike:::reduce_to_formula_template(~ 2 + (3 + x))
+  alike:::reduce_to_formula_template(y ~ x ^ 2 + x * z + z + w:z)
+
+  alike(x ~ y, z ~ w)
+  alike(x ~ y, z ~ w + 1)
+  alike(x ~ y + 2, z ~ w + 1)
+  alike(x ~ y + z:y, w ~ v + u:v)
+  alike(z ~ w + 1, x ~ y)
+  alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 2 + l * j + j + w:j)
+  alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 3 + l * j + j + w:j)
+
+  exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)")
+  exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)")
+  exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)")
+
+  alike(exp.1, exp.2)
+  alike(exp.2, exp.3)
+  alike(exp.3, exp.2)
+} )
