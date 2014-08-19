@@ -52,7 +52,7 @@ alike.recursive_index_list <- function(obj.reference, obj, ...) {
 
 all.equal.recursive_index_list <- function(target, current, ...) {
   tryCatch(
-    alike_recursive_index_list_common(target, current , strict=TRUE),
+    alike_recursive_index_list_common(target, current, strict=TRUE),
     error=function(e) stop(conditionMessage(e))
   )
 }
@@ -63,10 +63,13 @@ alike_recursive_index_list_common <- function(obj.reference, obj, strict=FALSE) 
     stop("Argument `strict` must be a one length logical.")
   if(strict) {
     if(
-      !is.recursive_full_index_list(obj.reference) || 
-      !is.recursive_full_index_list(obj)
+      !(is.recursive_full_index_list(obj.reference) && is.recursive_full_index_list(obj)) &&
+      !(is.recursive_terminal_index_list(obj.reference) && is.recursive_terminal_index_list(obj.reference))
     ) {
-      stop("Arguments `obj.reference` and `obj` must be \"recursive_full_index_list\".")
+      stop(
+        "Arguments `obj.reference` and `obj` must both be \"recursive_full_index_list\"",
+        " or \"recursive_terminal_index_list\"."
+      )
     }
   } else {
     if(
