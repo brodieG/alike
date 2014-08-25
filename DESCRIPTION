@@ -10,6 +10,6 @@ Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
     R (>= 3.0.1)
 Imports:
-    vectools
+    inline
 License: GPL-2
 LazyData: true
