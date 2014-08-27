@@ -103,7 +103,7 @@ boom <- cfunction(c(target="list", current="list"), "
 
         error(\"Structure Mismatch\");
       }
-      if(length(tar_nxt) > ind_val) {
+      if(length(tar_nxt) > ind_val) {      /* if this isn't TRUE then we need to drop down a level? */
         if(ind_lvl >= ind_stk_sz) {
           error(\"Exceeded Stack Size\");  /* placeholder, should re-allocate stack */
         } else if (ind_lvl < 0) {
@@ -115,7 +115,7 @@ boom <- cfunction(c(target="list", current="list"), "
         tar_nxt = VECTOR_ELT(tar_nxt, ind_val);
         cur_nxt = VECTOR_ELT(cur_nxt, ind_val);
         ind_lvl++;
-        ind_val = 0;        
+        ind_stk[ind_lvl] = ind_val = 0;        
       } else {
         if(--ind_lvl < 0)
           break;
