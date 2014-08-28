@@ -52,6 +52,13 @@ my_add4 <- cfunction(c(a = "integer", b = "integer"), "
 ")
 
 lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+
+# lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+# > microbenchmark(boom(lst, lst))
+# Unit: microseconds
+#            expr   min     lq median     uq    max neval
+#  boom(lst, lst) 1.495 1.5635 1.6145 1.7245 18.175   100
+
 lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
 library(inline)
 
@@ -65,6 +72,7 @@ boom <- cfunction(c(target="list", current="list"), "
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
   int i, k=0;
+  SEXPTYPE cur_type, tar_type;
 
   sxp_stk_tar[0] = target;
   sxp_stk_cur[0] = current;
@@ -78,12 +86,18 @@ boom <- cfunction(c(target="list", current="list"), "
     if(ind_lvl >= ind_stk_sz) {
       error(\"Exceeded Stack Size\");  /* placeholder, should re-allocate stack */
     } 
-
-    /**************************************************************************/
     if(ind_lvl < 0)
       error(\"Logic Error, level drop not detected\");
+    if(emr_brk++ > 50) 
+      error(\"Infininte Loop?\");
+    if (ind_lvl < 0) {
+      error(\"Negative Stack Index\"); /* genuine error */
+    }
+
+    /**************************************************************************
 
     Rprintf(\"At Level %d, index %d, length %d, type %d, length.2 %d, type2 %d\\n\", ind_lvl, ind_stk[ind_lvl], length(target), TYPEOF(target), length(current), TYPEOF(current));
+    
     for(i=0; i <= ind_lvl_max; i++) {
       Rprintf(\"%d \", ind_stk[i]);
     }
@@ -91,19 +105,20 @@ boom <- cfunction(c(target="list", current="list"), "
       Rprintf(\"Value: %f\", REAL(target)[0]);
     Rprintf(\"\\n\");
 
-    if(emr_brk++ > 50) 
-      error(\"Infininte Loop?\");
-    if (ind_lvl < 0) {
-      error(\"Negative Stack Index\"); /* genuine error */
-    }
     /**************************************************************************/
     
+    if((tar_type = TYPEOF(target)) != (cur_type = TYPEOF(current))) {
+      error(\"Type mismatch, got %s but expected %s\", type2char(cur_type), type2char(tar_type));
+    } else if(tar_type == 19 && length(target) != length(current)) {
+      error(\"Length mismatch, got %d but expected %d\", length(current), length(target));
+    }
+
     if(TYPEOF(target) == 19) {
       if(ind_stk[ind_lvl] + 1 > length(target)) { /* no sub-items to check */
         if(ind_lvl <= 0)
           break;
         target = sxp_stk_tar[ind_lvl - 1];
-        /* current = sxp_stk_cur[ind_lvl - 1]; */
+        current = sxp_stk_cur[ind_lvl - 1];
         ind_stk[ind_lvl - 1]++;     /* Since we completed list, parent pointer should be moved forward to review next */
         ind_stk[ind_lvl] = 0;       /* Need to reset pointer before we leave this level as next time we get here it will be with a fresh list */
         ind_lvl--;
@@ -111,16 +126,16 @@ boom <- cfunction(c(target="list", current="list"), "
       } else {
         sxp_stk_tar[ind_lvl] = target;
         sxp_stk_cur[ind_lvl] = current;
-        Rprintf(\"At level %d, advancing to %d\\n\", ind_lvl, ind_stk[ind_lvl]);
+        /* Rprintf(\"At level %d, advancing to %d\\n\", ind_lvl, ind_stk[ind_lvl]); */
         target = VECTOR_ELT(target, ind_stk[ind_lvl]);
-        /* current = VECTOR_ELT(current, ind_stk[ind_lvl]); */
+        current = VECTOR_ELT(current, ind_stk[ind_lvl]);
         ind_lvl++;
       }
     } else {
       if(ind_lvl <= 0)
         break;
       target = sxp_stk_tar[ind_lvl - 1];
-      /* current = sxp_stk_cur[ind_lvl - 1]; */
+      current = sxp_stk_cur[ind_lvl - 1];
       ind_stk[ind_lvl - 1]++;
       ind_lvl--;
     }
