@@ -41,6 +41,7 @@ SEXP C_alike (SEXP target, SEXP current) {
   int ind_lvl_max = -1;     /* deepest we've gone in current stack */
   int ind_stk_sz = 32;      /* current size of stack */
   int ind_stk[ind_stk_sz];  /* track the stack */
+  int tar_len;
   SEXP sxp_stk_tar[ind_stk_sz]; /* track the parent objects */
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
@@ -96,7 +97,10 @@ SEXP C_alike (SEXP target, SEXP current) {
       err_cur = R_alloc(strlen(type2char(cur_type)) + 1, sizeof(char));
       strcpy(err_tar, type2char(tar_type));
       strcpy(err_cur, type2char(cur_type));
-    } else if(tar_type == 19 && length(target) != length(current)) {
+    } else if(
+      tar_type == 19 && (tar_len = length(target)) > 0 && 
+      tar_len != length(current)
+    ) {
       err_type = 1;
       err_tar = R_alloc(C_int_charlen(length(target)) + 1, sizeof(char));
       err_cur = R_alloc(C_int_charlen(length(current)) + 1, sizeof(char));
