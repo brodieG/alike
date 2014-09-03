@@ -112,26 +112,33 @@ SEXP C_alike (SEXP target, SEXP current) {
       int ind_sz = 0; 
       int ind_sz_max = 0; 
 
-      for(i = 0; i <= ind_lvl; i++) { /* first level is meaningless; not sure */
+      /*
+      Compute the part of the error that gives the index where the discrepancy
+      occurred.  Note that last level is meaningless as it has not been dived 
+      into yet so we purposefully ignore it with `i < ind_lvl`
+      */
+
+      for(i = 0; i < ind_lvl; i++) { 
         if((ind_sz = C_int_charlen(ind_stk[i])) > ind_sz_max)
           ind_sz_max = ind_sz;  /* we will use to allocate a char vec of appropriate size */
-        /* Rprintf("  ind_sz: %d, ind_len: %d, stk: %d, log: %3.1f, ceil: %3.1f \\n", ind_sz, ind_len, ind_stk[i] + 1, log10(ind_stk[i] + 1), ceil(log10(ind_stk[i] + 1))); */
         ind_len = ind_len + ind_sz;
       }
-      /* Rprintf("ind_sz_max: %d, ind_len: %d\\n", ind_sz_max, ind_len); */
-      char chr_err_all[ind_len + 4 * (ind_lvl + 1) + 1];
-      char chr_err[ind_sz_max + 4 + 1];
-      chr_err_all[0] = chr_err[0] = '\0';
-      for(i = 0; i <= ind_lvl; i++) {
-        /* Rprintf("Doing: [[%d]]", ind_stk[i] + 1); */
-        sprintf(chr_err, "[[%d]]", ind_stk[i] + 1);
-        strcat(chr_err_all, chr_err);
+      char err_chr_indeces[ind_len + 4 * (ind_lvl + 1) + 1];
+      char err_chr_index[ind_sz_max + 4 + 1];
+      err_chr_indeces[0] = err_chr_index[0] = '\0';
+      for(i = 0; i < ind_lvl; i++) {
+        sprintf(err_chr_index, "[[%d]]", ind_stk[i] + 1);
+        strcat(err_chr_indeces, err_chr_index);
       }
       /* Create final error and store in STRSXP */
 
       sxp_err = PROTECT(allocVector(STRSXP, 1));
-      char err_final[err_len + strlen(chr_err_all) + 10]; 
-      sprintf(err_final, "%s at index %s", err_base, chr_err_all);
+      char err_final[err_len + strlen(err_chr_indeces) + 10]; 
+      if(ind_lvl > 0) {
+        sprintf(err_final, "%s at index %s", err_base, err_chr_indeces);
+      } else {
+        sprintf(err_final, "%s", err_base);
+      }
       SET_STRING_ELT(sxp_err, 0, mkChar(err_final));
       UNPROTECT(1);
       return sxp_err;
