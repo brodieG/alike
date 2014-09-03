@@ -172,15 +172,9 @@ SEXP C_alike (SEXP target, SEXP current) {
       ind_lvl--;
     }
   }
-  
   SEXP res;
-  res = PROTECT(allocVector(INTSXP, ind_stk_sz));
-  /* Rprintf("Stack: ");*/
-  for(i = 0; i < ind_stk_sz; i++) {
-    INTEGER(res)[i] = (int) ind_stk[i];
-    /* Rprintf("%d:%d:%d ", ind_stk[i], i, INTEGER(res)[i]); */
-  }
-  /*Rprintf("\n");*/
+  res = PROTECT(allocVector(LGLSXP, 1));
+  LOGICAL(res)[0] = 1;
   UNPROTECT(1);
   return res;  
 }
