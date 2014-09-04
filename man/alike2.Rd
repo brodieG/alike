@@ -3,7 +3,8 @@
 \alias{alike2}
 \title{C version of \code{`alike`}}
 \usage{
-alike2(target, current)
+alike2(target, current, int_mode = 0L, int_tol = .Machine$double.eps^0.5,
+  class_mode = 0L, attr_mode = 0L)
 }
 \description{
 C version of \code{`alike`}

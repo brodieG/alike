@@ -2,11 +2,14 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
-SEXP C_alike (SEXP target, SEXP current);
+
+SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
+int ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol);
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike", (DL_FUNC) &C_alike, 2},
+  {"alike", (DL_FUNC) &ALIKEC_alike, 6},
+  {"typeof", (DL_FUNC) &ALIKEC_typeof, 3},
   NULL 
 };
 
@@ -21,11 +24,54 @@ void R_init_alike(DllInfo *info)
   NULL, NULL);
 }
 
-int C_int_charlen (int a) {
+/* Estimate how many characters an integer can be represented with */
+
+int ALIKEC_int_charlen (int a) {
   return (int) ceil(log10(a + 1.1));
 }
 
-SEXP C_alike (SEXP target, SEXP current) {
+int ALIKEC_type_alike(SEXP target, SEXP current, SEXP int_mode, SEXP int_tol) {
+
+}
+
+int ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol) {
+    /*
+  
+  int int_mode_val, obj_len, i, * obj_int;
+  double * obj_real, int_tol_val;
+*/
+    /*
+  if(TYPEOF(object) == REALSXP) {
+    if(
+      TYPEOF(int_mode) != INTSXP || XLENGTH(int_mode) != 1L || 
+      (int_mode_val = INTEGER(int_mode)[0]) < 0 || int_mode_val > 2
+    )
+      error("Argument int_mode should be a one length integer vector between 0L and 2L");
+    if(int_mode_val > 0)
+      return REALSXP;
+    if(TYPEOF(int_tol) != REALSXP || XLENGTH(int_tol) != 1L)
+      error("Argument int_tol should be a one length numeric vector");
+    
+    obj_len = XLENGTH(object);
+    obj_real = REAL(object);
+    obj_int = INTEGER(PROTECT(coerceVector(object, INTSXP)));
+    int_tol_val = REAL(int_tol)[1];
+
+    for(i = 0; i < obj_len; i++) {
+      if(abs(obj_real[i] - obj_int[i]) > int_tol_val) return REALSXP;
+    }
+    return 1;
+  } else {
+    return(TYPEOF(object));
+  }
+  */
+}
+
+
+SEXP ALIKEC_alike (
+  SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode,
+  SEXP attr_mode 
+) {
 
   /* General algorithm here is to:
       - Check whether objects are equal
@@ -98,12 +144,12 @@ SEXP C_alike (SEXP target, SEXP current) {
       strcpy(err_tar, type2char(tar_type));
       strcpy(err_cur, type2char(cur_type));
     } else if(
-      tar_type == 19 && (tar_len = length(target)) > 0 && 
+      tar_type == 19 && (tar_len = length(target)) > 0 &&  /* zero lengths match any length */
       tar_len != length(current)
     ) {
       err_type = 1;
-      err_tar = R_alloc(C_int_charlen(length(target)) + 1, sizeof(char));
-      err_cur = R_alloc(C_int_charlen(length(current)) + 1, sizeof(char));
+      err_tar = R_alloc(ALIKEC_int_charlen(length(target)) + 1, sizeof(char));
+      err_cur = R_alloc(ALIKEC_int_charlen(length(current)) + 1, sizeof(char));
       sprintf(err_tar, "%d", length(target));
       sprintf(err_cur, "%d", length(current));      
     }
@@ -123,7 +169,7 @@ SEXP C_alike (SEXP target, SEXP current) {
       */
 
       for(i = 0; i < ind_lvl; i++) { 
-        if((ind_sz = C_int_charlen(ind_stk[i])) > ind_sz_max)
+        if((ind_sz = ALIKEC_int_charlen(ind_stk[i])) > ind_sz_max)
           ind_sz_max = ind_sz;  /* we will use to allocate a char vec of appropriate size */
         ind_len = ind_len + ind_sz;
       }

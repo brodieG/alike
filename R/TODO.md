@@ -4,6 +4,7 @@
 
 # Optimize!!!
 
+* Currently working in C, looks promising.
 
 ---
 # Random Notes
