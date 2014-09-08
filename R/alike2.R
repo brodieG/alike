@@ -18,5 +18,5 @@ alike2 <- function(
 #' @export
 
 typeof2 <- function(object, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5) {
-  .Call(ALIKEC_typeof, object, int_mode, int_tol, PACKAGE="alike")
+  .Call(ALIKEC_typeof2, object, int_mode, int_tol, PACKAGE="alike")
 }
