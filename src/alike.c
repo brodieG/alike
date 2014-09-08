@@ -4,12 +4,12 @@
 
 
 SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
-int ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol);
+SEXP ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol);
 
 static const
 R_CallMethodDef callMethods[] = {
   {"alike", (DL_FUNC) &ALIKEC_alike, 6},
-  {"typeof", (DL_FUNC) &ALIKEC_typeof, 3},
+  {"typeof2", (DL_FUNC) &ALIKEC_typeof, 3},
   NULL 
 };
 
@@ -33,14 +33,42 @@ int ALIKEC_int_charlen (int a) {
 int ALIKEC_type_alike(SEXP target, SEXP current, SEXP int_mode, SEXP int_tol) {
 
 }
+/*
+microbenchmark(typeof(5.1), typeof2(5.1), type_of(5.1))
+Unit: nanoseconds
+         expr  min   lq median     uq    max neval
+  typeof(5.1)  492  635  723.0  787.0  20245   100
+ typeof2(5.1) 2469 2734 2945.0 3255.5  83482   100
+ type_of(5.1) 7257 8260 8606.5 9315.0 105588   100
 
-int ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol) {
-    /*
-  
-  int int_mode_val, obj_len, i, * obj_int;
-  double * obj_real, int_tol_val;
+More details:
+
+fun0 <- function() .Call(al, 1, 1, 1)
+fun1 <- function() .Call(al, a, b, c)
+fun2 <- function(a, b, c) .Call(al, 1, 1, 1)
+fun3 <- function(a, b, c) .Call(al, a, b, c)
+
+Unit: nanoseconds
+                         expr  min     lq median     uq   max neval
+ al <- alike:::ALIKEC_typeof2 5225 5679.5 5930.0 6222.5 32741   500
+           .Call(al, 1, 1, 1)  427  495.0  543.0  631.0  1336   500
+           .Call(al, a, b, c)  569  628.0  670.0  739.5  1888   500
+                       fun0()  631  699.0  772.5  896.0 16414   500
+                       fun1()  756  822.0  881.5  994.0  3504   500
+                fun2(a, b, c)  799  929.5 1055.0 1220.0  2990   500
+                fun3(a, b, c) 1115 1229.5 1358.0 1533.5  3330   500
+
+  fun overhead is ~200ns
+  vars in .Call is ~130ns
+  fetching fun args in .Call ~300ns! (this is fun3 vs. fun2)
+
 */
-    /*
+
+SEXPTYPE ALIKEC_typeof_internal(SEXP object, SEXP int_mode, SEXP int_tol) {
+  return 14;
+  int int_mode_val, obj_len = XLENGTH(object), i, * obj_int;
+  double * obj_real, int_tol_val, obj_len_x=XLENGTH(object);
+
   if(TYPEOF(object) == REALSXP) {
     if(
       TYPEOF(int_mode) != INTSXP || XLENGTH(int_mode) != 1L || 
@@ -52,21 +80,40 @@ int ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol) {
     if(TYPEOF(int_tol) != REALSXP || XLENGTH(int_tol) != 1L)
       error("Argument int_tol should be a one length numeric vector");
     
-    obj_len = XLENGTH(object);
     obj_real = REAL(object);
     obj_int = INTEGER(PROTECT(coerceVector(object, INTSXP)));
-    int_tol_val = REAL(int_tol)[1];
+    int_tol_val = REAL(int_tol)[0];
 
     for(i = 0; i < obj_len; i++) {
-      if(abs(obj_real[i] - obj_int[i]) > int_tol_val) return REALSXP;
+      if(fabs(obj_real[i] - obj_int[i]) > int_tol_val) {
+        UNPROTECT(1);
+        return REALSXP;
+      }
     }
-    return 1;
+    UNPROTECT(1);  
+    return INTSXP;
   } else {
     return(TYPEOF(object));
   }
-  */
 }
+/* 
+External interface for typeof, here mostly so we don't have to deal with the
+SEXP return in the internal use case
+*/
 
+SEXP ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol) {
+  SEXPTYPE obj_type;
+  obj_type = ALIKEC_typeof_internal(object, int_mode, int_tol);
+  return R_NilValue;
+  //SEXPTYPE obj_type;
+  /* obj_type = ALIKEC_typeof_internal(object, int_mode, int_tol);*/
+  SEXP res;
+  
+  res = PROTECT(allocVector(STRSXP, 1));
+  SET_STRING_ELT(res, 0, mkChar(type2char(obj_type)));
+  UNPROTECT(1);
+  return R_NilValue;
+}
 
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode,
@@ -228,6 +275,7 @@ SEXP ALIKEC_alike (
   UNPROTECT(1);
   return res;  
 }
+
 
 
     /**************************************************************************
