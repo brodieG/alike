@@ -13,10 +13,21 @@ alike2 <- function(
   )
 }
 
-#' C version of \code{`typeof`}
+#' C version of \code{`type_of`}
 #' 
+#' The dot version \code{`.typeof2`} doesn't allow you to specify tolerance 
+#' (uses the same default value) so that it can evaluate faster.
+#' 
+#' @seealso type_of
+#' @aliases .typeof2
+#' @param object the object to check the type of
+#' @param tolerance similar to the \code{`\link{all.equal}`} \code{`tolerance`} argument
 #' @export
 
-typeof2 <- function(object, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5) {
-  .Call(ALIKEC_typeof2, object, int_mode, int_tol, PACKAGE="alike")
+typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5) {
+  .Call(ALIKEC_typeof2, object, tolerance)
 }
+
+#' @export
+
+.typeof2 <- function(object) .Call(ALIKEC_typeof2_fast, object)

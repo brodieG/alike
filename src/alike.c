@@ -4,12 +4,14 @@
 
 
 SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
-SEXP ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol);
+SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
+SEXP ALIKEC_typeof_fast(SEXP object);
 
 static const
 R_CallMethodDef callMethods[] = {
   {"alike", (DL_FUNC) &ALIKEC_alike, 6},
-  {"typeof2", (DL_FUNC) &ALIKEC_typeof, 3},
+  {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
+  {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
   NULL 
 };
 
@@ -41,12 +43,17 @@ Unit: nanoseconds
  typeof2(5.1) 2469 2734 2945.0 3255.5  83482   100
  type_of(5.1) 7257 8260 8606.5 9315.0 105588   100
 
+A big chunk of eval time is computing the tolerance value in R
+
+typeof is internal
+
 More details:
 
 fun0 <- function() .Call(al, 1, 1, 1)
 fun1 <- function() .Call(al, a, b, c)
 fun2 <- function(a, b, c) .Call(al, 1, 1, 1)
 fun3 <- function(a, b, c) .Call(al, a, b, c)
+fun4 <- function(a, b, c) .Call(al, a, 1, 1)
 
 Unit: nanoseconds
                          expr  min     lq median     uq   max neval
@@ -57,63 +64,73 @@ Unit: nanoseconds
                        fun1()  756  822.0  881.5  994.0  3504   500
                 fun2(a, b, c)  799  929.5 1055.0 1220.0  2990   500
                 fun3(a, b, c) 1115 1229.5 1358.0 1533.5  3330   500
+                fun4(a, b, c)  921 1036.5 1188.0 1292.5  2158   100                
 
   fun overhead is ~200ns
   vars in .Call is ~130ns
-  fetching fun args in .Call ~300ns! (this is fun3 vs. fun2)
+  fetching fun args in .Call ~300ns! (this is fun3 vs. fun2), but cleary this is
+  a per var issue (see fun4, likely on the order of 100ns per var!!!)
+
+  In C function calls negligible (seems to be on the order of 15ns)
+
+  internal accept C level non main arguments coerced by the externals interface
+  functions
+  
+  typeof:
+  - base version with no adjustments for speed
+  - alternate with just tolerance (since typeof is basically like setting mode
+    greater than zero? at which point tolerance isn't meaningful?)
+
+  typealike:
+  - base version with no adjustments for speed, default mode (0), and tolerance
+  - alternate with both tolerance and mode
+
 
 */
 
-SEXPTYPE ALIKEC_typeof_internal(SEXP object, SEXP int_mode, SEXP int_tol) {
-  return 14;
-  int int_mode_val, obj_len = XLENGTH(object), i, * obj_int;
-  double * obj_real, int_tol_val, obj_len_x=XLENGTH(object);
+SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance) {
+  int mode_val, obj_len = XLENGTH(object), i, * obj_int, items=0, finite;
+  double * obj_real, int_tol_val, obj_len_x=XLENGTH(object), diff_abs=0, val=0, flr;
+  SEXPTYPE obj_type;
 
-  if(TYPEOF(object) == REALSXP) {
-    if(
-      TYPEOF(int_mode) != INTSXP || XLENGTH(int_mode) != 1L || 
-      (int_mode_val = INTEGER(int_mode)[0]) < 0 || int_mode_val > 2
-    )
-      error("Argument int_mode should be a one length integer vector between 0L and 2L");
-    if(int_mode_val > 0)
-      return REALSXP;
-    if(TYPEOF(int_tol) != REALSXP || XLENGTH(int_tol) != 1L)
-      error("Argument int_tol should be a one length numeric vector");
-    
+  if((obj_type = TYPEOF(object)) == REALSXP) {    
     obj_real = REAL(object);
-    obj_int = INTEGER(PROTECT(coerceVector(object, INTSXP)));
-    int_tol_val = REAL(int_tol)[0];
 
     for(i = 0; i < obj_len; i++) {
-      if(fabs(obj_real[i] - obj_int[i]) > int_tol_val) {
-        UNPROTECT(1);
-        return REALSXP;
-      }
+      if(
+        !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) && 
+        obj_real[i] != (flr = floor(obj_real[i]))
+      ) {
+        items = items + 1;
+        diff_abs = diff_abs + fabs((obj_real[i] - flr) / obj_real[i]);
+        val = val + fabs(obj_real[i]);
+      } else if (!finite) return REALSXP;
     }
-    UNPROTECT(1);  
-    return INTSXP;
-  } else {
-    return(TYPEOF(object));
-  }
+    if(items > 0 && val / items > tolerance && diff_abs / items > tolerance) {
+      return REALSXP;
+    } else {
+      return INTSXP;
+  } }
+  return(obj_type);
 }
 /* 
 External interface for typeof, here mostly so we don't have to deal with the
 SEXP return in the internal use case
 */
 
-SEXP ALIKEC_typeof(SEXP object, SEXP int_mode, SEXP int_tol) {
+SEXP ALIKEC_typeof(SEXP object, SEXP tolerance) {
   SEXPTYPE obj_type;
-  obj_type = ALIKEC_typeof_internal(object, int_mode, int_tol);
-  return R_NilValue;
-  //SEXPTYPE obj_type;
-  /* obj_type = ALIKEC_typeof_internal(object, int_mode, int_tol);*/
   SEXP res;
-  
-  res = PROTECT(allocVector(STRSXP, 1));
-  SET_STRING_ELT(res, 0, mkChar(type2char(obj_type)));
-  UNPROTECT(1);
-  return R_NilValue;
+
+  if(TYPEOF(tolerance) != REALSXP || XLENGTH(tolerance) != 1L)
+    error("Argument tolerance should be a one length numeric vector");
+
+  return mkString(type2char(ALIKEC_typeof_internal(object, REAL(tolerance)[0])));
 }
+SEXP ALIKEC_typeof_fast(SEXP object) {
+  return mkString(type2char(ALIKEC_typeof_internal(object, sqrt(DOUBLE_EPS))));
+}
+
 
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode,
