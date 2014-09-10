@@ -2,15 +2,23 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
+/* - Setup ------------------------------------------------------------------ */
+
 SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
+SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
+SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
+SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
+SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
 
 static const
 R_CallMethodDef callMethods[] = {
   {"alike", (DL_FUNC) &ALIKEC_alike, 6},
   {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
+  {"type_alike2", (DL_FUNC) &ALIKEC_type_alike, 4},
+  {"type_alike2_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   NULL 
 };
 
@@ -28,13 +36,48 @@ void R_init_alike(DllInfo *info)
 
 
 SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance) {
-
+  SEXPTYPE tar_type, cur_type;
+  int res = 0;
+  switch(mode) {
+    case 0:
+      tar_type = ALIKEC_typeof_internal(target, tolerance);
+      cur_type = ALIKEC_typeof_internal(current, tolerance);
+      break;
+    case 1:
+    case 2:
+      tar_type = TYPEOF(target);
+      cur_type = TYPEOF(current);
+      break;
+    default:
+      error("Logic Error: unexpected type comparison mode %d\n", mode);
+  }
+  if(
+    cur_type == INTSXP && (mode == 0 || mode == 1) && 
+    (tar_type == INTSXP || tar_type == REALSXP)
+  ) {
+    res = 1;
+  } else {
+    res = cur_type == tar_type;
+  }
+  return ScalarLogical(res);
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
-
+  SEXPTYPE mod_type, tol_type;
+  int mode_val;
+  double tol_val;
+  
+  mod_type = ALIKEC_typeof_internal(mode, sqrt(DOUBLE_EPS));
+  tol_type = ALIKEC_typeof_internal(tolerance, sqrt(DOUBLE_EPS));
+  
+  if(mod_type != INTSXP || XLENGTH(mode) != 1) 
+    error("Argument `mode` must be a one length integer like vector");
+  if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(tolerance) != 1) 
+    error("Argument `tolerance` must be a one length numeric vector");
+  
+  return ALIKEC_type_alike_internal(target, current, asInteger(mode), asReal(tolerance));
 }
 SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
-
+  return ALIKEC_type_alike_internal(target, current, 0, sqrt(DOUBLE_EPS));
 }
 
 /* - typeof ----------------------------------------------------------------- */

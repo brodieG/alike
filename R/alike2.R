@@ -31,3 +31,21 @@ typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5) {
 #' @export
 
 .typeof2 <- function(object) .Call(ALIKEC_typeof2_fast, object)
+
+#' C version of \code{`type_alike`}
+#' 
+#' The dot version \code{`.type_alike`} doesn't allow you to specify tolerance 
+#' (uses the same default value) or mode so that it can evaluate faster.
+#' 
+#' @seealso type_alike
+#' @aliases .type_alike2
+#' @param tolerance similar to the \code{`\link{all.equal}`} \code{`tolerance`} argument
+#' @export
+
+type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps ^ 0.5)
+  .Call(ALIKEC_type_alike2, target, current, mode, tolerance)
+
+#' @export
+
+.type_alike2 <- function(target, current)
+  .Call(ALIKEC_type_alike2_fast, target, current)
