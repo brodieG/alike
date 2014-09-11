@@ -6,12 +6,12 @@
 alike2 <- function(
   target, current, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5, 
   class_mode=0L, attr_mode=0L
-) {
-  .Call(
-    ALIKEC_alike, target, current, int_mode, int_tol, class_mode, attr_mode, 
-    PACKAGE="alike"
-  )
-}
+) 
+  .Call(ALIKEC_alike2, target, current, int_mode, int_tol, class_mode, attr_mode)
+
+#' @export
+
+.alike2 <- function(target, current) .Call(ALIKEC_alike2_fast, target, current)
 
 #' C version of \code{`type_of`}
 #' 
@@ -24,9 +24,9 @@ alike2 <- function(
 #' @param tolerance similar to the \code{`\link{all.equal}`} \code{`tolerance`} argument
 #' @export
 
-typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5) {
+typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5)
   .Call(ALIKEC_typeof2, object, tolerance)
-}
+
 
 #' @export
 

@@ -5,6 +5,7 @@
 /* - Setup ------------------------------------------------------------------ */
 
 SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
+SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
@@ -14,7 +15,8 @@ SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tole
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike", (DL_FUNC) &ALIKEC_alike, 6},
+  {"alike2", (DL_FUNC) &ALIKEC_alike, 6},
+  {"alike2_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
   {"type_alike2", (DL_FUNC) &ALIKEC_type_alike, 4},
@@ -133,9 +135,9 @@ int ALIKEC_int_charlen (int a) {
   return (int) ceil(log10(a + 1.1));
 }
 
-SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode,
-  SEXP attr_mode 
+SEXP ALIKEC_alike_internal(
+  SEXP target, SEXP current, int int_mode, double int_tolerance, 
+  int class_mode, int attr_mode
 ) {
 
   /* General algorithm here is to:
@@ -144,7 +146,15 @@ SEXP ALIKEC_alike (
       - Keep diving until hit something that isn't a list
       2. Walk to next item in item before, and go back to 1.
       - If no more items in list, then go to .2
-    This should guarantee that we visit every element
+    This should guarantee that we visit every element.
+    
+    Note, need to check performance of this vs. recursive version as it is 
+    now clearly apparent that the bulk of the overhead here is associated with the
+    C/R interface rather than the recursion, and getting the iterative version
+    to work when exploring the tree was definitely an exercise in pretzel making.
+
+    Flipside here is that we would need to recurse in parallel over two objects,
+    so maybe that adaptation is not that simple.
   */
  
   int ind_val = 0;          /* current index value */
@@ -202,14 +212,17 @@ SEXP ALIKEC_alike (
     `err_type`
     */
     
-    if((tar_type = TYPEOF(target)) != (cur_type = TYPEOF(current))) {      
+    if(
+      (tar_type = ALIKEC_typeof_internal(target, int_tolerance)) != 
+      (cur_type = ALIKEC_typeof_internal(current, int_tolerance))
+    ) {      
       err_type = 0;
       err_tar = R_alloc(strlen(type2char(tar_type)) + 1, sizeof(char));
       err_cur = R_alloc(strlen(type2char(cur_type)) + 1, sizeof(char));
       strcpy(err_tar, type2char(tar_type));
       strcpy(err_cur, type2char(cur_type));
     } else if(
-      tar_type == 19 && (tar_len = length(target)) > 0 &&  /* zero lengths match any length */
+      tar_type == VECSXP && (tar_len = length(target)) > 0 &&  /* zero lengths match any length */
       tar_len != length(current)
     ) {
       err_type = 1;
@@ -260,7 +273,7 @@ SEXP ALIKEC_alike (
     }
     /* If object list, then dive in */
 
-    if(TYPEOF(target) == 19) {
+    if(TYPEOF(target) == VECSXP) {
       if(ind_stk[ind_lvl] + 1 > length(target)) { /* no sub-items to check */
         if(ind_lvl <= 0)
           break;
@@ -292,6 +305,35 @@ SEXP ALIKEC_alike (
   LOGICAL(res)[0] = 1;
   UNPROTECT(1);
   return res;  
+}
+SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
+  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0, 0);
+}
+SEXP ALIKEC_alike (
+  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, 
+  SEXP class_mode, SEXP attr_mode 
+) {
+  SEXPTYPE int_mod_type, tol_type, class_mod_type, attr_mod_type;
+  
+  int_mod_type = ALIKEC_typeof_internal(int_mode, sqrt(DOUBLE_EPS));
+  class_mod_type = ALIKEC_typeof_internal(class_mode, sqrt(DOUBLE_EPS));
+  attr_mod_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
+  tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
+  
+  if(int_mod_type != INTSXP || XLENGTH(int_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
+    error("Argument `int_mode` must be a one length integer like vector");
+  if(class_mod_type != INTSXP || XLENGTH(class_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
+    error("Argument `class_mode` must be a one length integer like vector");
+  if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
+    error("Argument `attr_mode` must be a one length integer like vector");
+  if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(int_tolerance) != 1) 
+    error("Argument `int_tolerance` must be a one length numeric vector");
+
+  return 
+    ALIKEC_alike_internal(
+      target, current, asInteger(int_mode), asReal(int_tolerance), 
+      asInteger(class_mode), asInteger(attr_mode)
+    );
 }
 
 
