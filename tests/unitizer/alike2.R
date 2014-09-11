@@ -38,6 +38,9 @@ unitizer_sect(".typeof", {
   .typeof2(NA_real_)            # integer
   .typeof2(Inf)                 # integer
   .typeof2(-Inf)                # integer
+  .typeof2(list())
+  .typeof2(data.frame(a=1:10))
+  .typeof2(matrix("", 10, 10))
 } )
 unitizer_sect("typeof", {
   typeof2(1:100)
@@ -52,4 +55,46 @@ unitizer_sect("typeof", {
   typeof2(Inf)                 # integer
   typeof2(-Inf)                # integer
   typeof2(1e7 + .1, tolerance = .Machine$double.eps ^ .5 / 10) # double
+  typeof2(1e7 + .1, tolerance=1L)       # error, might change in future
+  typeof2(1e7 + .1, tolerance="hello")  # error
+} )
+unitizer_sect(".type_alike", {
+  .type_alike2(1, 1.1)
+  .type_alike2(1, 1.00000001)
+  .type_alike2(list(), integer())
+  .type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
+  .type_alike2(1:100, a)        # FALSE
+  .type_alike2(1:100, b)        # TRUE
+  .type_alike2(1e6, 1e6 + .1)   # FALSE
+  .type_alike2(1e7, 1e7 + .1)   # TRUE
+  .type_alike2(data.frame(a=1:10), list())
+  .type_alike2(NULL, NULL)
+  .type_alike2(1/0, NA)
+} )
+
+unitizer_sect("type_alike", {
+  type_alike2(1, 1.1)
+  type_alike2(1, 1.00000001)
+  type_alike2(list(), integer())
+  type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
+  type_alike2(1:100, a)        # FALSE
+  type_alike2(1:100, b)        # TRUE
+  type_alike2(1e6, 1e6 + .1)   # FALSE
+  type_alike2(1e7, 1e7 + .1)   # TRUE
+  type_alike2(data.frame(a=1:10), list())
+  type_alike2(NULL, NULL)
+  type_alike2(1/0, NA)
+
+  type_alike2(1:100, a, tolerance=.Machine$double.eps ^ .5 * 10)  # TRUE
+  type_alike2(a, 1:100, mode=1.0)      # TRUE
+  type_alike2(a, 1:100, mode=1L)       # TRUE
+  type_alike2(1:100, b, mode=1L)       # FALSE
+  type_alike2(a, 1:100, mode=2L)       # FALSE
+
+
+  type_alike2(1:100, a, tolerance=1L)       # error
+  type_alike2(1:100, a, tolerance=1:2)      # error
+  type_alike2(1:100, a, tolerance="hello")  # error
+  type_alike2(1:100, a, mode=1.1)           # error
+  type_alike2(1:100, a, mode=1:2)           # error
 } )
