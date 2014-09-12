@@ -38,3 +38,10 @@ int.super.loose = integer like numerics can be integers
 * 1L, 1.0 # TRUE
 * 1.0, 1L # TRUE
 
+# Things to test
+
+## alike.c
+
+* Make sure our use of `flags` argument to R_compute_identical() is correct
+* Test that our decision to use direct comparison or `rownames` attribute isn't
+  a disaster

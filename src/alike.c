@@ -135,6 +135,28 @@ int ALIKEC_int_charlen (int a) {
   return (int) ceil(log10(a + 1.1));
 }
 
+/* Initial benchmarks (before attr checking):
+
+> microbenchmark(alike2(lst, lst.2), alike(lst, lst.2), .alike2(lst, lst.2))
+
+> lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+> lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
+
+Unit: microseconds
+                expr      min        lq    median       uq      max neval
+  alike2(lst, lst.2)    5.644    6.7105    8.4745   11.085   19.995   100
+   alike(lst, lst.2) 1106.624 1120.6535 1133.5815 1159.470 2245.159   100
+ .alike2(lst, lst.2)    4.012    4.5560    5.4650    7.905   66.953   100
+> microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst))
+Unit: microseconds
+              expr      min        lq    median        uq      max neval
+  alike2(lst, lst)    3.850    4.7085    6.7295    9.8175   22.973   100
+   alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
+ .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
+*/
+
+
+
 SEXP ALIKEC_alike_internal(
   SEXP target, SEXP current, int int_mode, double int_tolerance, 
   int class_mode, int attr_mode
@@ -212,6 +234,8 @@ SEXP ALIKEC_alike_internal(
     `err_type`
     */
     
+    // - Type ------------------------------------------------------------------
+
     if(
       (tar_type = ALIKEC_typeof_internal(target, int_tolerance)) != 
       (cur_type = ALIKEC_typeof_internal(current, int_tolerance))
@@ -221,6 +245,9 @@ SEXP ALIKEC_alike_internal(
       err_cur = R_alloc(strlen(type2char(cur_type)) + 1, sizeof(char));
       strcpy(err_tar, type2char(tar_type));
       strcpy(err_cur, type2char(cur_type));
+
+    // - Length ----------------------------------------------------------------
+
     } else if(
       tar_type == VECSXP && (tar_len = length(target)) > 0 &&  /* zero lengths match any length */
       tar_len != length(current)
@@ -230,7 +257,164 @@ SEXP ALIKEC_alike_internal(
       err_cur = R_alloc(ALIKEC_int_charlen(length(current)) + 1, sizeof(char));
       sprintf(err_tar, "%d", length(target));
       sprintf(err_cur, "%d", length(current));      
+
+    // - Attributes ------------------------------------------------------------
+    //
+    // Code lifted from `R_compute_identical`
+
+    } else {
+      SEXP tar_attr, cur_attr, tar_attr_el, cur_attr_el, tar_attr_el_val, cur_attr_el_val;
+      SEXPTYPE tar_attr_el_val_type;
+      int curr_attr_len, tar_attr_len, tar_attr_el_val_len, attr_i, tar_dim_val;
+      
+      tar_attr = ATTRIB(target);
+      cur_attr = ATTRIB(target);
+
+      if(
+        (tar_attr != R_NilValue || mode == 2) && 
+        !(tar_attr == R_NilValue && cur_attr == R_NilValue)
+      ) {
+        if(mode == 2 && tar_attr == R_NilValue && cur_attr != R_NilValue)
+          error("target and current must have identical attributes")
+        // There must be attributes on both target and current
+        if(TYPEOF(tar_attr) != LISTSXP || TYPEOF(tar_attr) != LISTSXP) {
+          warning(_("ignoring non-pairlist attributes"));
+        } else {
+          tar_attr_len = length(tar_attr);
+          curr_attr_len = length(cur_attr);
+          
+          if(mode == 2 && tar_attr_len != curr_attr_len) {
+            error("target and current must have same number of attributes")
+          
+          } else if (tar_attr_len > curr_attr_len) {
+            error("current must have all the attributes that target has")
+          
+          } else {
+            // Loop through all attr combinations; maybe could be made faster by
+            // reducing the second loop each time a match is found
+
+            for(tar_attr_el = tar_attr; tar_attr_el != R_NilValue; tar_attr_el = CDR(tar_attr_el)) {
+              const char *tx = CHAR(PRINTNAME(TAG(tar_attr_el)));
+              
+              for(cur_attr_el = cur_attr; cur_attr_el != R_NilValue; cur_attr_el = CDR(cur_attr_el)) {
+                if(streql(tx, CHAR(PRINTNAME(TAG(cur_attr_el))))) {
+
+                  tar_attr_el_val = CAR(tar_attr_el);
+                  cur_attr_el_val = CAR(cur_attr_el_val);
+
+                  /* We need to treat row.names specially here because of the 
+                  totally bullshit (well, not truly) way data.frame row names 
+                  are stored c(NA, n) where "n" is the number of rows; the `getAttrib`
+                  access expands that to the full sequence; entirely unclear why
+                  we can't just compare the two `c(NA, n)` and just be done; do
+                  we really want to allow two row.names attributes that are stored
+                  differently but compute to the same value to be identical???
+                  */
+
+                  /* not entirely sure what the "default" flag is for `identical`,
+                  seems to be 16 by the convention that all the flags that are TRUE
+                  get set to zero, but very confusing why `ignore.environment` basically
+                  is the opposite of all the others.  Otherwise it would have made
+                  sense to have the default flag be 0  NEED TO TEST CLOSURE
+                  COMPARISON!!!*/
+                  
+                  /*if(streql(tx, "row.names")) {
+                    PROTECT(atrx = getAttrib(target, R_RowNamesSymbol));
+                    PROTECT(atry = getAttrib(current, R_RowNamesSymbol));
+                    if(!R_compute_identical(atrx, atry, 16)) {
+                      UNPROTECT(2);
+                      return FALSE;
+                    } else UNPROTECT(2);
+                  } else */
+                  
+
+                  if(streql(tx, "class")) {
+
+                  } else if (streql(tx, "dim") && mode == 0) {
+                    if(
+                      (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(tar_attr_el_val) ||
+                      tar_attr_el_val_type != INTSXP || 
+                      (tar_attr_el_val_len = XLENGTH(tar_attr_el_val)) != XLENGTH(cur_attr_el_val)
+                    ) {
+                      error("`dim` mismatch or non integer dimensions");
+                    }
+                    for(attr_i = 0; attr_i < tar_attr_el_val_len; attr_i++) {
+                      if(
+                        (tar_dim_val = INTEGER(tar_attr_el_val)[attr_i]) && 
+                        tar_dim_val != INTEGER(cur_attr_el_val)[attr_i]
+                      ) {
+                        error(
+                          "`dim` mismatch at dimension %d: expected %d but got %d",
+                          attr_i, tar_dim_val, INTEGER(cur_attr_el_val)[attr_i]
+                        );
+                    } }
+                  } else if (streql(tx, "dimnames") && mode == 0) {
+                    if(
+                      (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(tar_attr_el_val) ||
+                      tar_attr_el_val_type != VECSXP || 
+                      (tar_attr_el_val_len = xlength(tar_attr_el_val)) != xlength(cur_attr_el_val)
+                    ) {
+                      error("`dimnames` mismatch or non-list dimnames");
+                    }
+
+
+
+                  } else {
+                    if(!R_compute_identical(CAR(tar_attr_el), CAR(cur_attr_el), 16))
+                      return FALSE;
+                  }
+                  break;
+                }
+                if(cur_attr_el == R_NilValue) return FALSE;
+              }
+            }
+          }
+        }
+      }  
+
+      if(tar_attr != R_NilValue || mode == 2) {
+
+
+        if(TYPE(tar_attr) != )  
+
+      }
+
+      if(
+      (tar_attr = ATTRIB(target)) != R_NilValue && mode == 0
+    ) {  
+      cur_attr = ATTRIB(current);
+
+
+
+      ax = ATTRIB(x); ay = ATTRIB(y);
+      if (!ATTR_AS_SET) {
+    if(!R_compute_identical(ax, ay, flags)) return FALSE;
+      }
+      /* Attributes are special: they should be tagged pairlists.  We
+         don't test them if they are not, and we do not test the order
+         if they are.
+
+         This code is not very efficient, but then neither is using
+         pairlists for attributes.  If long attribute lists become more
+         common (and they are used for S4 slots) we should store them in
+         a hash table.
+      */
+      else if(ax != R_NilValue || ay != R_NilValue) {
+    if(ax == R_NilValue || ay == R_NilValue)
+        return FALSE;
+    if(TYPEOF(ax) != LISTSXP || TYPEOF(ay) != LISTSXP) {
+        warning(_("ignoring non-pairlist attributes"));
+    } else {
+        SEXP elx, ely;
+        if(length(ax) != length(ay)) return FALSE;
+        /* They are the same length and should have
+           unique non-empty non-NA tags */
+
+
+
     }
+    // - Handle Errors ---------------------------------------------------------
+
     if(err_type > -1) {
       err_len = strlen(err_msgs[err_type]) + strlen(err_tar) + strlen(err_cur) - 4; /* -4 because we have 2 %s in the message */
       char err_base[err_len + 1];
@@ -271,9 +455,11 @@ SEXP ALIKEC_alike_internal(
       UNPROTECT(1);
       return sxp_err;
     }
+    // - Get Next Elements -----------------------------------------------------
+
     /* If object list, then dive in */
 
-    if(TYPEOF(target) == VECSXP) {
+    if(tar_type == VECSXP) {
       if(ind_stk[ind_lvl] + 1 > length(target)) { /* no sub-items to check */
         if(ind_lvl <= 0)
           break;
@@ -286,7 +472,6 @@ SEXP ALIKEC_alike_internal(
       } else {
         sxp_stk_tar[ind_lvl] = target;
         sxp_stk_cur[ind_lvl] = current;
-        /* Rprintf("At level %d, advancing to %d\n", ind_lvl, ind_stk[ind_lvl]); */
         target = VECTOR_ELT(target, ind_stk[ind_lvl]);
         current = VECTOR_ELT(current, ind_stk[ind_lvl]);
         ind_lvl++;
@@ -300,6 +485,8 @@ SEXP ALIKEC_alike_internal(
       ind_lvl--;
     }
   }
+  // - Finalize ----------------------------------------------------------------
+
   SEXP res;
   res = PROTECT(allocVector(LGLSXP, 1));
   LOGICAL(res)[0] = 1;
