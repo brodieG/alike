@@ -82,7 +82,7 @@
 # library(inline)
 
 
-# boom <- cfunction(c(target="list", current="list"), "
+# alike3 <- cfunction(c(target="list", current="list"), "
 #   int ind_val = 0;          /* current index value */
 #   int ind_lvl = 0;          /* how deep in the stack we are */
 #   int ind_lvl_max = -1;     /* deepest we've gone in current stack */
