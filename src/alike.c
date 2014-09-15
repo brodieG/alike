@@ -8,7 +8,7 @@
 |                                                                              |
 \* -------------------------------------------------------------------------- */
 
-SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP class_mode, SEXP attr_mode);
+SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode);
 SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
@@ -20,7 +20,7 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike2", (DL_FUNC) &ALIKEC_alike, 6},
+  {"alike2", (DL_FUNC) &ALIKEC_alike, 5},
   {"alike2_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
@@ -47,12 +47,12 @@ Returns a character pointer to the string representation of the integer; allocat
 with R_alloc so in theory don't need to worry about freeing memory
 */
 
-char * ALIKEC_int_to_char(int a) {
+const char * ALIKEC_int_to_char(int a) {
   int int_len = (int) ceil(log10(abs(a) + 1.00001));  // + 1.00001 to account for 0
   char * res;
   res = R_alloc(int_len + 1, sizeof(char));
   sprintf(res, "%d", a);
-  return res;
+  return (const char *) res;
 }
 /* Returns a character pointer containing the results of using `a` as the parent
 string and all the others a substrings with `sprintf`
@@ -61,7 +61,7 @@ note:
 - `a` must contain exactly four unescaped "%s"; this will break ugly if it doesn't
 */
 
-char * ALIKEC_sprintf(char * a, char * b, char * c, char * d, char * e) {
+char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
   int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) - 8 + 1;
   char * res;
   res = R_alloc(full_len, sizeof(char));
@@ -254,8 +254,8 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
 
               if(strcmp(tx, "class") == 0 && attr_mode == 0) {
                 int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i;
-                char * cur_class;
-                char * tar_class;
+                const char * cur_class;
+                const char * tar_class;
 
                 if(TYPEOF(tar_attr_el_val) != STRSXP || TYPEOF(tar_attr_el_val) != STRSXP) {
                   return "`class` attribute not character vector for both `target` and `current`; if you are using custom `class` attributes please set `attr_mode` to 1L or 2L";
@@ -273,8 +273,8 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                 ) {
                   if(
                     strcmp(
-                      cur_class = (char *) CHAR(STRING_ELT(cur_attr_el_val, cur_class_i)), 
-                      tar_class = (char *) CHAR(STRING_ELT(tar_attr_el_val, tar_class_i))
+                      cur_class = CHAR(STRING_ELT(cur_attr_el_val, cur_class_i)), 
+                      tar_class = CHAR(STRING_ELT(tar_attr_el_val, tar_class_i))
                     ) != 0
                   ) {
                     return ALIKEC_sprintf(
@@ -307,9 +307,11 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
               // - dimnames ------------------------------------------------
 
               } else if (strcmp(tx, "dimnames") == 0 && attr_mode == 0) {
-                SEXP tar_attr_el_val_dimnames, tar_attr_el_val_dimnames,
-                  tar_attr_el_val_dimname_obj, cur_attr_el_val_dimname_obj;
+                SEXP tar_attr_el_val_dimnames, cur_attr_el_val_dimnames,
+                  tar_attr_el_val_dimname_obj, cur_attr_el_val_dimname_obj,
+                  tar_attr_el_val_dimnames_names, cur_attr_el_val_dimnames_names;
                 SEXPTYPE type_tmp;
+                int tar_attr_el_val_dimnames_names_len;
 
                 if(
                   (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(tar_attr_el_val) ||
@@ -324,8 +326,8 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                   if(
                     TYPEOF(tar_attr_el_val_dimnames_names) != STRSXP ||
                     !(
-                      (type_tmp = TYPEOF(cur_attr_el_val_dimnames_names) == STRSXP) ||
-                      type_tmp == R_NilValue
+                      (type_tmp = TYPEOF(cur_attr_el_val_dimnames_names)) == STRSXP ||
+                      cur_attr_el_val_dimnames_names == R_NilValue
                     )
                   ) {
                     return "Unexpected `dimnames` values; if you are using custom `dimnames` attributes please set `attr_mode` to 1L or 2L";
@@ -337,7 +339,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                     return ALIKEC_sprintf(
                       "`dimnames` mismatch, `target` dimnames does not have expected length %d%s%s%s",
                       ALIKEC_int_to_char(XLENGTH(cur_attr_el_val_dimnames_names)), "", "", ""
-                    )
+                    );
                   } else {
                     for(attr_i = 0; attr_i < tar_attr_el_val_dimnames_names_len; attr_i++) {
                       const char * dimnames_name = CHAR(STRING_ELT(tar_attr_el_val_dimnames_names, attr_i));
@@ -433,7 +435,7 @@ Unit: microseconds
 */
 
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int int_mode, double int_tolerance, attr_mode
+  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode
 ) {
 
   /* General algorithm here is to:
@@ -622,25 +624,21 @@ SEXP ALIKEC_alike_internal(
 evaluations in R */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0, 0);
+  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0);
 }
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, 
-  SEXP class_mode, SEXP attr_mode 
+  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode 
 ) {
-  SEXPTYPE int_mod_type, tol_type, class_mod_type, attr_mod_type;
+  SEXPTYPE int_mod_type, tol_type, attr_mod_type;
   
   int_mod_type = ALIKEC_typeof_internal(int_mode, sqrt(DOUBLE_EPS));
-  class_mod_type = ALIKEC_typeof_internal(class_mode, sqrt(DOUBLE_EPS));
   attr_mod_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
   tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
   
   if(int_mod_type != INTSXP || XLENGTH(int_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
     error("Argument `int_mode` must be a one length integer like vector");
-  if(class_mod_type != INTSXP || XLENGTH(class_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `class_mode` must be a one length integer like vector");
   if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
     error("Argument `attr_mode` must be a one length integer like vector");
   if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(int_tolerance) != 1) 
@@ -648,7 +646,6 @@ SEXP ALIKEC_alike (
 
   return 
     ALIKEC_alike_internal(
-      target, current, asInteger(int_mode), asReal(int_tolerance), 
-      asInteger(class_mode), asInteger(attr_mode)
+      target, current, asInteger(int_mode), asReal(int_tolerance), asInteger(attr_mode)
     );
 }
