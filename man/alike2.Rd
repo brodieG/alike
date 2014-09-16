@@ -9,4 +9,25 @@ alike2(target, current, int_mode = 0L, int_tol = .Machine$double.eps^0.5,
 \description{
 C version of \code{`alike`}
 }
+\section{\code{`attr_mode`}}{
+
+
+Paramter \code{`attr_mode`} controls how attributes are compared:
+\itemize{
+  \item 0: special attributes are compared specially, and only attributes
+    present in target are compared.  Additionally, zero length attributes in
+    \code{`target`} must be of the same type as the corresponding attribute in
+    \code{`current`}, but the \code{`current`} attribute may be any length
+  \item 1: all attributes present in \code{`target`} must be present in
+    \code{`current`} and be identical.
+  \item 2: all attributes present in \code{`target`} must be present in
+    \code{`current`} and there may be no additional attributes in \code{`current`}
+}
+
+Attributes on attributes are checked indirectly only when \code{`target`}
+has an attribute with length that isn't special, at which point the attributes
+must be identical (and by extension, must have identical attributes
+themselves).  Attributes that are being treated "specially" or zero length
+attributes don't have their attributes checked.
+}
 

@@ -64,9 +64,10 @@ note:
 char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
   int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) - 8 + 1;
   char * res;
+  //Rprintf("%s %s %s %s%s; allocating %d\n", a, b, c, d, e, full_len);
   res = R_alloc(full_len, sizeof(char));
   sprintf(res, a, b, c, d, e);
-  res;
+  return res;
 }
 
 /* -------------------------------------------------------------------------- *\
@@ -174,6 +175,13 @@ SEXP ALIKEC_typeof_fast(SEXP object) {
 string if successful, an error message otherwise
 
 Code heavily inspired by `R_compute_identical` (thanks R CORE)
+
+Problems to resolve:
+- Different dimnames don't seem to trigger errors
+- zero length row.names don't match row.names
+- zero length attributes generally don't match attributes
+- class matching seems buggy
+
 */
 
 char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
@@ -191,7 +199,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
     !(tar_attr == R_NilValue && cur_attr == R_NilValue)
   ) {
     if(attr_mode == 2 && tar_attr == R_NilValue && cur_attr != R_NilValue)
-      return "target and current must have identical attributes";
+      return "current must have the exact same attributes target has, with none extra or missing";
     // There must be attributes on both target and current
     if(TYPEOF(tar_attr) != LISTSXP || TYPEOF(tar_attr) != LISTSXP) {
       warning("ignoring non-pairlist attributes");
@@ -199,7 +207,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
       tar_attr_len = length(tar_attr);
       curr_attr_len = length(cur_attr);
       
-      if(attr_mode == 2 && tar_attr_len != curr_attr_len) {
+      if(attr_mode == 2 && tar_attr_len > curr_attr_len) {
         return "target and current must have same number of attributes";
       } else if (tar_attr_len > curr_attr_len) {
         return "current must have all the attributes that target has";
@@ -279,7 +287,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                   ) {
                     return ALIKEC_sprintf(
                       "`class` mismatch at class #%s: expected %s but got %s%s",
-                      ALIKEC_int_to_char(cur_class_i),
+                      ALIKEC_int_to_char(cur_class_i + 1),
                       tar_class, cur_class, ""
                     );
                   }
@@ -300,15 +308,14 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                   ) {
                     return ALIKEC_sprintf(
                       "`dim` mismatch at dimension %s: expected %s but got %s%s",
-                      ALIKEC_int_to_char(attr_i), ALIKEC_int_to_char(tar_dim_val), 
+                      ALIKEC_int_to_char(attr_i + 1), ALIKEC_int_to_char(tar_dim_val), 
                       ALIKEC_int_to_char(INTEGER(cur_attr_el_val)[attr_i]), ""
                     );
                 } }
               // - dimnames ------------------------------------------------
 
               } else if (strcmp(tx, "dimnames") == 0 && attr_mode == 0) {
-                SEXP tar_attr_el_val_dimnames, cur_attr_el_val_dimnames,
-                  tar_attr_el_val_dimname_obj, cur_attr_el_val_dimname_obj,
+                SEXP tar_attr_el_val_dimname_obj, cur_attr_el_val_dimname_obj,
                   tar_attr_el_val_dimnames_names, cur_attr_el_val_dimnames_names;
                 SEXPTYPE type_tmp;
                 int tar_attr_el_val_dimnames_names_len;
@@ -356,10 +363,10 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                       } else if ( // check dimnames match 
                         (
                           tar_attr_el_val_dimname_obj = 
-                            VECTOR_ELT(tar_attr_el_val_dimnames, attr_i)
+                            VECTOR_ELT(tar_attr_el_val, attr_i)
                         ) != R_NilValue
                       ) {
-                        cur_attr_el_val_dimname_obj = VECTOR_ELT(cur_attr_el_val_dimnames, attr_i);
+                        cur_attr_el_val_dimname_obj = VECTOR_ELT(cur_attr_el_val, attr_i);
                         if(
                           !R_compute_identical(
                             tar_attr_el_val_dimname_obj,
@@ -368,7 +375,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                         ) {
                           return ALIKEC_sprintf(
                             "`dimnames` mismatch at dimension %s%s%s%s", 
-                            ALIKEC_int_to_char(attr_i), "", "", ""
+                            ALIKEC_int_to_char(attr_i + 1), "", "", ""
                           );
                 } } } } }
               } else {

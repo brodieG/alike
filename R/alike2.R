@@ -18,16 +18,17 @@
 #' has an attribute with length that isn't special, at which point the attributes
 #' must be identical (and by extension, must have identical attributes 
 #' themselves).  Attributes that are being treated "specially" or zero length
-#' attributes don't have their attributes checked. 
+#' attributes don't have their attributes checked.
+#' 
+#' Special attributes at this point include `dim`, `dimnames`, and `class`.
 #' 
 #' @export
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
 
 alike2 <- function(
-  target, current, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5, 
-  class_mode=0L, attr_mode=0L
+  target, current, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5, attr_mode=0L
 ) 
-  .Call(ALIKEC_alike2, target, current, int_mode, int_tol, class_mode, attr_mode)
+  .Call(ALIKEC_alike2, target, current, int_mode, int_tol, attr_mode)
 
 #' @export
 
@@ -69,3 +70,16 @@ type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps 
 
 .type_alike2 <- function(target, current)
   .Call(ALIKEC_type_alike2_fast, target, current)
+
+#' Compare Attributes
+#' 
+#' R interface for an internal C function used by \code{`alike`}.  Provided 
+#' primarily for unit testing purposes
+#' 
+#' @seealso type_alike
+#' @export
+#' @param int_mode 
+
+attr_compare <- function(target, current, attr_mode=0L)
+  .Call(ALIKEC_compare_attributes, target, current, attr_mode)
+
