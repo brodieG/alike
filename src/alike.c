@@ -352,7 +352,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                       const char * dimnames_name = CHAR(STRING_ELT(tar_attr_el_val_dimnames_names, attr_i));
                       if(         // check dimnames names match
                         strcmp(dimnames_name, "") != 0 && 
-                        strcmp(dimnames_name, CHAR(STRING_ELT(cur_attr_el_val_dimnames_names, attr_i))) == 0
+                        strcmp(dimnames_name, CHAR(STRING_ELT(cur_attr_el_val_dimnames_names, attr_i))) != 0
                       ) { 
                         return ALIKEC_sprintf(
                           "`dimnames` name mismatch at dimension %s, expected %s but got %s%s",
