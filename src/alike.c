@@ -206,7 +206,7 @@ Other notes:
 
 */
 
-char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
+const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
   
   SEXP tar_attr, cur_attr, tar_attr_el, cur_attr_el, tar_attr_el_val, cur_attr_el_val;
   SEXPTYPE tar_attr_el_val_type;
@@ -482,7 +482,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
 
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
-  char * comp_res;
+  const char * comp_res;
   
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1) 
     error("Argument `mode` must be a one length integer like vector");
