@@ -83,3 +83,6 @@ type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps 
 attr_compare <- function(target, current, attr_mode=0L)
   .Call(ALIKEC_compare_attributes, target, current, attr_mode)
 
+#' @export
+
+alike_test <- function(x) .Call(ALIKEC_test, x)

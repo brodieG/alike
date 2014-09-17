@@ -17,6 +17,7 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
 SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
+SEXP ALIKEC_test(SEXP obj);
 
 static const
 R_CallMethodDef callMethods[] = {
@@ -27,6 +28,7 @@ R_CallMethodDef callMethods[] = {
   {"type_alike2", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"type_alike2_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
+  {"test", (DL_FUNC) &ALIKEC_test, 1},
   NULL 
 };
 
@@ -68,6 +70,20 @@ char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, 
   res = R_alloc(full_len, sizeof(char));
   sprintf(res, a, b, c, d, e);
   return res;
+}
+
+// - Testing Function ----------------------------------------------------------
+
+SEXP ALIKEC_test(SEXP obj) {
+  SEXP attr, attr_el;
+
+  return getAttrib(obj, R_NamesSymbol);
+
+  for(attr_el = attr; attr_el != R_NilValue; attr_el = CDR(attr_el)) {
+    const char *tx = CHAR(PRINTNAME(TAG(attr_el)));
+    Rprintf("Attrib %s\n", tx);
+  }
+  Rprintf("");
 }
 
 /* -------------------------------------------------------------------------- *\
@@ -171,6 +187,7 @@ SEXP ALIKEC_typeof_fast(SEXP object) {
 |                                 ATTRIBUTES                                   |
 |                                                                              |
 \* -------------------------------------------------------------------------- */
+
 /* Used by alike to compare attributes; returns pointer to zero length character
 string if successful, an error message otherwise
 
@@ -182,14 +199,20 @@ Problems to resolve:
 - zero length attributes generally don't match attributes
 - class matching seems buggy
 
+Other notes:
+- Special attributes are class, dim, dimnames
+- dimnames may have at most a names attribute if in special attr mode
+- all other attribute attributes must be identical
+
+
 */
 
 char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
   
   SEXP tar_attr, cur_attr, tar_attr_el, cur_attr_el, tar_attr_el_val, cur_attr_el_val;
   SEXPTYPE tar_attr_el_val_type;
-  int curr_attr_len, tar_attr_len, tar_attr_el_val_len, attr_i, tar_dim_val,
-    attr_match;
+  R_xlen_t curr_attr_len, tar_attr_len, tar_attr_el_val_len;
+  int attr_i, tar_dim_val, attr_match;
   
   tar_attr = ATTRIB(target);
   cur_attr = ATTRIB(current);
@@ -204,8 +227,8 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
     if(TYPEOF(tar_attr) != LISTSXP || TYPEOF(tar_attr) != LISTSXP) {
       warning("ignoring non-pairlist attributes");
     } else {
-      tar_attr_len = length(tar_attr);
-      curr_attr_len = length(cur_attr);
+      tar_attr_len = xlength(tar_attr);
+      curr_attr_len = xlength(cur_attr);
       
       if(attr_mode == 2 && tar_attr_len > curr_attr_len) {
         return "target and current must have same number of attributes";
@@ -245,17 +268,7 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
               sense to have the default flag be 0  NEED TO TEST CLOSURE
               COMPARISON!!!*/
               
-              /*if(strcmp(tx, "row.names") == 0) {
-                PROTECT(atrx = getAttrib(target, R_RowNamesSymbol));
-                PROTECT(atry = getAttrib(current, R_RowNamesSymbol));
-                if(!R_compute_identical(atrx, atry, 16)) {
-                  UNPROTECT(2);
-                  return FALSE;
-                } else UNPROTECT(2);
-              } else */
-              
-
-              // - class ---------------------------------------------------
+              // - class -------------------------------------------------------
 
               /* see R documentation for explanations of how the special 
               attributes class, dim, and dimnames are compared */
@@ -292,10 +305,13 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                     );
                   }
                 }
-              // - dim -----------------------------------------------------
+                if(!R_compute_identical(ATTRIB(tar_attr_el_val), ATTRIB(cur_attr_el_val), 16)) {
+                  return "attribute `class` has mismatching attributes between target and current";
+                }
+              // - dim ---------------------------------------------------------
               } else if (strcmp(tx, "dim") == 0 && attr_mode == 0) {
                 if(
-                  (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(tar_attr_el_val) ||
+                  (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(cur_attr_el_val) ||
                   tar_attr_el_val_type != INTSXP || 
                   (tar_attr_el_val_len = XLENGTH(tar_attr_el_val)) != XLENGTH(cur_attr_el_val)
                 ) {
@@ -312,13 +328,65 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                       ALIKEC_int_to_char(INTEGER(cur_attr_el_val)[attr_i]), ""
                     );
                 } }
-              // - dimnames ------------------------------------------------
+                if(!R_compute_identical(ATTRIB(tar_attr_el_val), ATTRIB(cur_attr_el_val), 16)) {
+                  return "attribute `dim` has mismatching attributes between target and current";
+                }
+
+              // - dimnames ----------------------------------------------------
 
               } else if (strcmp(tx, "dimnames") == 0 && attr_mode == 0) {
                 SEXP tar_attr_el_val_dimname_obj, cur_attr_el_val_dimname_obj,
-                  tar_attr_el_val_dimnames_names, cur_attr_el_val_dimnames_names;
+                  tar_attr_el_val_dimnames_names, cur_attr_el_val_dimnames_names,
+                  tar_dimnames_attr, cur_dimnames_attr, tdn_attr, cdn_attr;
                 SEXPTYPE type_tmp;
-                int tar_attr_el_val_dimnames_names_len;
+                int tar_dimnames_has_names, cur_dimnames_has_names,
+                  tar_attr_el_val_dimnames_names_len, tdn_attr_len, cdn_attr_len,
+                  cdn_attr_len_final;
+
+                // The following likely doesn't need to be done for every dimnames
+                // so there probably is some optimization to be had here
+
+                tar_attr_el_val_dimnames_names = getAttrib(tar_attr_el_val, R_NamesSymbol);
+                cur_attr_el_val_dimnames_names = getAttrib(cur_attr_el_val, R_NamesSymbol);
+                tar_dimnames_has_names = (tar_attr_el_val_dimnames_names != R_NilValue);
+                cur_dimnames_has_names = (cur_attr_el_val_dimnames_names != R_NilValue);
+                tar_dimnames_attr = ATTRIB(tar_attr_el_val);
+                cur_dimnames_attr = ATTRIB(cur_attr_el_val);
+                tdn_attr_len = 0 - tar_dimnames_has_names;        // counting attr other than `names`
+                cdn_attr_len_final = 0 - cur_dimnames_has_names;  // counting attr other than `names`
+
+                // Check that all `dimnames` attributes other than `names` are
+                // identical; in practice this loop should never have to do anything
+                // but this is here for consistency with other special attr treatment
+
+                for(tdn_attr = tar_dimnames_attr; tdn_attr = CDR(tdn_attr); tdn_attr != R_NilValue) {
+                  const char * tdn_tag = CHAR(PRINTNAME(TAG(tar_attr_el)));
+                  tdn_attr_len++;
+                  cdn_attr_len = 0 - cur_dimnames_has_names;
+                  if(strcmp(tdn_tag, "names") == 0) continue;
+                  for(cdn_attr = cur_dimnames_attr; cdn_attr = CDR(cdn_attr); cdn_attr != R_NilValue) {
+                    if(++cdn_attr_len > cdn_attr_len_final) 
+                      cdn_attr_len_final++;
+                    if(strcmp(tdn_tag, CHAR(PRINTNAME(TAG(cdn_attr)))) == 0){
+                      if(!R_compute_identical(CAR(tdn_attr), CAR(cdn_attr), 16)){
+                        return ALIKEC_sprintf(
+                          "`dimnames` attribute `%s` is not identical in target and current%s%s%s",
+                          tdn_tag, "", "", ""
+                        );
+                      } else continue;
+                  } }
+                  return ALIKEC_sprintf(
+                    "`dimnames` attribute `%s` is missing from current but present in target %s%s%s",
+                    tdn_tag, "", "", ""
+                  );
+                }
+                if(cdn_attr_len_final != tdn_attr_len) {
+                  return ALIKEC_sprintf(
+                    "`dimnames` has a different number of attributes in target and current (%s vs %s)%s%s",
+                    ALIKEC_int_to_char(tdn_attr_len), ALIKEC_int_to_char(cdn_attr_len_final), "", ""
+                  );                  
+                }
+                // Compare actual dimnames attr
 
                 if(
                   (tar_attr_el_val_type = TYPEOF(tar_attr_el_val)) != TYPEOF(tar_attr_el_val) ||
@@ -326,6 +394,8 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                   (tar_attr_el_val_len = xlength(tar_attr_el_val)) != xlength(cur_attr_el_val)
                 ) {
                   return "`dimnames` mismatch or non-list dimnames";
+                // Now look at dimnames names
+
                 } else if (
                   (tar_attr_el_val_dimnames_names = getAttrib(tar_attr_el_val, R_NamesSymbol)) != R_NilValue
                 ) {
@@ -379,12 +449,30 @@ char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mo
                           );
                 } } } } }
               } else {
-                // - Other Attributes --------------------------------------
+                // - Other Attributes ------------------------------------------
 
-                if(!R_compute_identical(CAR(tar_attr_el), CAR(cur_attr_el), 16))
+                R_xlen_t tae_val_len, cae_val_len;
+
+                if(TYPEOF(tar_attr_el_val) != TYPEOF(cur_attr_el_val)) {
                   return ALIKEC_sprintf(
-                    "attribute mismatch for attribute `%s`%s%s%s", tx, "", "", ""
+                    "attribute `%s` is not of same type in current and target%s%s%s", tx, "", "", ""
                   );
+                } else if (
+                  ((tae_val_len = xlength(tar_attr_el_val)) != 0 || attr_mode != 0) &&
+                  !R_compute_identical(tar_attr_el_val, cur_attr_el_val, 16)
+                ) {
+                  return ALIKEC_sprintf(
+                    "attribute value mismatch for attribute `%s` between target and current%s%s%s", tx, "", "", ""
+                  );                  
+                } else if (
+                  attr_mode == 0 && tae_val_len != (R_xlen_t) 0 &&
+                  tae_val_len != (cae_val_len = xlength(cur_attr_el_val))
+                ) {
+                  return ALIKEC_sprintf(
+                    "attribute `%s` is not of the same length in target and current (%s vs %s)%s",
+                    tx, ALIKEC_int_to_char(tae_val_len), ALIKEC_int_to_char(cae_val_len), ""
+                  );
+                }
           } } }
           if(!attr_match) {
             return ALIKEC_sprintf("attribute %s missing from target%s%s%s\n", tx, "", "", "");

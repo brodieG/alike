@@ -4,7 +4,7 @@
 \title{C version of \code{`alike`}}
 \usage{
 alike2(target, current, int_mode = 0L, int_tol = .Machine$double.eps^0.5,
-  class_mode = 0L, attr_mode = 0L)
+  attr_mode = 0L)
 }
 \description{
 C version of \code{`alike`}
@@ -29,5 +29,7 @@ has an attribute with length that isn't special, at which point the attributes
 must be identical (and by extension, must have identical attributes
 themselves).  Attributes that are being treated "specially" or zero length
 attributes don't have their attributes checked.
+
+Special attributes at this point include `dim`, `dimnames`, and `class`.
 }
 
