@@ -47,3 +47,8 @@ int.super.loose = integer like numerics can be integers
 * Make sure our use of `flags` argument to R_compute_identical() is correct
 * Test that our decision to use direct comparison or `rownames` attribute isn't
   a disaster
+* can we track down the really weird error that popped up relating to some part
+  of memory.C running into unknown type ANYSXP that happened right after our
+  changes to have type_alike_internal return character?  After that `unitizer`
+  was totally messed up; clearly something got over-written in memory, but can't
+  replicate error anymore.

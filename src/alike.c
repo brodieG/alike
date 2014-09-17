@@ -15,7 +15,7 @@ SEXP ALIKEC_typeof_fast(SEXP object);
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
 SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
-SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
+const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
 SEXP ALIKEC_test(SEXP obj);
 
@@ -98,7 +98,12 @@ SEXP ALIKEC_test(SEXP obj) {
 |                                                                              |
 \* -------------------------------------------------------------------------- */
 
-SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance) {
+/*
+compare types, accounting for "integer like" numerics; empty string means success,
+otherwise outputs an a character string explaining why the types are not alike
+*/
+
+const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance) {
   SEXPTYPE tar_type, cur_type;
   int res = 0;
   switch(mode) {
@@ -115,19 +120,29 @@ SEXP ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tole
       error("Logic Error: unexpected type comparison mode %d\n", mode);
   }
   if(
-    cur_type == INTSXP && (mode == 0 || mode == 1) && 
-    (tar_type == INTSXP || tar_type == REALSXP)
+    cur_type == INTSXP && mode < 2 && 
+    (tar_type == INTSXP || tar_type == REALSXP) ||
+    cur_type == tar_type
   ) {
-    res = 1;
-  } else {
-    res = cur_type == tar_type;
+    return "";
   }
-  return ScalarLogical(res);
+  const char * what;
+  if(mode == 0 && tar_type == INTSXP) {
+    what = "integer-like";
+  } else if (mode < 2 && tar_type == REALSXP) {
+    what = "numeric";
+  } else {
+    what = type2char(tar_type);
+  }
+  return ALIKEC_sprintf(
+    "expected %s, but got %s%s%s", what, type2char(cur_type), "", ""
+  );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
   SEXPTYPE mod_type, tol_type;
   int mode_val;
   double tol_val;
+  const char * res;
   
   mod_type = ALIKEC_typeof_internal(mode, sqrt(DOUBLE_EPS));
   tol_type = ALIKEC_typeof_internal(tolerance, sqrt(DOUBLE_EPS));
@@ -137,10 +152,22 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
   if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(tolerance) != 1) 
     error("Argument `tolerance` must be a one length numeric vector");
   
-  return ALIKEC_type_alike_internal(target, current, asInteger(mode), asReal(tolerance));
+  res = ALIKEC_type_alike_internal(target, current, asInteger(mode), asReal(tolerance));
+
+  if(strlen(res)) {
+    return(mkString(res));
+  } else {
+    return ScalarLogical(1);
+  }
 }
 SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_type_alike_internal(target, current, 0, sqrt(DOUBLE_EPS));
+  const char * res;
+  res = ALIKEC_type_alike_internal(target, current, 0, sqrt(DOUBLE_EPS));
+  if(strlen(res)) {
+    return(mkString(res));
+  } else {
+    return ScalarLogical(1);
+  }
 }
 
 /* - typeof ----------------------------------------------------------------- */
@@ -581,7 +608,7 @@ SEXP ALIKEC_alike_internal(
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
   int i, k=0;
-  SEXPTYPE cur_type, tar_type;
+  SEXPTYPE cur_type, tar_type, tar_type_raw;
   SEXP sxp_err;
 
   /* Define error message; need to figure out how to move this out of here */
@@ -624,20 +651,17 @@ SEXP ALIKEC_alike_internal(
     
     // - Type ------------------------------------------------------------------
 
-    if(
-      (tar_type = ALIKEC_typeof_internal(target, int_tolerance)) != 
-      (cur_type = ALIKEC_typeof_internal(current, int_tolerance))
-    ) {      
+    if(!ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance)) { 
       err = 1;
       err_base = "Type mismatch, expected %s but got %s";
       err_tok1 = type2char(tar_type);
       err_tok2 = type2char(cur_type);
       err_tok3 = err_tok4 = "";
-
+    } 
     // - Length ----------------------------------------------------------------
 
-    } else if(
-      (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
+    if(
+      !err && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
       tar_len != (cur_len = xlength(current))
     ) {
       err = 1;
@@ -648,7 +672,8 @@ SEXP ALIKEC_alike_internal(
 
     // - Attributes ------------------------------------------------------------
 
-    } else if (
+    } if (
+      !err &&
       strlen(err_base = ALIKEC_compare_attributes_internal(target, current, attr_mode))
     ) {
       err = 1;
