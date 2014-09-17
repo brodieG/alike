@@ -72,6 +72,13 @@ char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, 
   return res;
 }
 
+/* Estimate how many characters an integer can be represented with */
+
+int ALIKEC_int_charlen (int a) {
+  return (int) ceil(log10(a + 1.1));
+}
+
+
 // - Testing Function ----------------------------------------------------------
 
 SEXP ALIKEC_test(SEXP obj) {
@@ -509,12 +516,6 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
 |                                   ALIKE                                      |
 |                                                                              |
 \* -------------------------------------------------------------------------- */
-
-/* Estimate how many characters an integer can be represented with */
-
-int ALIKEC_int_charlen (int a) {
-  return (int) ceil(log10(a + 1.1));
-}
 
 /* Initial benchmarks (before attr checking):
 
