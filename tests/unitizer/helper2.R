@@ -6,6 +6,8 @@ unitizer_sect(".typeof", {
   a[[1]] <- a[[1]] + .0000001
   b[[1]] <- b[[1]] + .00000001
 
+  .typeof2(1 + .Machine$double.eps ^ .5)          # integer, this is the threshold 
+  .typeof2(1 + .Machine$double.eps ^ .5 * 1.0001) # double
   .typeof2(1:100)
   .typeof2(1.1)
   .typeof2(1.0000001)           # double
