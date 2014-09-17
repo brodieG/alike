@@ -502,7 +502,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                 }
           } } }
           if(!attr_match) {
-            return ALIKEC_sprintf("attribute %s missing from current%s%s%s\n", tx, "", "", "");
+            return ALIKEC_sprintf("attribute %s missing from current%s%s%s", tx, "", "", "");
   } } } } }
 
   return "";
