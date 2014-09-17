@@ -26,9 +26,9 @@
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
 
 alike2 <- function(
-  target, current, int_mode=0L, int_tol=.Machine$double.eps ^ 0.5, attr_mode=0L
+  target, current, int.mode=0L, int.tol=.Machine$double.eps ^ 0.5, attr.mode=0L
 ) 
-  .Call(ALIKEC_alike2, target, current, int_mode, int_tol, attr_mode)
+  .Call(ALIKEC_alike2, target, current, int.mode, int.tol, attr.mode)
 
 #' @export
 
@@ -80,8 +80,8 @@ type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps 
 #' @export
 #' @param int_mode 
 
-attr_compare <- function(target, current, attr_mode=0L)
-  .Call(ALIKEC_compare_attributes, target, current, attr_mode)
+attr_compare <- function(target, current, attr.mode=0L)
+  .Call(ALIKEC_compare_attributes, target, current, attr.mode)
 
 #' @export
 
