@@ -1,217 +1,146 @@
 library(alike)
 
-unitizer_sect("alike", {
+alike <- alike2  # over-write alike with the new version so we can just keep the tests for now
+
+unitizer_sect("Atomic", {
+  alike(integer(), 1:3)    # TRUE
+  alike(integer(5L), 1:3)  # FALSE
+  alike(integer(3L), 1:3)  # TRUE
+  alike(integer(), 1:3, int.strict=1L)        # TRUE, b/c `:` coerces to integer
+  alike(integer(), c(1, 2, 3),int.strict=1L)  # FALSE (compare to above)
+  alike(numeric(), c(1, 2, 3))         # TRUE
+  alike(numeric(), 1L)                 # TRUE
+  alike(numeric(), 1L, int.strict=2L)  # FALSE
+  alike(integer(3L), 1:3 + .01)
+  alike(integer(3L), 1:3 + .Machine$double.eps)      # FALSE, integer like Numerics must be under this
+  alike(integer(3L), 1:3 + .Machine$double.eps / 2)  # TRUE
+  alike(integer(4L), letters[1:4])  
+  alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
+} )
+unitizer_sect("lists", {
   lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
   lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
 
-  alike2(lst, lst.2)     # length mismatch
+  alike(lst, lst.2)     # length mismatch
 
   lst.3 <- lst.2
   lst.3[[2]][[2]][[2]][[2]] <- matrix(1:9, nrow=3)
 
-  alike2(lst, lst.3)     # object type mismatch
-  alike2(1:10, "hello")  # object type mismatch, no dive
+  alike(lst, lst.3)     # object type mismatch
+  alike(1:10, "hello")  # object type mismatch, no dive
 
-  alike2(lst, lst)       # obvious match
+  alike(lst, lst)       # obvious match
 
   lst.4 <- lst
   lst.4[[2]][[2]] <- list()
 
-  alike2(lst.4, lst)     # should match
-  alike2(lst, lst.4)     # should not match because template has more detail   
+  alike(lst.4, lst)     # should match
+  alike(lst, lst.4)     # should not match because template has more detail   
 } )
+unitizer_sect("Matrix & Data Frames", {
+  alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
+  alike(matrix(integer(), nrow=3), matrix(1:21, nrow=3))
+  alike(matrix(character(), nrow=3), matrix(1:21, nrow=3))
+  alike(matrix(integer(), nrow=4), matrix(1:21, nrow=3))
+  alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(NULL, c("R", "G", "B"))))
+  alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(c("R", "G", "B"), c("bacon", "turkey", "bravo"))))
+  alike(data.frame(), data.frame(a=1:3, b=letters[1:3]))  # TRUE
+  alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))    # TRUE, note this is recursive
+  alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))     # "has structure mis-match at index [[1]]; item should have class \"factor\""
+  
+  # TRUE, more complex nested structure
 
-unitizer_sect(".typeof", {
-  .Machine$double.eps    # just to record precision these tests were run in
-  a <- b <- 1:100
-  a[[1]] <- a[[1]] + .0000001
-  b[[1]] <- b[[1]] + .00000001
+  alike(
+    list(integer(), data.frame(a=integer(), b=numeric()), matrix(integer(), nrow=3)),
+    list(1:10, data.frame(a=1:200, b=runif(20)), matrix(1:27, nrow=3))
+  )
+} )
+unitizer_sect("Class Matching", {
+  obj2 <- structure(numeric())
+  obj1 <- structure(numeric(), class="hello")
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c(letters[10:12], letters[1:3], letters[8:9]))
+  obj1 <- structure(numeric(), class=letters[1:3])
+  alike(obj1, obj2)
+  alike(obj2, obj1)
+  obj2 <- structure(numeric(), class=c("b", "a", "c"))
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c("a", "b", "x", "c"))
+  alike(obj1, obj2)
+  obj2 <- structure(numeric(), class=c("a", "b", "c"))
+  alike(obj1, obj2)      # TRUE 
+  obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
+  alike(obj1, obj2)      # TRUE
+} )
+unitizer_sect("S4", {
+  setClass("foo", representation(a = "character", b = "numeric"))
+  setClass("bar", representation(d = "numeric", c = "numeric"))
 
-  .typeof2(1:100)
-  .typeof2(1.1)
-  .typeof2(1.0000001)           # double
-  .typeof2(a)                   # double
-  .typeof2(1.00000001)          # integer
-  .typeof2(b)                   # integer
-  .typeof2(1e6 + .1)            # double
-  .typeof2(1e7 + .1)            # integer
-  .typeof2(NA_real_)            # integer
-  .typeof2(Inf)                 # integer
-  .typeof2(-Inf)                # integer
-  .typeof2(list())
-  .typeof2(data.frame(a=1:10))
-  .typeof2(matrix("", 10, 10))
-} )
-unitizer_sect("typeof", {
-  typeof2(1:100)
-  typeof2(1.1)
-  typeof2(1.0000001)           # double
-  typeof2(a)                   # double
-  typeof2(1.00000001)          # integer
-  typeof2(b)                   # integer
-  typeof2(1e6 + .1)            # double
-  typeof2(1e7 + .1)            # integer
-  typeof2(NA_real_)            # integer
-  typeof2(Inf)                 # integer
-  typeof2(-Inf)                # integer
-  typeof2(1e7 + .1, tolerance = .Machine$double.eps ^ .5 / 10) # double
-  typeof2(1e7 + .1, tolerance=1L)       # error, might change in future
-  typeof2(1e7 + .1, tolerance="hello")  # error
-} )
-unitizer_sect(".type_alike", {
-  .type_alike2(1, 1.1)
-  .type_alike2(1, 1.00000001)
-  .type_alike2(list(), integer())
-  .type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
-  .type_alike2(1:100, a)        # FALSE
-  .type_alike2(1:100, b)        # TRUE
-  .type_alike2(1e6, 1e6 + .1)   # FALSE
-  .type_alike2(1e7, 1e7 + .1)   # TRUE
-  .type_alike2(data.frame(a=1:10), list())
-  .type_alike2(NULL, NULL)
-  .type_alike2(1/0, NA)
-} )
-unitizer_sect("type_alike", {
-  type_alike2(1, 1.1)
-  type_alike2(1, 1.00000001)
-  type_alike2(list(), integer())
-  type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
-  type_alike2(1:100, a)        # FALSE
-  type_alike2(1:100, b)        # TRUE
-  type_alike2(1e6, 1e6 + .1)   # FALSE
-  type_alike2(1e7, 1e7 + .1)   # TRUE
-  type_alike2(data.frame(a=1:10), list())
-  type_alike2(NULL, NULL)
-  type_alike2(1/0, NA)
+  x <- new("foo")
+  y <- new("foo")
+  z <- new("bar")
+  w <- structure(list(a=character(), b=numeric()), class="foo")
 
-  type_alike2(1:100, a, tolerance=.Machine$double.eps ^ .5 * 10)  # TRUE
-  type_alike2(a, 1:100, mode=1.0)      # TRUE
-  type_alike2(a, 1:100, mode=1L)       # TRUE
-  type_alike2(1:100, b, mode=1L)       # FALSE
-  type_alike2(a, 1:100, mode=2L)       # FALSE
+  alike(x, y)
+  alike(x, z)
+  alike(x, w)
+  alike(w, x)
 
+  # Include those defined in different environments
+  
+  env <- new.env()
+  setClass("foo", representation(A = "character", B = "numeric"), where=env)
+  u <- new(getClass("foo", where=env))
+  alike(x, u)
+} )
+unitizer_sect("Non-Standard Class", {
+  # Basically ensure that stuff still recurses even if they are lists/calls
+  # but have another class
+   
+  var.1 <- list(1, 2, 3)
+  var.2 <- list("hello", list(1, 2, 3), 5)
+  class(var.1) <- "marbles"
+  class(var.2) <- "marbles"
+  alike(var.1, var.2)        # "mis-match at index [[1]]: should be integer instead of character"
+} )
+# unitizer_sect("Functions", {
+#   alike(sd, median)                     # TRUE
+#   alike(sd, cor)                        # "does not have the expected formals structure"
+# } )  
+# unitizer_sect("Calls / Formulas", {
+#   alike(quote(1 + 1), quote(x + y))
+#   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
+#   alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
 
-  type_alike2(1:100, a, tolerance=1L)       # error
-  type_alike2(1:100, a, tolerance=1:2)      # error
-  type_alike2(1:100, a, tolerance="hello")  # error
-  type_alike2(1:100, a, mode=1.1)           # error
-  type_alike2(1:100, a, mode=1:2)           # error
-} )
-unitizer_sect("compare attributes, default", {
-  attr_compare(1, 1)                                           # TRUE
-  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
-  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), "hello")  # Error
-  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1.1)      # Error
-  attr_compare(matrix(integer(), 4), matrix(integer(), 3, 3))           # Dim 1 error
-  attr_compare(matrix(integer(), ncol=4), matrix(integer(), 3, 3))      # Dim 2 error
-  attr_compare(                                                         # TRUE
-    matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-  )  
-  attr_compare(                                                         # dimnames error
-    matrix(integer(), 3, 3, dimnames=list(NULL, letters[2:4])), 
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-  )  
-  attr_compare(                                                         # dimnames error
-    matrix(integer(), 3, 3, dimnames=list(letters[1:3], letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-  )  
-  attr_compare(                                                         # TRUE
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
-  )  
-  attr_compare(                                                         # dimnames error
-    matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
-  )
-  attr_compare(                                                         # TRUE
-    structure(list(integer(), character())),
-    data.frame(a=1:10, b=letters[1:10])
-  )  
-  attr_compare(                                                         # TRUE
-    structure(list(integer(), character()), class="data.frame"),
-    data.frame(a=1:10, b=letters[1:10])
-  )  
-  attr_compare(                                                         # TRUE
-    structure(unname(data.frame(integer(), character())), class="data.frame"),
-    data.frame(a=1:10, b=letters[1:10])
-  )
-  attr_compare(                                                         # TRUE, zero length attr
-    structure(list(), welp=list()), 
-    structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
-  )
-  attr_compare(                                                         # Attr length mismatch
-    structure(list(), welp=list(NULL)), 
-    structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
-  )
-  attr_compare(                                                         # Missing attr
-    structure(list(), welp=list(), belp=1:3), 
-    structure(list("hello"), welp=list(NULL, 1:3))
-  )
-  attr_compare(                                                         # TRUE
-    structure(list(), class=letters[1:3]), 
-    structure(list("hello"), class=letters[1:3])
-  )
-  attr_compare(                                                         # class mismatch
-    structure(list(), class=letters[1:3]), 
-    structure(list("hello"), class=letters[1:4])
-  )
-  attr_compare(                                                         # TRUE
-    structure(list(), class=letters[2:4]), 
-    structure(list("hello"), class=letters[1:4])
-  )
-} )
-unitizer_sect("compare attributes, strict", {
-  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
-  attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
-  attr_compare(                                                         # dimnames mismatch
-    matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-    attr_mode=1
-  )  
-  attr_compare(                                                         # dimnames mismatch
-    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
-    attr_mode=1
-  )  
-  attr_compare(                                                         # dimnames error
-    matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])), 
-    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
-    attr_mode=1
-  )
-  attr_compare(                                                         # TRUE
-    structure(list(integer(), character())),
-    data.frame(a=1:10, b=letters[1:10]),
-    attr_mode=1
-  )  
-  attr_compare(                                                         # TRUE
-    structure(list(integer(), character()), class="data.frame"),
-    data.frame(a=1:10, b=letters[1:10]),
-    attr_mode=1
-  )  
-  attr_compare(                                                         # Class mismatch
-    structure(list(), class=letters[2:4]), 
-    structure(list("hello"), class=letters[1:4]),
-    attr_mode=1
-  )
-  attr_compare(                                                         # Too many attrs
-    structure(list(integer(), character())),
-    data.frame(a=1:10, b=letters[1:10]),
-    attr_mode=2
-  )  
-  attr_compare(                                                         # Too many attrs
-    structure(list(integer(), character()), class="data.frame"),
-    data.frame(a=1:10, b=letters[1:10]),
-    attr_mode=2
-  )
-  attr_compare(                                                         # Missing attr
-    structure(list(), welp=list(NULL, 1:3), belp=1:3), 
-    structure(list("hello"), welp=list(NULL, 1:3)),
-    attr_mode=2
-  )
-  attr_compare(                                                         # Missing attr, but attr count same
-    structure(list(), welp=list(NULL, 1:3), belp=1:3), 
-    structure(list("hello"), welp=list(NULL, 1:3), kelp=20),  
-    attr_mode=2
-  )
-} )
+#   if(exists("fun")) rm(fun)
+#   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))   # sub-optimal error message, but necessary to handle cases that engage match.call
+#   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1))) # clearer what's going on here
+#   fun <- function(a, b, c) NULL
+#   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))  # Because fun defined, uses match.call() to re-arrange args
+#   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)))
+#   alike(quote(fun(a=1)), quote(fun(b=1)))
+
+#   alike(quote(fun(1, 2)), quote(fun(1)))
+#   alike(quote(fun(1)), quote(fun(1, 2)))
+
+#   alike(quote(fun(1, 2)), quote(fun2(1, 2)))
+#   alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))
+
+#   alike(x ~ y, z ~ w)
+#   alike(x ~ y, z ~ w + 1)
+#   alike(x ~ y + 2, z ~ w + 1)
+#   alike(x ~ y + z:y, w ~ v + u:v)
+#   alike(z ~ w + 1, x ~ y)
+#   alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 2 + l * j + j + w:j)
+#   alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 3 + l * j + j + w:j)
+
+#   exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)")
+#   exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)")
+#   exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)")
+
+#   alike(exp.1, exp.2)
+#   alike(exp.2, exp.3)
+#   alike(exp.3, exp.2)
+# } )
