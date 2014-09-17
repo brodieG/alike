@@ -5,6 +5,8 @@
 # Optimize!!!
 
 * Currently working in C, looks promising.
+* Make sure all the safety / infinite loop stuff and stack re-allocation is implemented
+
 
 ---
 # Random Notes

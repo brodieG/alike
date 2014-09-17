@@ -576,7 +576,7 @@ SEXP ALIKEC_alike_internal(
   int ind_lvl_max = -1;     /* deepest we've gone in current stack */
   int ind_stk_sz = 32;      /* current size of stack */
   int ind_stk[ind_stk_sz];  /* track the stack */
-  int tar_len;
+  int tar_len, cur_len;
   SEXP sxp_stk_tar[ind_stk_sz]; /* track the parent objects */
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
@@ -587,13 +587,8 @@ SEXP ALIKEC_alike_internal(
   /* Define error message; need to figure out how to move this out of here */
 
   const char * err_msgs[2];
-  err_msgs[0] = "Type mismatch, expected %s but got %s";
-  err_msgs[1] = "Length mismatch, expected %s but got %s";
-  int err_type = -1;
-  int err_len = 0;
-  char * err_tar;
-  char * err_cur;
-  const char * attr_err;
+  int err = 0;
+  const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4;
   
   /* Initialize Object Tracking Stack */
 
@@ -633,48 +628,46 @@ SEXP ALIKEC_alike_internal(
       (tar_type = ALIKEC_typeof_internal(target, int_tolerance)) != 
       (cur_type = ALIKEC_typeof_internal(current, int_tolerance))
     ) {      
-      err_type = 0;
-      err_tar = R_alloc(strlen(type2char(tar_type)) + 1, sizeof(char));
-      err_cur = R_alloc(strlen(type2char(cur_type)) + 1, sizeof(char));
-      strcpy(err_tar, type2char(tar_type));
-      strcpy(err_cur, type2char(cur_type));
+      err = 1;
+      err_base = "Type mismatch, expected %s but got %s";
+      err_tok1 = type2char(tar_type);
+      err_tok2 = type2char(cur_type);
+      err_tok3 = err_tok4 = "";
 
     // - Length ----------------------------------------------------------------
 
     } else if(
-      tar_type == VECSXP && (tar_len = length(target)) > 0 &&  /* zero lengths match any length */
-      tar_len != length(current)
+      tar_type == VECSXP && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
+      tar_len != (cur_len = xlength(current))
     ) {
-      err_type = 1;
-      err_tar = R_alloc(ALIKEC_int_charlen(length(target)) + 1, sizeof(char));
-      err_cur = R_alloc(ALIKEC_int_charlen(length(current)) + 1, sizeof(char));
-      sprintf(err_tar, "%d", length(target));
-      sprintf(err_cur, "%d", length(current));      
+      err = 1;
+      err_base =  "Length mismatch, expected %s but got %s";
+      err_tok1 = ALIKEC_int_to_char(tar_len);
+      err_tok2 = ALIKEC_int_to_char(cur_len);
+      err_tok3 = err_tok4 = "";
 
     // - Attributes ------------------------------------------------------------
 
     } else if (
-      strlen(attr_err = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+      strlen(err_base = ALIKEC_compare_attributes_internal(target, current, attr_mode))
     ) {
-
-
+      err = 1;
+      err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
     }
     // - Handle Errors ---------------------------------------------------------
 
-    if(err_type > -1) {
-      err_len = strlen(err_msgs[err_type]) + strlen(err_tar) + strlen(err_cur) - 4; /* -4 because we have 2 %s in the message */
-      char err_base[err_len + 1];
-      sprintf(err_base, err_msgs[err_type], err_tar, err_cur);
-
-      int ind_len = 0;
-      int ind_sz = 0; 
-      int ind_sz_max = 0; 
+    if(err) {
+      const char * err_final, * err_msg;
+      err_msg = ALIKEC_sprintf((char *) err_base, err_tok1, err_tok2, err_tok3, err_tok4);
 
       /*
       Compute the part of the error that gives the index where the discrepancy
       occurred.  Note that last level is meaningless as it has not been dived 
       into yet so we purposefully ignore it with `i < ind_lvl`
       */
+      int ind_len = 0;
+      int ind_sz = 0; 
+      int ind_sz_max = 0; 
 
       for(i = 0; i < ind_lvl; i++) { 
         if((ind_sz = ALIKEC_int_charlen(ind_stk[i])) > ind_sz_max)
@@ -690,16 +683,12 @@ SEXP ALIKEC_alike_internal(
       }
       /* Create final error and store in STRSXP */
 
-      sxp_err = PROTECT(allocVector(STRSXP, 1));
-      char err_final[err_len + strlen(err_chr_indeces) + 10]; 
       if(ind_lvl > 0) {
-        sprintf(err_final, "%s at index %s", err_base, err_chr_indeces);
+        err_final = ALIKEC_sprintf("%s at index %s%s%s", err_msg, err_chr_indeces, "", "");
       } else {
-        sprintf(err_final, "%s", err_base);
+        err_final = ALIKEC_sprintf("%s%s%s%s", err_msg, "", "", "");
       }
-      SET_STRING_ELT(sxp_err, 0, mkChar(err_final));
-      UNPROTECT(1);
-      return sxp_err;
+      return mkString(err_final);;
     }
     // - Get Next Elements -----------------------------------------------------
 
