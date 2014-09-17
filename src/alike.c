@@ -210,7 +210,20 @@ Other notes:
 - dimnames may have at most a names attribute if in special attr mode
 - all other attribute attributes must be identical
 
+lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+mx.1 <- matrix(integer(), 3, 3, dimnames = list(NULL, letters[2:4]))
+mx.2 <- matrix(integer(), 3, 3, dimnames = list(LETTERS[1:3], letters[1:3]))
 
+microbenchmark(
+  attr_compare(lst, lst),   # no attrs
+  attr_compare(mx.2, mx.2), # attrs but no error
+  attr_compare(mx.1, mx.2)  # attrs and error
+)
+Unit: microseconds
+                     expr   min     lq median     uq    max neval
+   attr_compare(lst, lst) 1.278 1.3755 1.4635 1.5510 23.470   100
+ attr_compare(mx.2, mx.2) 1.539 1.6380 1.7905 1.8885  2.426   100
+ attr_compare(mx.1, mx.2) 2.406 2.5380 2.6100 2.7150 13.482   100
 */
 
 const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
@@ -580,6 +593,7 @@ SEXP ALIKEC_alike_internal(
   int err_len = 0;
   char * err_tar;
   char * err_cur;
+  const char * attr_err;
   
   /* Initialize Object Tracking Stack */
 
@@ -638,9 +652,11 @@ SEXP ALIKEC_alike_internal(
       sprintf(err_cur, "%d", length(current));      
 
     // - Attributes ------------------------------------------------------------
-    //
 
-    } else {
+    } else if (
+      strlen(attr_err = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+    ) {
+
 
     }
     // - Handle Errors ---------------------------------------------------------
