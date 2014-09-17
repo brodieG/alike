@@ -209,4 +209,9 @@ unitizer_sect("compare attributes, strict", {
     structure(list("hello"), welp=list(NULL, 1:3)),
     attr_mode=2
   )
+  attr_compare(                                                         # Missing attr, but attr count same
+    structure(list(), welp=list(NULL, 1:3), belp=1:3), 
+    structure(list("hello"), welp=list(NULL, 1:3), kelp=20),  
+    attr_mode=2
+  )
 } )
