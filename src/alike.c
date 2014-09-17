@@ -615,7 +615,8 @@ SEXP ALIKEC_alike_internal(
 
   const char * err_msgs[2];
   int err = 0;
-  const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4;
+  const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4, 
+    * err_type, * err_attr;
   
   /* Initialize Object Tracking Stack */
 
@@ -651,12 +652,13 @@ SEXP ALIKEC_alike_internal(
     
     // - Type ------------------------------------------------------------------
 
-    if(!ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance)) { 
+    if(
+      strlen(err_type = ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance))
+    ) { 
       err = 1;
-      err_base = "Type mismatch, expected %s but got %s";
-      err_tok1 = type2char(tar_type);
-      err_tok2 = type2char(cur_type);
-      err_tok3 = err_tok4 = "";
+      err_base = "Type mismatch, %s";
+      err_tok1 = err_type;
+      err_tok2 = err_tok3 = err_tok4 = "";
     } 
     // - Length ----------------------------------------------------------------
 
@@ -674,9 +676,10 @@ SEXP ALIKEC_alike_internal(
 
     } if (
       !err &&
-      strlen(err_base = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+      strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
     ) {
       err = 1;
+      err_base = err_attr;
       err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
     }
     // - Handle Errors ---------------------------------------------------------
@@ -719,7 +722,7 @@ SEXP ALIKEC_alike_internal(
 
     /* If object list, then dive in */
 
-    if(tar_type == VECSXP) {
+    if((tar_type = TYPEOF(target)) == VECSXP) {
       if(ind_stk[ind_lvl] + 1 > length(target)) { /* no sub-items to check */
         if(ind_lvl <= 0)
           break;
@@ -732,6 +735,7 @@ SEXP ALIKEC_alike_internal(
       } else {
         sxp_stk_tar[ind_lvl] = target;
         sxp_stk_cur[ind_lvl] = current;
+        Rprintf("Woohoo %s %s", type2char(tar_type), type2char(TYPEOF(current))); return R_NilValue;
         target = VECTOR_ELT(target, ind_stk[ind_lvl]);
         current = VECTOR_ELT(current, ind_stk[ind_lvl]);
         ind_lvl++;
