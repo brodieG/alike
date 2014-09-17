@@ -637,7 +637,7 @@ SEXP ALIKEC_alike_internal(
     // - Length ----------------------------------------------------------------
 
     } else if(
-      tar_type == VECSXP && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
+      (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
       tar_len != (cur_len = xlength(current))
     ) {
       err = 1;
