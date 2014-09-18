@@ -29,7 +29,7 @@ R_CallMethodDef callMethods[] = {
   {"type_alike2_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
   {"test", (DL_FUNC) &ALIKEC_test, 1},
-  NULL 
+  {NULL, NULL, 0} 
 };
 
 void R_init_alike(DllInfo *info)
@@ -104,8 +104,13 @@ otherwise outputs an a character string explaining why the types are not alike
 */
 
 const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance) {
-  SEXPTYPE tar_type, cur_type;
-  int res = 0;
+  SEXPTYPE tar_type, cur_type, tar_type_raw, cur_type_raw;
+  tar_type_raw = TYPEOF(target);
+  cur_type_raw = TYPEOF(current);
+  
+  if(tar_type_raw == cur_type_raw)
+    return "";
+  
   switch(mode) {
     case 0:
       tar_type = ALIKEC_typeof_internal(target, tolerance);
@@ -113,16 +118,15 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
       break;
     case 1:
     case 2:
-      tar_type = TYPEOF(target);
-      cur_type = TYPEOF(current);
+      tar_type = tar_type_raw;
+      cur_type = cur_type_raw;
       break;
     default:
       error("Logic Error: unexpected type comparison mode %d\n", mode);
   }
   if(
     cur_type == INTSXP && mode < 2 && 
-    (tar_type == INTSXP || tar_type == REALSXP) ||
-    cur_type == tar_type
+    (tar_type == INTSXP || tar_type == REALSXP)
   ) {
     return "";
   }
@@ -135,13 +139,11 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
     what = type2char(tar_type);
   }
   return ALIKEC_sprintf(
-    "expected %s, but got %s%s%s", what, type2char(cur_type), "", ""
+    "expected \"%s\", but got \"%s\"%s%s", what, type2char(cur_type), "", ""
   );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
   SEXPTYPE mod_type, tol_type;
-  int mode_val;
-  double tol_val;
   const char * res;
   
   mod_type = ALIKEC_typeof_internal(mode, sqrt(DOUBLE_EPS));
@@ -149,7 +151,7 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
   
   if(mod_type != INTSXP || XLENGTH(mode) != 1) 
     error("Argument `mode` must be a one length integer like vector");
-  if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(tolerance) != 1) 
+  if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(tolerance) != 1) 
     error("Argument `tolerance` must be a one length numeric vector");
   
   res = ALIKEC_type_alike_internal(target, current, asInteger(mode), asReal(tolerance));
@@ -173,8 +175,8 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
 /* - typeof ----------------------------------------------------------------- */
 
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance) {
-  int mode_val, obj_len = XLENGTH(object), i, * obj_int, items=0, finite;
-  double * obj_real, int_tol_val, obj_len_x=XLENGTH(object), diff_abs=0, val=0, flr;
+  int obj_len = XLENGTH(object), i, items=0, finite;
+  double * obj_real, diff_abs=0, val=0, flr;
   SEXPTYPE obj_type;
 
   if((obj_type = TYPEOF(object)) == REALSXP) {    
@@ -203,8 +205,6 @@ SEXP return in the internal use case
 */
 
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance) {
-  SEXPTYPE obj_type;
-  SEXP res;
 
   if(TYPEOF(tolerance) != REALSXP || XLENGTH(tolerance) != 1L)
     error("Argument tolerance should be a one length numeric vector");
@@ -288,7 +288,6 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
         // reducing the second loop each time a match is found
 
         for(tar_attr_el = tar_attr; tar_attr_el != R_NilValue; tar_attr_el = CDR(tar_attr_el)) {
-          int k=0;
           const char *tx = CHAR(PRINTNAME(TAG(tar_attr_el)));
           
           attr_match = 0;  // Track whether an attribute was matched or not
@@ -349,7 +348,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                     ) != 0
                   ) {
                     return ALIKEC_sprintf(
-                      "`class` mismatch at class #%s: expected %s but got %s%s",
+                      "`class` mismatch at class #%s: expected \"%s\" but got \"%s\"%s",
                       ALIKEC_int_to_char(cur_class_i + 1),
                       tar_class, cur_class, ""
                     );
@@ -475,7 +474,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                         strcmp(dimnames_name, CHAR(STRING_ELT(cur_attr_el_val_dimnames_names, attr_i))) != 0
                       ) {
                         return ALIKEC_sprintf(
-                          "`dimnames` name mismatch at dimension %s, expected %s but got %s%s",
+                          "`dimnames` name mismatch at dimension %s, expected \"%s\" but got \"%s\"%s",
                           ALIKEC_int_to_char(attr_i + 1), dimnames_name, 
                           CHAR(STRING_ELT(cur_attr_el_val_dimnames_names, attr_i)),
                           ""
@@ -598,7 +597,6 @@ SEXP ALIKEC_alike_internal(
     so maybe that adaptation is not that simple.
   */
  
-  int ind_val = 0;          /* current index value */
   int ind_lvl = 0;          /* how deep in the stack we are */
   int ind_lvl_max = -1;     /* deepest we've gone in current stack */
   int ind_stk_sz = 32;      /* current size of stack */
@@ -607,13 +605,11 @@ SEXP ALIKEC_alike_internal(
   SEXP sxp_stk_tar[ind_stk_sz]; /* track the parent objects */
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
-  int i, k=0;
-  SEXPTYPE cur_type, tar_type, tar_type_raw;
-  SEXP sxp_err;
+  int i;
+  SEXPTYPE tar_type;
 
   /* Define error message; need to figure out how to move this out of here */
 
-  const char * err_msgs[2];
   int err = 0;
   const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4, 
     * err_type, * err_attr;
@@ -686,7 +682,8 @@ SEXP ALIKEC_alike_internal(
 
     if(err) {
       const char * err_final, * err_msg;
-      err_msg = ALIKEC_sprintf((char *) err_base, err_tok1, err_tok2, err_tok3, err_tok4);
+      
+      err_msg = (const char *) ALIKEC_sprintf((char *) err_base, err_tok1, err_tok2, err_tok3, err_tok4);
 
       /*
       Compute the part of the error that gives the index where the discrepancy
@@ -712,11 +709,17 @@ SEXP ALIKEC_alike_internal(
       /* Create final error and store in STRSXP */
 
       if(ind_lvl > 0) {
-        err_final = ALIKEC_sprintf("%s at index %s%s%s", err_msg, err_chr_indeces, "", "");
+        err_final = (const char *) ALIKEC_sprintf("%s at index %s%s%s", err_msg, err_chr_indeces, "", "");
       } else {
-        err_final = ALIKEC_sprintf("%s%s%s%s", err_msg, "", "", "");
+        err_final = (const char *) ALIKEC_sprintf("%s%s%s%s", (char *) err_msg, "", "", "");
       }
-      return mkString(err_final);;
+      SEXP res;
+      res = PROTECT(allocVector(STRSXP, 1));
+      SET_STRING_ELT(res, 0, mkChar(err_final));
+      UNPROTECT(1);
+      return res;  
+
+      //return mkString(err_final);
     }
     // - Get Next Elements -----------------------------------------------------
 
@@ -735,7 +738,6 @@ SEXP ALIKEC_alike_internal(
       } else {
         sxp_stk_tar[ind_lvl] = target;
         sxp_stk_cur[ind_lvl] = current;
-        Rprintf("Woohoo %s %s", type2char(tar_type), type2char(TYPEOF(current))); return R_NilValue;
         target = VECTOR_ELT(target, ind_stk[ind_lvl]);
         current = VECTOR_ELT(current, ind_stk[ind_lvl]);
         ind_lvl++;
@@ -778,7 +780,7 @@ SEXP ALIKEC_alike (
     error("Argument `int_mode` must be a one length integer like vector");
   if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
     error("Argument `attr_mode` must be a one length integer like vector");
-  if(tol_type != INTSXP && tol_type != REALSXP || XLENGTH(int_tolerance) != 1) 
+  if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1) 
     error("Argument `int_tolerance` must be a one length numeric vector");
 
   return 

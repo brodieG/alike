@@ -52,20 +52,3 @@ int.super.loose = integer like numerics can be integers
   changes to have type_alike_internal return character?  After that `unitizer`
   was totally messed up; clearly something got over-written in memory, but can't
   replicate error anymore.
-
-## Nasty memory bug
-
-The following code recreates the crash, when starting from a fresh session:
-
-    library(alike)  # run this first
-    gc()            # then this
-    
-    alike2(numeric(), 1L)                 # then this and the next three in one go
-    alike2(numeric(), 1L, int.mode=2L)
-    alike2(integer(3L), 1:3 + .01)
-    alike2(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2)
-    gc()            # then this causes the crash
-
-Need to get valgrind working on this machine to figure out wtf is going on.
-Problem is likely some interactions between ALIKEC_sprintf and mkChar, etc...
-
