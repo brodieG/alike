@@ -6,14 +6,15 @@ unitizer_sect("Atomic", {
   alike(integer(), 1:3)    # TRUE
   alike(integer(5L), 1:3)  # FALSE
   alike(integer(3L), 1:3)  # TRUE
-  alike(integer(), 1:3, int.strict=1L)        # TRUE, b/c `:` coerces to integer
-  alike(integer(), c(1, 2, 3),int.strict=1L)  # FALSE (compare to above)
+  alike(integer(), 1:3, int.mode=1L)         # TRUE, b/c `:` coerces to integer
+  alike(integer(), c(1, 2, 3), int.mode=1L)  # FALSE (compare to above)
   alike(numeric(), c(1, 2, 3))         # TRUE
   alike(numeric(), 1L)                 # TRUE
-  alike(numeric(), 1L, int.strict=2L)  # FALSE
+  alike(numeric(), 1L, int.mode=2L)    # FALSE
+  alike(numeric(), c(1.1,.053,41.8))   # TRUE
   alike(integer(3L), 1:3 + .01)
-  alike(integer(3L), 1:3 + .Machine$double.eps)      # FALSE, integer like Numerics must be under this
-  alike(integer(3L), 1:3 + .Machine$double.eps / 2)  # TRUE
+  alike(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2) # FALSE, integer like Numerics must be under this
+  alike(integer(3L), 1:3 + .Machine$double.eps ^ .5)     # TRUE
   alike(integer(4L), letters[1:4])  
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
 } )
@@ -47,8 +48,9 @@ unitizer_sect("Matrix & Data Frames", {
   alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(NULL, c("R", "G", "B"))))
   alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(c("R", "G", "B"), c("bacon", "turkey", "bravo"))))
   alike(data.frame(), data.frame(a=1:3, b=letters[1:3]))  # TRUE
-  alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))    # TRUE, note this is recursive
-  alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))     # "has structure mis-match at index [[1]]; item should have class \"factor\""
+  alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))        # TRUE, note this is recursive
+  alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))         # FALSE mis-match at index[[1]]
+  alike(list(NULL, structure("a", class="x")), list(NULL, structure("a", class="y")))  # FALSE mis-match at index[[2]] (class)
   
   # TRUE, more complex nested structure
 
@@ -57,54 +59,54 @@ unitizer_sect("Matrix & Data Frames", {
     list(1:10, data.frame(a=1:200, b=runif(20)), matrix(1:27, nrow=3))
   )
 } )
-unitizer_sect("Class Matching", {
-  obj2 <- structure(numeric())
-  obj1 <- structure(numeric(), class="hello")
-  alike(obj1, obj2)
-  obj2 <- structure(numeric(), class=c(letters[10:12], letters[1:3], letters[8:9]))
-  obj1 <- structure(numeric(), class=letters[1:3])
-  alike(obj1, obj2)
-  alike(obj2, obj1)
-  obj2 <- structure(numeric(), class=c("b", "a", "c"))
-  alike(obj1, obj2)
-  obj2 <- structure(numeric(), class=c("a", "b", "x", "c"))
-  alike(obj1, obj2)
-  obj2 <- structure(numeric(), class=c("a", "b", "c"))
-  alike(obj1, obj2)      # TRUE 
-  obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
-  alike(obj1, obj2)      # TRUE
-} )
-unitizer_sect("S4", {
-  setClass("foo", representation(a = "character", b = "numeric"))
-  setClass("bar", representation(d = "numeric", c = "numeric"))
+# unitizer_sect("Class Matching", {
+#   obj2 <- structure(numeric())
+#   obj1 <- structure(numeric(), class="hello")
+#   alike(obj1, obj2)
+#   obj2 <- structure(numeric(), class=c(letters[10:12], letters[1:3], letters[8:9]))
+#   obj1 <- structure(numeric(), class=letters[1:3])
+#   alike(obj1, obj2)
+#   alike(obj2, obj1)
+#   obj2 <- structure(numeric(), class=c("b", "a", "c"))
+#   alike(obj1, obj2)
+#   obj2 <- structure(numeric(), class=c("a", "b", "x", "c"))
+#   alike(obj1, obj2)
+#   obj2 <- structure(numeric(), class=c("a", "b", "c"))
+#   alike(obj1, obj2)      # TRUE 
+#   obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
+#   alike(obj1, obj2)      # TRUE
+# } )
+# unitizer_sect("S4", {
+#   setClass("foo", representation(a = "character", b = "numeric"))
+#   setClass("bar", representation(d = "numeric", c = "numeric"))
 
-  x <- new("foo")
-  y <- new("foo")
-  z <- new("bar")
-  w <- structure(list(a=character(), b=numeric()), class="foo")
+#   x <- new("foo")
+#   y <- new("foo")
+#   z <- new("bar")
+#   w <- structure(list(a=character(), b=numeric()), class="foo")
 
-  alike(x, y)
-  alike(x, z)
-  alike(x, w)
-  alike(w, x)
+#   alike(x, y)
+#   alike(x, z)
+#   alike(x, w)
+#   alike(w, x)
 
-  # Include those defined in different environments
+#   # Include those defined in different environments
   
-  env <- new.env()
-  setClass("foo", representation(A = "character", B = "numeric"), where=env)
-  u <- new(getClass("foo", where=env))
-  alike(x, u)
-} )
-unitizer_sect("Non-Standard Class", {
-  # Basically ensure that stuff still recurses even if they are lists/calls
-  # but have another class
+#   env <- new.env()
+#   setClass("foo", representation(A = "character", B = "numeric"), where=env)
+#   u <- new(getClass("foo", where=env))
+#   alike(x, u)
+# } )
+# unitizer_sect("Non-Standard Class", {
+#   # Basically ensure that stuff still recurses even if they are lists/calls
+#   # but have another class
    
-  var.1 <- list(1, 2, 3)
-  var.2 <- list("hello", list(1, 2, 3), 5)
-  class(var.1) <- "marbles"
-  class(var.2) <- "marbles"
-  alike(var.1, var.2)        # "mis-match at index [[1]]: should be integer instead of character"
-} )
+#   var.1 <- list(1, 2, 3)
+#   var.2 <- list("hello", list(1, 2, 3), 5)
+#   class(var.1) <- "marbles"
+#   class(var.2) <- "marbles"
+#   alike(var.1, var.2)        # "mis-match at index [[1]]: should be integer instead of character"
+# } )
 # unitizer_sect("Functions", {
 #   alike(sd, median)                     # TRUE
 #   alike(sd, cor)                        # "does not have the expected formals structure"
