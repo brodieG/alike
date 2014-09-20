@@ -28,7 +28,7 @@
 alike2 <- function(
   target, current, int.mode=0L, int.tol=.Machine$double.eps ^ 0.5, attr.mode=0L
 ) 
-  .Call(ALIKEC_alike2, target, current, int.mode, int.tol, attr.mode)
+  .Call(ALIKEC_alike2, target, current, int.mode, int.tol, attr.mode, parent.frame())
 
 #' @export
 
@@ -85,4 +85,4 @@ attr_compare <- function(target, current, attr.mode=0L)
 
 #' @export
 
-alike_test <- function(x) .Call(ALIKEC_test, x)
+alike_test <- function(obj1, obj2) .Call(ALIKEC_test, obj1, obj2, parent.frame())

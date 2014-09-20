@@ -8,7 +8,7 @@
 |                                                                              |
 \* -------------------------------------------------------------------------- */
 
-SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode);
+SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode, SEXP rho);
 SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
@@ -17,18 +17,18 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
 const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
-SEXP ALIKEC_test(SEXP obj);
+SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP env);
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike2", (DL_FUNC) &ALIKEC_alike, 5},
+  {"alike2", (DL_FUNC) &ALIKEC_alike, 6},
   {"alike2_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
   {"type_alike2", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"type_alike2_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
-  {"test", (DL_FUNC) &ALIKEC_test, 1},
+  {"test", (DL_FUNC) &ALIKEC_test, 3},
   {NULL, NULL, 0} 
 };
 
@@ -81,16 +81,24 @@ int ALIKEC_int_charlen (int a) {
 
 // - Testing Function ----------------------------------------------------------
 
-SEXP ALIKEC_test(SEXP obj) {
-  SEXP attr, attr_el;
+SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP rho) {
 
-  return getAttrib(obj, R_NamesSymbol);
+  return mkString(ALIKEC_sprintf("hello %s", "", "", "", ""));
 
-  for(attr_el = attr; attr_el != R_NilValue; attr_el = CDR(attr_el)) {
-    const char *tx = CHAR(PRINTNAME(TAG(attr_el)));
-    Rprintf("Attrib %s\n", tx);
-  }
-  Rprintf("");
+  // klass = getAttrib(obj1, R_ClassSymbol);
+
+  // t = s = PROTECT(allocList(3));
+  // SET_TYPEOF(s, LANGSXP);
+  // SETCAR(t, install("inherits")); t = CDR(t);
+  // SETCAR(t,  obj2); t = CDR(t);
+  // SETCAR(t, klass);
+  // UNPROTECT(1);
+  // return eval(s, rho);
+  // CHAR(asChar(klass))
+  // // UNPROTECT(1);
+
+  // Rprintf("class: %s\n", CHAR(asChar(klass)));
+  // return ScalarLogical(inherits(obj2, CHAR(asChar(klass))));
 }
 /* -------------------------------------------------------------------------- *\
 |                                                                              |
@@ -139,7 +147,7 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
     what = type2char(tar_type);
   }
   return ALIKEC_sprintf(
-    "expected \"%s\", but got \"%s\"%s%s", what, type2char(cur_type), "", ""
+    "expected \"%s\", but got \"%s\"", what, type2char(cur_type), "", ""
   );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
@@ -259,6 +267,27 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
   SEXPTYPE tar_attr_el_val_type;
   R_xlen_t cur_attr_len, tar_attr_len, tar_attr_el_val_len;
   int attr_i, tar_dim_val, attr_match;
+  
+  // if(isS4(target)) {
+  //   SEXP klass, R_TRUE;
+  //   if(!isS4(target))
+  //     return "target is S4 but current isn't";
+  //   klass = getAttrib(target, R_ClassSymbol);
+  //   if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP)
+  //     error("`class` attribute for target does not appear to be a valid S4 class (not 1 length character)");
+  
+  //   R_TRUE = PROTECT(ScalarLogical(1));
+  //   if(!asLogical(inherits3(current, klass, R_TRUE))) {
+  //     UNPROTECT(1);
+  //     return ALIKEC_sprintf(
+  //       "current does not contain S4 class \"%s\"%s%s%s",
+  //       CHAR(asChar(klass)), "", "", ""
+  //     )
+  //   }
+  //   UNPROTECT(1);
+  // }
+  // Note we don't protect these because target and curent should come in 
+  // protected so every SEXP under them should also be protected
   
   tar_attr = ATTRIB(target);
   cur_attr = ATTRIB(current);
@@ -556,28 +585,9 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
 |                                                                              |
 \* -------------------------------------------------------------------------- */
 
-/* Initial benchmarks (before attr checking):
-
-> microbenchmark(alike2(lst, lst.2), alike(lst, lst.2), .alike2(lst, lst.2))
-
-> lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
-> lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
-
-Unit: microseconds
-                expr      min        lq    median       uq      max neval
-  alike2(lst, lst.2)    5.644    6.7105    8.4745   11.085   19.995   100
-   alike(lst, lst.2) 1106.624 1120.6535 1133.5815 1159.470 2245.159   100
- .alike2(lst, lst.2)    4.012    4.5560    5.4650    7.905   66.953   100
-> microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst))
-Unit: microseconds
-              expr      min        lq    median        uq      max neval
-  alike2(lst, lst)    3.850    4.7085    6.7295    9.8175   22.973   100
-   alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
- .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
-*/
-
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode
+  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
+  SEXP rho
 ) {
 
   /* General algorithm here is to:
@@ -645,38 +655,101 @@ SEXP ALIKEC_alike_internal(
     err_msgs is a constant array with all the error messages, indexed by 
     `err_type`
     */
-    
+
+    // - S4 --------------------------------------------------------------------
+
+    // Don't run custom checks for S4 objects, just use inherits
+
+    int s4_cur, s4_tar;
+    s4_tar = ((IS_S4_OBJECT)(target) != 0);
+    s4_cur = ((IS_S4_OBJECT)(current) != 0);
+    if(!err && (s4_cur || s4_tar)) {
+      if(s4_tar + s4_cur == 1) {
+        err = 1;
+        err_base = "target %s S4 but current %s";
+        err_tok1 = (s4_tar ? "is" : "isn't");
+        err_tok2 = (s4_cur ? "is" : "isn't");
+        err_tok3 = err_tok4 = "";
+      } else {
+        // Here we pull the class symbol, install "inherits" from R proper, and
+        // evaluate it in provided environment
+
+        SEXP klass, klass_attrib;
+        SEXP s, t;
+
+        klass = getAttrib(target, R_ClassSymbol);
+        if(xlength(klass) != 1L || TYPEOF(klass) != STRSXP)
+          error("Logic Error: unexpected S4 class \"class\" attribute of length != 1 or type not character vector; contact package maintainer");
+        klass_attrib = getAttrib(klass, install("package"));
+        if(xlength(klass_attrib) != 1L || TYPEOF(klass_attrib) != STRSXP)
+          error("Logic Error: unexpected S4 class \"class\" attribute does not have `package` attribute in expected structure");
+
+        t = s = PROTECT(allocList(3));
+        SET_TYPEOF(s, LANGSXP);
+        SETCAR(t, install("inherits")); t = CDR(t);
+        SETCAR(t, current); t = CDR(t);
+        SETCAR(t, klass);
+        UNPROTECT(1);
+        if(!asLogical(eval(s, rho))) {
+          err = 1;
+          err_base = "current does not contain class \"%s\" (package: %s)";
+          err_tok1 = CHAR(asChar(klass));
+          err_tok2 = CHAR(asChar(klass_attrib));
+          err_tok3 = err_tok4 = "";        
+      } }
+    } else { // don't run length or attribute checks on S4
+
     // - Type ------------------------------------------------------------------
 
-    if(
-      strlen(err_type = ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance))
-    ) { 
-      err = 1;
-      err_base = "Type mismatch, %s";
-      err_tok1 = err_type;
-      err_tok2 = err_tok3 = err_tok4 = "";
-    } 
+      if(
+        strlen(err_type = ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance))
+      ) { 
+        err = 1;
+        err_base = "Type mismatch, %s";
+        err_tok1 = err_type;
+        err_tok2 = err_tok3 = err_tok4 = "";
+      } 
+
     // - Length ----------------------------------------------------------------
 
-    if(
-      !err && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
-      tar_len != (cur_len = xlength(current))
-    ) {
-      err = 1;
-      err_base =  "Length mismatch, expected %s but got %s";
-      err_tok1 = ALIKEC_int_to_char(tar_len);
-      err_tok2 = ALIKEC_int_to_char(cur_len);
-      err_tok3 = err_tok4 = "";
-
+      if(
+        !err && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
+        tar_len != (cur_len = xlength(current))
+      ) {
+        err = 1;
+        err_base =  "Length mismatch, expected %s but got %s%s%s";
+        err_tok1 = ALIKEC_int_to_char(tar_len);
+        err_tok2 = ALIKEC_int_to_char(cur_len);
+        err_tok3 = err_tok4 = "";
+      } 
     // - Attributes ------------------------------------------------------------
 
-    } if (
-      !err &&
-      strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
-    ) {
-      err = 1;
-      err_base = err_attr;
-      err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
+      if (
+        !err &&
+        strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+      ) {
+        err = 1;
+        err_base = err_attr;
+        err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
+    } }
+    // - Known Limitations -----------------------------------------------------
+
+    tar_type = TYPEOF(target);
+    switch(tar_type) {
+      case NILSXP:
+      case LGLSXP:
+      case INTSXP:
+      case REALSXP:
+      case CPLXSXP:
+      case STRSXP:
+      case VECSXP:
+      case S4SXP:
+        break;
+      default:
+          warning(
+            "`alike` behavior for objects of type \"%s\" is not well defined and may change in the future",
+            type2char(tar_type)
+          );
     }
     // - Handle Errors ---------------------------------------------------------
 
@@ -725,7 +798,7 @@ SEXP ALIKEC_alike_internal(
 
     /* If object list, then dive in */
 
-    if((tar_type = TYPEOF(target)) == VECSXP) {
+    if(tar_type == VECSXP) {
       if(ind_stk[ind_lvl] + 1 > length(target)) { /* no sub-items to check */
         if(ind_lvl <= 0)
           break;
@@ -760,15 +833,19 @@ SEXP ALIKEC_alike_internal(
   return res;  
 }
 /* "fast" version doesn't allow messing with optional parameters to avoid arg
-evaluations in R */
+evaluations in R; note that S4 tests will be done by evaluating `inherits` in
+R_GlobalEnv, which should be fine since all the other arguments to `alike` have
+already been evaluated, but the standard `alike` function evaluates it in the
+calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0);
+  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0, R_GlobalEnv);
 }
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode 
+  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode,
+  SEXP rho 
 ) {
   SEXPTYPE int_mod_type, tol_type, attr_mod_type;
   
@@ -785,6 +862,7 @@ SEXP ALIKEC_alike (
 
   return 
     ALIKEC_alike_internal(
-      target, current, asInteger(int_mode), asReal(int_tolerance), asInteger(attr_mode)
+      target, current, asInteger(int_mode), asReal(int_tolerance), 
+      asInteger(attr_mode), rho
     );
 }
