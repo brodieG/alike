@@ -1,5 +1,7 @@
 # C Benchmarking
 
+## Assessing General Overhead
+
 microbenchmark(typeof(5.1), typeof2(5.1), type_of(5.1))
 Unit: nanoseconds
          expr  min   lq median     uq    max neval
@@ -56,3 +58,75 @@ typealike:
 
 - base version with no adjustments for speed, default mode (0), and tolerance
 - alternate with both tolerance and mode
+
+## Alike
+
+Initial benchmarks (before attr checking):
+
+  lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+  lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
+
+  microbenchmark(alike2(lst, lst.2), alike(lst, lst.2), .alike2(lst, lst.2))
+
+  Unit: microseconds
+                  expr      min        lq    median       uq      max neval
+    alike2(lst, lst.2)    5.644    6.7105    8.4745   11.085   19.995   100
+     alike(lst, lst.2) 1106.624 1120.6535 1133.5815 1159.470 2245.159   100
+   .alike2(lst, lst.2)    4.012    4.5560    5.4650    7.905   66.953   100
+
+  > microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst))
+  Unit: microseconds
+                expr      min        lq    median        uq      max neval
+    alike2(lst, lst)    3.850    4.7085    6.7295    9.8175   22.973   100
+     alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
+   .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
+
+After adding S4 checks (and also upgrading to OSX 10.9 and R 3.1.1: 
+
+    setClass("z", contains="x", list(b="integer"))
+    setClass("x", list(a="integer"))
+    y <- new("x")
+    w <- new("z")
+    
+    microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst), .alike2(y, w))
+
+    Unit: microseconds
+                  expr      min       lq    median        uq      max neval
+      alike2(lst, lst)    3.925    4.693    6.9255    9.0355   18.768   100
+       alike(lst, lst) 2326.880 2365.172 2395.5355 2417.4255 3800.582   100
+     .alike2(lst, lst)    1.961    2.272    2.5050    3.1080   20.000   100
+         .alike2(y, w)    1.934    2.796    3.3625    6.5495   13.822   100
+
+And some that cause errors:
+
+    microbenchmark(.alike2(lst, lst.2), .alike2(w, y))
+    Unit: microseconds
+                    expr   min     lq median     uq    max neval
+     .alike2(lst, lst.2) 3.662 3.7625 3.8665 4.0015 19.204   100
+           .alike2(w, y) 2.944 3.2205 3.3315 3.5265 37.653   100
+
+## Stack Manipulation
+
+The is the baseline:
+
+    microbenchmark(alike_test(x, w))
+    Unit: nanoseconds
+                 expr min  lq median   uq   max neval
+     alike_test(x, w) 832 888 1050.5 1212 17721   100
+
+Now let's add a call to `parent.frame` in the R function to pass through `.Call`.
+
+    microbenchmark(alike_test(x, w))
+    Unit: microseconds
+                 expr   min     lq median     uq     max neval
+     alike_test(x, w) 1.114 1.2005  1.311 1.5275 163.422   100
+
+And add a `substitute`:
+
+    microbenchmark(alike_test(x, w))
+    Unit: microseconds
+                 expr   min    lq median    uq     max neval
+     alike_test(x, w) 1.435 1.586  1.672 1.879 160.893   100
+
+At this point we've replicated a promise of sorts, by capturing the expression,
+as well as the evaluation environment, but we've add 600ns in evaluation time.
