@@ -1,6 +1,7 @@
 library(alike)
 
 alike <- alike2  # over-write alike with the new version so we can just keep the tests for now
+.alike <- .alike2
 
 unitizer_sect("Atomic", {
   alike(integer(), 1:3)    # TRUE
@@ -108,6 +109,17 @@ unitizer_sect("S4", {
   v2 <- v
   class(v2) <- c("baz", "foo")
   alike(x, v2)
+
+  # Stress test installation of `inherits`; right now the inherits command is
+  # evaluated in the base environment, which seems to work since the arguments
+  # are already evaluated, but it suggests `inherits` can look up S4 definitions
+  # irrespective of where they are defined...
+
+  inherits <- function(x, y) stop("pwned!!!")
+  alike(y, v)  # TRUE
+  .alike(y, v) # TRUE
+
+
 } )
 unitizer_sect("Non-Standard Class", {
   # Basically ensure that stuff still recurses even if they are lists/calls
