@@ -8,7 +8,7 @@
 |                                                                              |
 \* -------------------------------------------------------------------------- */
 
-SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode, SEXP rho);
+SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode);
 SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
@@ -21,7 +21,7 @@ SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP env);
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike2", (DL_FUNC) &ALIKEC_alike, 6},
+  {"alike2", (DL_FUNC) &ALIKEC_alike, 5},
   {"alike2_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
@@ -268,24 +268,6 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
   R_xlen_t cur_attr_len, tar_attr_len, tar_attr_el_val_len;
   int attr_i, tar_dim_val, attr_match;
   
-  // if(isS4(target)) {
-  //   SEXP klass, R_TRUE;
-  //   if(!isS4(target))
-  //     return "target is S4 but current isn't";
-  //   klass = getAttrib(target, R_ClassSymbol);
-  //   if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP)
-  //     error("`class` attribute for target does not appear to be a valid S4 class (not 1 length character)");
-  
-  //   R_TRUE = PROTECT(ScalarLogical(1));
-  //   if(!asLogical(inherits3(current, klass, R_TRUE))) {
-  //     UNPROTECT(1);
-  //     return ALIKEC_sprintf(
-  //       "current does not contain S4 class \"%s\"%s%s%s",
-  //       CHAR(asChar(klass)), "", "", ""
-  //     )
-  //   }
-  //   UNPROTECT(1);
-  // }
   // Note we don't protect these because target and curent should come in 
   // protected so every SEXP under them should also be protected
   
@@ -298,8 +280,11 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
   ) {
     if(attr_mode == 2 && tar_attr == R_NilValue && cur_attr != R_NilValue)
       return "current must have the exact same attributes target has, with none extra or missing";
+    if(tar_attr != R_NilValue && cur_attr == R_NilValue) {
+      return "target has attributes but current does not";
+    }
     // There must be attributes on both target and current
-    if(TYPEOF(tar_attr) != LISTSXP || TYPEOF(tar_attr) != LISTSXP) {
+    if((TYPEOF(tar_attr) != LISTSXP) || (TYPEOF(cur_attr) != LISTSXP)) {
       warning("ignoring non-pairlist attributes");
     } else {
       tar_attr_len = xlength(tar_attr);
@@ -534,11 +519,25 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                 // - Other Attributes ------------------------------------------
 
                 R_xlen_t tae_val_len, cae_val_len;
+                SEXPTYPE tae_type, cae_type;
 
-                if(TYPEOF(tar_attr_el_val) != TYPEOF(cur_attr_el_val)) {
+                if((tae_type = TYPEOF(tar_attr_el_val)) != (cae_type = TYPEOF(cur_attr_el_val))) {
                   return ALIKEC_sprintf(
                     "attribute `%s` is not of same type in current and target%s%s%s", tx, "", "", ""
                   );
+                } else if (
+                  tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
+                  tae_type == BCODESXP || tae_type == ENVSXP
+                ) {
+                  // Because these attributes are references to other objects that
+                  // we cannot directly compare, and could for all intents and 
+                  // purposes be "identical" in the typical R sense (i.e. not 
+                  // pointing to exact same memory location, but otherwise the 
+                  // same, we consider the fact that they are of the same type
+                  // a match for alike purposes).  This is a bit of a cop out,
+                  // but the situations where these attributes alone would cause
+                  // a mismatch seem pretty rare
+                  return "";
                 } else if (
                   ((tae_val_len = xlength(tar_attr_el_val)) != 0 || attr_mode != 0) &&
                   !R_compute_identical(tar_attr_el_val, cur_attr_el_val, 16)
@@ -586,8 +585,7 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
 \* -------------------------------------------------------------------------- */
 
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
-  SEXP rho
+  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode
 ) {
 
   /* General algorithm here is to:
@@ -672,7 +670,8 @@ SEXP ALIKEC_alike_internal(
         err_tok3 = err_tok4 = "";
       } else {
         // Here we pull the class symbol, install "inherits" from R proper, and
-        // evaluate it in provided environment
+        // evaluate it in the base environment to avoid conflicts with other
+        // symbols
 
         SEXP klass, klass_attrib;
         SEXP s, t;
@@ -689,14 +688,15 @@ SEXP ALIKEC_alike_internal(
         SETCAR(t, install("inherits")); t = CDR(t);
         SETCAR(t, current); t = CDR(t);
         SETCAR(t, klass);
-        UNPROTECT(1);
-        if(!asLogical(eval(s, rho))) {
+        if(!asLogical(eval(s, R_BaseEnv))) {
           err = 1;
           err_base = "current does not contain class \"%s\" (package: %s)";
           err_tok1 = CHAR(asChar(klass));
           err_tok2 = CHAR(asChar(klass_attrib));
           err_tok3 = err_tok4 = "";        
-      } }
+        }
+        UNPROTECT(1);
+      }
     } else { // don't run length or attribute checks on S4
 
     // - Type ------------------------------------------------------------------
@@ -839,13 +839,12 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0, R_GlobalEnv);
+  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0);
 }
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode,
-  SEXP rho 
+  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode
 ) {
   SEXPTYPE int_mod_type, tol_type, attr_mod_type;
   
@@ -863,6 +862,6 @@ SEXP ALIKEC_alike (
   return 
     ALIKEC_alike_internal(
       target, current, asInteger(int_mode), asReal(int_tolerance), 
-      asInteger(attr_mode), rho
+      asInteger(attr_mode)
     );
 }
