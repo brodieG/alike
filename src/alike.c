@@ -526,8 +526,10 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                     "attribute `%s` is not of same type in current and target%s%s%s", tx, "", "", ""
                   );
                 } else if (
-                  tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
-                  tae_type == BCODESXP || tae_type == ENVSXP
+                  attr_mode == 0 && (
+                    tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
+                    tae_type == BCODESXP || tae_type == ENVSXP
+                  )
                 ) {
                   // Because these attributes are references to other objects that
                   // we cannot directly compare, and could for all intents and 
