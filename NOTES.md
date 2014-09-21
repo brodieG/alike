@@ -83,8 +83,8 @@ Initial benchmarks (before attr checking):
 
 After adding S4 checks (and also upgrading to OSX 10.9 and R 3.1.1: 
 
-    setClass("z", contains="x", list(b="integer"))
     setClass("x", list(a="integer"))
+    setClass("z", contains="x", list(b="integer"))
     y <- new("x")
     w <- new("z")
     
