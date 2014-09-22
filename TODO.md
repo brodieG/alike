@@ -47,8 +47,10 @@ int.super.loose = integer like numerics can be integers
 * Make sure our use of `flags` argument to R_compute_identical() is correct
 * Test that our decision to use direct comparison or `rownames` attribute isn't
   a disaster
-* can we track down the really weird error that popped up relating to some part
-  of memory.C running into unknown type ANYSXP that happened right after our
-  changes to have type_alike_internal return character?  After that `unitizer`
-  was totally messed up; clearly something got over-written in memory, but can't
-  replicate error anymore.
+* should we disable the zero length matches any length for the stricter modes?
+  does this mean we need another len_mode argument?  would rather avoid more
+  args.  A more complex mode argument?
+* should names be allowable as a partially specified attribute?  If yes, what
+  about row names?  The answer is probably yes, as this would then align with
+  `dimnames`, which would make sense.
+* add tests for reference classes

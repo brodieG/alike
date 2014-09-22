@@ -25,14 +25,14 @@
 #' @export
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
 
-alike2 <- function(
+alike <- function(
   target, current, int.mode=0L, int.tol=.Machine$double.eps ^ 0.5, attr.mode=0L
 ) 
-  .Call(ALIKEC_alike2, target, current, int.mode, int.tol, attr.mode)
+  .Call(ALIKEC_alike, target, current, int.mode, int.tol, attr.mode)
 
 #' @export
 
-.alike2 <- function(target, current) .Call(ALIKEC_alike2_fast, target, current)
+.alike <- function(target, current) .Call(ALIKEC_alike_fast, target, current)
 
 #' C version of \code{`type_of`}
 #' 
@@ -45,13 +45,13 @@ alike2 <- function(
 #' @param tolerance similar to the \code{`\link{all.equal}`} \code{`tolerance`} argument
 #' @export
 
-typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5)
-  .Call(ALIKEC_typeof2, object, tolerance)
+type_of <- function(object, tolerance=.Machine$double.eps ^ 0.5)
+  .Call(ALIKEC_typeof, object, tolerance)
 
 
 #' @export
 
-.typeof2 <- function(object) .Call(ALIKEC_typeof2_fast, object)
+.type_of <- function(object) .Call(ALIKEC_typeof2_fast, object)
 
 #' C version of \code{`type_alike`}
 #' 
@@ -63,13 +63,13 @@ typeof2 <- function(object, tolerance=.Machine$double.eps ^ 0.5)
 #' @param tolerance similar to the \code{`\link{all.equal}`} \code{`tolerance`} argument
 #' @export
 
-type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps ^ 0.5)
-  .Call(ALIKEC_type_alike2, target, current, mode, tolerance)
+type_alike <- function(target, current, mode=0L, tolerance=.Machine$double.eps ^ 0.5)
+  .Call(ALIKEC_type_alike, target, current, mode, tolerance)
 
 #' @export
 
-.type_alike2 <- function(target, current)
-  .Call(ALIKEC_type_alike2_fast, target, current)
+.type_alike <- function(target, current)
+  .Call(ALIKEC_type_alike_fast, target, current)
 
 #' Compare Attributes
 #' 
@@ -77,12 +77,14 @@ type_alike2 <- function(target, current, mode=0L, tolerance=.Machine$double.eps 
 #' primarily for unit testing purposes
 #' 
 #' @seealso type_alike
-#' @export
+#' @keywords internal
 #' @param int_mode 
 
 attr_compare <- function(target, current, attr.mode=0L)
   .Call(ALIKEC_compare_attributes, target, current, attr.mode)
 
-#' @export
+#' Used for testing C code
+#' 
+#' @keywords internal
 
 alike_test <- function(obj1, obj2) .Call(ALIKEC_test, obj1, obj2, parent.frame())
