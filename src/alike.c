@@ -21,12 +21,12 @@ SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP env);
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike2", (DL_FUNC) &ALIKEC_alike, 5},
-  {"alike2_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
-  {"typeof2", (DL_FUNC) &ALIKEC_typeof, 2},
-  {"typeof2_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
-  {"type_alike2", (DL_FUNC) &ALIKEC_type_alike, 4},
-  {"type_alike2_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
+  {"alike", (DL_FUNC) &ALIKEC_alike, 5},
+  {"alike_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
+  {"typeof", (DL_FUNC) &ALIKEC_typeof, 2},
+  {"typeof_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
+  {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
+  {"type_alike_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
   {"test", (DL_FUNC) &ALIKEC_test, 3},
   {NULL, NULL, 0} 
@@ -477,8 +477,8 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                     (tar_attr_el_val_dimnames_names_len = XLENGTH(tar_attr_el_val_dimnames_names))
                   ) {
                     return ALIKEC_sprintf(
-                      "`dimnames` mismatch, `target` dimnames does not have expected length %d%s%s%s",
-                      ALIKEC_int_to_char(XLENGTH(cur_attr_el_val_dimnames_names)), "", "", ""
+                      "`dimnames` mismatch, `current` dimnames _names_ are not of expected length %s",
+                      ALIKEC_int_to_char(XLENGTH(tar_attr_el_val_dimnames_names)), "", "", ""
                     );
                   } else {
                     for(attr_i = 0; attr_i < tar_attr_el_val_dimnames_names_len; attr_i++) {
