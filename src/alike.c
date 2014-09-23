@@ -260,7 +260,7 @@ const char * ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
     );        
   } else if (tar_type == INTSXP && !R_compute_identical(target, current, 16)) {
     return "`target` and `current` are integer and not identical";
-  } else if (tar_type == STRSXP && cur_type == STRSXP) {
+  } else if (tar_type == STRSXP) {
     if((cur_len = XLENGTH(current)) != (tar_len = XLENGTH(target))) {
       return ALIKEC_sprintf(
         "length mismatch between `target` and `current` (%s vs %s)",
@@ -279,6 +279,11 @@ const char * ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
         );
     } }
     return "";    
+  } else if (tar_type != STRSXP || tar_type != INTSXP) {
+    return ALIKEC_sprintf(
+      "unexpected attribute type %s; if you are using custom attributes consider setting `attr_mode=1`",
+      type2char(tar_type), "", "", ""
+    );        
   }
   error("Logic Error in compare_special_char_attrs; contact maintainer");
 }
