@@ -56,7 +56,7 @@ unitizer_sect("Matrix & Data Frames", {
     list(integer(), data.frame(a=integer(), b=numeric()), matrix(integer(), nrow=3)),
     list(1:10, data.frame(a=1:200, b=runif(20)), matrix(1:27, nrow=3))
   )
-  # More dimnames tests
+  # Adding tests from docs
 
   mx.tpl <- matrix(integer(), ncol=3, dimnames=list(row.id=NULL, c("R", "G", "B")))
   mx.cur <- matrix(sample(0:255, 12), ncol=3, dimnames=list(row.id=1:4, rgb=c("R", "G", "B")))
