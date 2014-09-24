@@ -64,6 +64,24 @@ unitizer_sect("Matrix & Data Frames", {
 
   alike(mx.tpl, mx.cur)
   alike(mx.tpl, mx.cur2)
+
+  # row.names / names (note use `structure` to get around `data.frame` checks)
+
+  df.tpl <- structure(list(1:4, factor(LETTERS[1:4], levels=LETTERS)), row.names=c("one", "", "", ""), names=c("id", ""), class="data.frame")
+  df.cur <- `row.names<-`(data.frame(id=5:8, val=factor(LETTERS[21:24], levels=LETTERS)), c("one", "two", "tre", "qtr"))
+  df.cur2 <- `row.names<-`(data.frame(id=5:8, val=factor(LETTERS[21:24], levels=LETTERS)), c("uno", "due", "tre", "qtr"))
+
+  alike(df.tpl, df.cur)   # TRUE
+  alike(df.cur, df.tpl)   # Nope, names won't match reversed
+  alike(df.tpl, df.cur2)  # Nope, row.names won't match
+
+  # NA names
+
+  df.tpl <- structure(list(1:4, letters[1:4]), names=c("id", NA), class="data.frame")
+  df.cur <- structure(list(1:4, letters[1:4]), names=c("id", "val"), class="data.frame")
+
+  alike(df.tpl, df.tpl)
+  alike(df.tpl, df.cur)
 } )
 unitizer_sect("Class Matching", {
   obj2 <- structure(numeric())

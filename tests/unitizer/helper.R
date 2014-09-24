@@ -1,5 +1,14 @@
 library(alike)
 
+# Redefine names; necessary because we renamed functions when moving to C versions
+
+.typeof2 <- .type_of
+typeof2 <- type_of
+.type_alike2 <- .type_alike
+type_alike2 <- type_alike
+attr_compare <- alike:::attr_compare
+name_compare <- alike:::name_compare
+
 unitizer_sect(".typeof", {
   .Machine$double.eps    # just to record precision these tests were run in
   a <- b <- 1:100
@@ -197,4 +206,11 @@ unitizer_sect("compare attributes, strict", {
     structure(list("hello"), welp=list(NULL, 1:3), kelp=20),  
     attr.mode=2
   )
+} )
+unitizer_sect("Name like attributes", {
+  name_compare(c("", "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c("abc", "hello"))
+  name_compare(c(NA_character_, "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c(NA_character_, "hello"))
+  name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
 } )
