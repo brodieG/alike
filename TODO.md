@@ -53,4 +53,8 @@ int.super.loose = integer like numerics can be integers
 * should names be allowable as a partially specified attribute?  If yes, what
   about row names?  The answer is probably yes, as this would then align with
   `dimnames`, which would make sense.
-* add tests for reference classes
+* trying to treat R_xlen_t as it's own type, but we're doing arithmetic on it,
+  etc; hopefully no untoward coersions happening as R_xlen_t seems to just be
+  a long in diguise; the one point where we couldn't avoid an explicit coersion
+  was in use with `sprintf` where we used %td
+  
