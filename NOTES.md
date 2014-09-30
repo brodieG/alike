@@ -1,3 +1,5 @@
+These are internal developer notes
+
 # C Benchmarking
 
 ## Assessing General Overhead

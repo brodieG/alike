@@ -1,0 +1,5 @@
+alike 0.2
+=========
+
+* Primarily moved to C based computations to run faster
+* Lost some functionality in the process of doing the above
