@@ -17,7 +17,8 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
 const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
-SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP env);
+SEXP ALIKEC_test(SEXP obj1);
+SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
 
 static const
 R_CallMethodDef callMethods[] = {
@@ -28,7 +29,8 @@ R_CallMethodDef callMethods[] = {
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"type_alike_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
-  {"test", (DL_FUNC) &ALIKEC_test, 3},
+  {"test", (DL_FUNC) &ALIKEC_test, 1},
+  {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {NULL, NULL, 0} 
 };
 
@@ -62,13 +64,13 @@ const char * ALIKEC_xlen_to_char(R_xlen_t a) {
 string and all the others a substrings with `sprintf`
 
 note:
-- `a` must contain exactly four unescaped "%s"; this will break ugly if it doesn't
+- will over-allocate by up to 8 characters to account for possibility there may
+  not be an "%s" in `a`
 */
 
-char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
-  int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) - 8 + 1;
+const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
+  int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) + 1;
   char * res;
-  //Rprintf("%s %s %s %s%s; allocating %d\n", a, b, c, d, e, full_len);
   res = R_alloc(full_len, sizeof(char));
   sprintf(res, a, b, c, d, e);
   return res;
@@ -85,9 +87,9 @@ int ALIKEC_int_charlen (R_xlen_t a) {
 
 // - Testing Function ----------------------------------------------------------
 
-SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP rho) {
+SEXP ALIKEC_test(SEXP obj1) {
 
-  return ScalarReal(log10(4503599627370495));
+  return R_NilValue;
 
   // klass = getAttrib(obj1, R_ClassSymbol);
 
@@ -238,7 +240,7 @@ Implements comparing character vectors element for element, allowing zero lenght
 strings in `target` to match any length string in `current`
 */
 
-const char * ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
+const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP current) {
 
   SEXPTYPE cur_type, tar_type;
   R_xlen_t cur_len, tar_len, i;
@@ -287,6 +289,12 @@ const char * ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
   }
   error("Logic Error in compare_special_char_attrs; contact maintainer");
 }
+// External version for unit testing
+
+SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
+  return mkString(ALIKEC_compare_special_char_attrs_internal(target, current));
+}
+
 
 /* Used by alike to compare attributes; returns pointer to zero length character
 string if successful, an error message otherwise
@@ -432,7 +440,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                 }
               // - names/row.names ---------------------------------------------
               } else if ((strcmp(tx, "names") == 0 || strcmp(tx, "row.names") == 0) && attr_mode == 0) {
-                const char * name_comp = ALIKEC_compare_special_char_attrs(
+                const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
                   tar_attr_el_val, cur_attr_el_val
                 );
                 if(strlen(name_comp))
@@ -524,7 +532,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
                 } 
                 // Now look at dimnames names
                 
-                const char * dimnames_name_comp = ALIKEC_compare_special_char_attrs(
+                const char * dimnames_name_comp = ALIKEC_compare_special_char_attrs_internal(
                   tar_attr_el_val_dimnames_names, cur_attr_el_val_dimnames_names
                 );
                 if(strlen(dimnames_name_comp))
@@ -626,6 +634,10 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
 SEXP ALIKEC_alike_internal(
   SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode
 ) {
+  if(int_mode < 0 || int_mode > 2)
+    error("Argument `int.mode` must be in 0:2");
+  if(attr_mode < 0 || attr_mode > 2)
+    error("Argument `attr.mode` must be in 0:2");
 
   /* General algorithm here is to:
       - Check whether objects are equal
