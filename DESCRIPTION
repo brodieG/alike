@@ -13,3 +13,5 @@ Imports:
     inline
 License: GPL-2
 LazyData: true
+VignetteBuilder: knitr
+Suggests: knitr
