@@ -34,7 +34,7 @@ are interested in more details, see the vignette.
 
 Generally speaking the lengths of two objects must be equal in order for them
 to be considered alike, though in the special case where \code{`target`} is
-length zero, then \code{`\link{current}`} may be any length.
+length zero, then \code{`current`} may be any length.
 }
 
 \section{Types}{

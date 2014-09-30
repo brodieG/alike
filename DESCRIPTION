@@ -12,4 +12,6 @@ Depends:
 License: GPL-2
 LazyData: true
 VignetteBuilder: knitr
-Suggests: knitr
+Suggests:
+    knitr,
+    microbenchmark

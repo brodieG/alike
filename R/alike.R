@@ -11,7 +11,7 @@
 #' 
 #' Generally speaking the lengths of two objects must be equal in order for them
 #' to be considered alike, though in the special case where \code{`target`} is
-#' length zero, then \code{`\link{current}`} may be any length.
+#' length zero, then \code{`current`} may be any length.
 #' 
 #' @section Types:
 #' 
@@ -141,7 +141,6 @@ alike <- function(
 #' type_of(1.0001)                     # numeric
 #' type_of(1 + 1e-20)                  # integer
 #' type_of(1)                          # integer  
-#' type_of(1, tolerance=1L)            # numeric
 #' type_of(data.frame(a=1:3))          # list
 
 type_of <- function(object, tolerance=MachDblEpsSqrt)
@@ -175,6 +174,8 @@ type_of <- function(object, tolerance=MachDblEpsSqrt)
 #' 
 #' @seealso type_of, alike
 #' @aliases .type_alike
+#' @param target the object to test type alikeness against
+#' @param current the object to test the type alikeness of
 #' @param mode integer(1L) in 0:2, see details
 #' @param tolerance see \code{`tolerance`} parameter for \code{`\link{type_of}`}
 #' @export

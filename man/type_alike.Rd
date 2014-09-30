@@ -7,6 +7,10 @@
 type_alike(target, current, mode = 0L, tolerance = MachDblEpsSqrt)
 }
 \arguments{
+\item{target}{the object to test type alikeness against}
+
+\item{current}{the object to test the type alikeness of}
+
 \item{mode}{integer(1L) in 0:2, see details}
 
 \item{tolerance}{see \code{`tolerance`} parameter for \code{`\link{type_of}`}}

@@ -35,7 +35,6 @@ modify the \code{`tolerance`} parameter.
 type_of(1.0001)                     # numeric
 type_of(1 + 1e-20)                  # integer
 type_of(1)                          # integer
-type_of(1, tolerance=1L)            # numeric
 type_of(data.frame(a=1:3))          # list
 }
 

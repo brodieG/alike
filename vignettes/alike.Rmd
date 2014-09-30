@@ -28,7 +28,7 @@ The structure of these objects is the same: they are both integer matrices with 
 
 To illustrate, suppose that we write a function that is intended to operate on a data frame with an `id` integer column and a `grade` factor column with possible levels `LETTERS[1:6]`:
 
-```{r, error=TRUE}
+```{r, error=TRUE, purl=FALSE}
 my_fun <- function(x) {
   df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
   if(!isTRUE(err <- alike(df.tpl, x)))
