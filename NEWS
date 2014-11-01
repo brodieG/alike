@@ -1,3 +1,10 @@
+alike 0.2.1
+===========
+
+* Now unloading dynamic libraries on package unload (Fixes #1), though some
+  questions as to whether this introduces other issues when loading/unloading
+  same package (happened once, can't reproduce).
+
 alike 0.2
 =========
 
