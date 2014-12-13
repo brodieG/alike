@@ -40,9 +40,8 @@ void R_init_alike(DllInfo *info)
     No .Fortran() or .External() routines,
     so pass those arrays as NULL.
   */
-  R_registerRoutines(info,
-  NULL, callMethods,
-  NULL, NULL);
+  R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+  R_RegisterCCallable("alike", "ALIKEC_alike_fast", (DL_FUNC) ALIKEC_alike_fast);
 }
 // - Helper Functions ----------------------------------------------------------
 
