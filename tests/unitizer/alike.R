@@ -197,9 +197,11 @@ unitizer_sect("Calls / Formulas", {
   alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 2 + l * j + j + w:j)
   alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 3 + l * j + j + w:j)
 
-  exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)")
-  exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)")
-  exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)")
+  # Repeating parses to deal with potential parse issues in clean R runs
+
+  exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)", keep.source=TRUE)
+  exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)", keep.source=TRUE)
+  exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)", keep.source=TRUE)
 
   alike(exp.1, exp.2)
   alike(exp.2, exp.3)
