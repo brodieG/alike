@@ -11,9 +11,9 @@ alike(target, current, int.mode = 0L, int.tol = MachDblEpsSqrt,
 
 \item{current}{the object to determine alikeness to the template}
 
-\item{int.mode}{integer(1L) in 0:2, see \code{`mode`} parameter to \code{`\link{type_alike}`}}
+\item{int.mode}{integer(1L) in 0:2, see \code{mode} parameter to \code{\link{type_alike}}}
 
-\item{int.tol}{numeric(1L) see \code{`tolerance`} paramter to \code{`\link{type_alike}`}}
+\item{int.tol}{numeric(1L) see \code{tolerance} paramter to \code{\link{type_alike}}}
 
 \item{attr.mode}{integer(1L) in 0:2 determines strictness of attribute comparison, see details}
 }
@@ -21,11 +21,11 @@ alike(target, current, int.mode = 0L, int.tol = MachDblEpsSqrt,
 TRUE if target and current are alike, character(1L) describing why they are not if they are not
 }
 \description{
-Similar to \code{`\link{all.equal}`}, but compares object structure rather than
+Similar to \code{\link{all.equal}}, but compares object structure rather than
 value.
 }
 \details{
-Exactly what makes two objects \code{`alike`} is complex to explain in words,
+Exactly what makes two objects \code{alike} is complex to explain in words,
 but should be clear from the examples.  We recommend you review those.  If you
 are interested in more details, see the vignette.
 }
@@ -33,49 +33,49 @@ are interested in more details, see the vignette.
 
 
 Generally speaking the lengths of two objects must be equal in order for them
-to be considered alike, though in the special case where \code{`target`} is
-length zero, then \code{`current`} may be any length.
+to be considered alike, though in the special case where \code{target} is
+length zero, then \code{current} may be any length.
 }
 
 \section{Types}{
 
 
-The underlying data types between two objects must be \code{`\link{type_alike}`}.
+The underlying data types between two objects must be \code{\link{type_alike}}.
 }
 
 \section{Attribute Comparison}{
 
 
-Generally speaking attributes between \code{`target`} and \code{`current`}
+Generally speaking attributes between \code{target} and \code{current}
 must be identical, but there are some exceptions:
 
-Paramter \code{`attr.mode`} controls how attributes are compared:
+Paramter \code{attr.mode} controls how attributes are compared:
 \itemize{
   \item 0: special attributes are compared specially, and only attributes
-    present in \code{`target`} are compared (i.e. \code{`current`} may have
+    present in \code{target} are compared (i.e. \code{current} may have
     additional attributes).  Special attributes include:
     \itemize{
-      \item \code{`dim`}, \code{`dimnames`}, \code{`row.names`}, and \code{`names`}
-      \item \code{`class`}
+      \item \code{dim}, \code{dimnames}, \code{row.names}, and \code{names}
+      \item \code{class}
       \item zero-length attributes
       \item reference attributes (e.g. external pointers environments, etc.)
     }
-  \item 1: all attributes present in \code{`target`} must be present in
-    \code{`current`} and be identical.
-  \item 2: all attributes present in \code{`target`} must be present in
-    \code{`current`} and there may be no additional attributes in \code{`current`}
+  \item 1: all attributes present in \code{target} must be present in
+    \code{current} and be identical.
+  \item 2: all attributes present in \code{target} must be present in
+    \code{current} and there may be no additional attributes in \code{current}
 }
 Please see vignette for details on for how special attributes are compared.
-Note that attributes on attributes (e.g. \code{`names(dimnames(x))`}) are
-generally required to be identical in \code{`target`} and \code{`current`},
-though \code{`names(dimnames(x))`} itself is a special case.
+Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
+generally required to be identical in \code{target} and \code{current},
+though \code{names(dimnames(x))} itself is a special case.
 }
 
-\section{\code{`.alike`}}{
+\section{\code{.alike}}{
 
 
-\code{`.alike`} is identical to \code{`alike`}, except that it doesn't accept
-any parameters outside of \code{`target`} and \code{`current`}, and as a result
+\code{.alike} is identical to \code{alike}, except that it doesn't accept
+any parameters outside of \code{target} and \code{current}, and as a result
 is slightly faster.
 }
 \examples{
