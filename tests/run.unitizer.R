@@ -1,5 +1,3 @@
 library(unitizer)
-dir <- system.file(package="alike")
-
-unitize(paste0(dir, "/tests/unitizer/alike.R"))
-unitize(paste0(dir, "/tests/unitizer/helper.R"))
+unitize("unitizer/alike.R")
+unitize("unitizer/helper.R")
