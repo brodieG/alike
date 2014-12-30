@@ -1,8 +1,10 @@
 ---
 title: "alike"
 author: "Brodie Gaslam"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{alike}
@@ -42,7 +44,7 @@ my_fun(df.correct)
 my_fun(df.wrong)
 ```
 
-The rules governing what makes objects alike are complex to explain, but the should be intuitive to understand.  We recommend you look at the examples in the documentation for `alike` to get a sense for how `alike` works.  If you want to understand the specifics, read on.
+The rules governing what makes objects alike are complex to explain, but should be intuitive to understand.  We recommend you look at the examples in the documentation for `alike` to get a sense for how `alike` works.  If you want to understand the specifics, read on.
 
 ## Templates
 
@@ -77,9 +79,9 @@ alike(1L, 1)     # note 1 is not integer
 alike(1L, 1.1)   # 1.1 is not integer-like
 alike(1.1, 1L)   # but integers can match numerics
 ```
-`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.  
+`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.
 
-### Attribute Comparison 
+### Attribute Comparison
 
 Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.
 
@@ -89,7 +91,7 @@ Attributes present in `target` must be present in `current`, but `current` may h
 
 ```{r}
 mx.tpl <- matrix(integer(), ncol=3);
-mx.cur <- matrix(1:12, nrow=4) 
+mx.cur <- matrix(1:12, nrow=4)
 alike(mx.tpl, mx.cur)
 
 dim(mx.tpl)    # notice the 0 for the first value in the `dim` vector
@@ -133,7 +135,6 @@ cur2 <- structure(NULL, class=c("a", "b", "c", "x"))
 
 alike(tpl, cur)
 alike(tpl, cur2)
-
 ```
 
 #### S4 and Reference Class (R5) Objects
@@ -175,7 +176,7 @@ Currently they are compared purely on length and internal type.
 library(microbenchmark)
 microbenchmark(
   all.equal(1:10, 1:10),
-  identical(1:10, 1:10), 
+  identical(1:10, 1:10),
   alike(1:10, 1:10)
 )
 ```

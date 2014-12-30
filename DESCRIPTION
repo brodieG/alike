@@ -1,16 +1,18 @@
 Package: alike
 Title: Determine Whether Two Objects Are Similar
-Description: Compares object structures rather than values.  This is particularly
-    useful when one has an object template (e.g. matrix(integer(), ncol=3)) that
-    they wish to compare other objects against (e.g. three column integer matrices).
-Version: 0.2
+Description: Compares object structures rather than values.  This is
+    particularly useful when one has an object template (e.g. matrix(integer(),
+    ncol=3)) that they wish to compare other objects against (e.g. three column
+    integer matrices).
+Version: 0.2.2
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
-    R (>= 3.0.1)
+    R (>= 3.1.2)
 License: GPL-2
 LazyData: true
 VignetteBuilder: knitr
 Suggests:
     knitr,
-    microbenchmark
+    microbenchmark,
+    unitizer
