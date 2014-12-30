@@ -13,7 +13,7 @@ unitizer_sect("Atomic", {
   alike(integer(3L), 1:3 + .01)
   alike(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2) # FALSE, integer like Numerics must be under this
   alike(integer(3L), 1:3 + .Machine$double.eps ^ .5)     # TRUE
-  alike(integer(4L), letters[1:4])  
+  alike(integer(4L), letters[1:4])
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
 } )
 unitizer_sect("lists", {
@@ -34,7 +34,7 @@ unitizer_sect("lists", {
   lst.4[[2]][[2]] <- list()
 
   alike(lst.4, lst)     # should match
-  alike(lst, lst.4)     # should not match because template has more detail   
+  alike(lst, lst.4)     # should not match because template has more detail
 } )
 unitizer_sect("Matrix & Data Frames", {
   alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
@@ -49,7 +49,7 @@ unitizer_sect("Matrix & Data Frames", {
   alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))        # TRUE, note this is recursive
   alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))         # FALSE mis-match at index[[1]]
   alike(list(NULL, structure("a", class="x")), list(NULL, structure("a", class="y")))  # FALSE mis-match at index[[2]] (class)
-  
+
   # TRUE, more complex nested structure
 
   alike(
@@ -96,7 +96,7 @@ unitizer_sect("Class Matching", {
   obj2 <- structure(numeric(), class=c("a", "b", "x", "c"))
   alike(obj1, obj2)
   obj2 <- structure(numeric(), class=c("a", "b", "c"))
-  alike(obj1, obj2)      # TRUE 
+  alike(obj1, obj2)      # TRUE
   obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
   alike(obj1, obj2)      # TRUE
   alike(obj1, obj2, attr.mode=1)   # FALSE
@@ -155,11 +155,11 @@ unitizer_sect("R5", {
   alike(Foo.1, Foo.2)
   alike(Foo.1, Bar.1)
 
-} ) 
+} )
 unitizer_sect("Non-Standard Class", {
   # Basically ensure that stuff still recurses even if they are lists/calls
   # but have another class
-   
+
   var.1 <- list(1, 2, 3)
   var.2 <- list("hello", list(1, 2, 3), 5)
   class(var.1) <- "marbles"
@@ -169,7 +169,7 @@ unitizer_sect("Non-Standard Class", {
 unitizer_sect("Functions", {
   alike(sd, median)                     # TRUE
   alike(sd, cor)                        # "does not have the expected formals structure"
-} )  
+} )
 unitizer_sect("Calls / Formulas", {
   alike(quote(1 + 1), quote(x + y))
   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
@@ -205,17 +205,18 @@ unitizer_sect("Calls / Formulas", {
   alike(exp.2, exp.3)
   alike(exp.3, exp.2)
 } )
-unitizer_sect("data.table", {
-  library(data.table)
+# # Had to remove these due to data.table issue #990
+# unitizer_sect("data.table", {
+#   library(data.table)
 
-  dt.1 <- data.table(a=1:10, b=1:10)
-  dt.2 <- data.table(a=1:10, b=letters[1:10], c=letters[11:20])
-  dt.3 <- data.table(a=integer(), b=integer())
+#   dt.1 <- data.table(a=1:10, b=1:10)
+#   dt.2 <- data.table(a=1:10, b=letters[1:10], c=letters[11:20])
+#   dt.3 <- data.table(a=integer(), b=integer())
 
-  alike(dt.1, dt.2)
-  alike(dt.1, dt.3)
-  alike(dt.3, dt.1)
-} )
+#   alike(dt.1, dt.2)
+#   alike(dt.1, dt.3)
+#   alike(dt.3, dt.1)
+# } )
 unitizer_sect("Errors", {
   alike(1, 1, int.mode="hello")
   alike(1, 1, int.mode=3)
@@ -237,7 +238,7 @@ unitizer_sect(".alike", {
   .alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
   .alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
 } )
-# These are also part of the examples, but here as well so that issues are 
+# These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks
 
 unitizer_sect("Examples", {
@@ -260,30 +261,30 @@ unitizer_sect("Examples", {
   alike(logical(1L), y.2)
 
   # `alike` will compare data frame columns
-  
+
   df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
   df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
   df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
-  
+
   alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
   alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
-  
-  # factor levels must match; makes sense, otherwise it really isn't the same 
+
+  # factor levels must match; makes sense, otherwise it really isn't the same
   # type of data (note this is a recursive comparison); for better understanding
   # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
 
-  alike(df.tpl, df.cur2)   
-  
+  alike(df.tpl, df.cur2)
+
   alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
   alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
-  
+
   # In order for objects to be alike, they must share a family tree, not just
   # a common class
-  
+
   obj.tpl <- structure(TRUE, class=letters[1:3])
   obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
   obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
-  
+
   alike(obj.tpl, obj.cur.1)
-  alike(obj.tpl, obj.cur.2) 
+  alike(obj.tpl, obj.cur.2)
 } )
