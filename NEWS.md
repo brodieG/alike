@@ -1,3 +1,8 @@
+alike 0.2.2
+===========
+
+* Internal changes to support `validate`
+
 alike 0.2.1
 ===========
 
