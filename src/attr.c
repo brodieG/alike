@@ -27,7 +27,10 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
 
   tar_class_len = XLENGTH(prim);
   cur_class_len = XLENGTH(sec);
-  len_delta = cur_class_len - tar_class_len;
+  R_xlen_t class_stop =
+    tar_class_len > cur_class_len ? cur_class_len : tar_class_len;
+
+  len_delta = cur_class_len - class_stop;
 
   for(
     cur_class_i = len_delta, tar_class_i = 0;
@@ -45,6 +48,11 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
         ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
         tar_class, cur_class, ""
   );} }
+  if(tar_class_len > cur_class_len) {
+    return ALIKEC_sprintf(
+      "`target` inherits from \"%s\" but `current` does not",
+      CHAR(STRING_ELT(prim, tar_class_i)), "", "", ""
+  );}
   if(!R_compute_identical(ATTRIB(prim), ATTRIB(sec), 16)) {
     return "attribute `class` has mismatching attributes (check `attributes(class(obj))`)";
   }
