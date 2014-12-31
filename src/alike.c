@@ -118,7 +118,16 @@ SEXP ALIKEC_alike_internal(
         UNPROTECT(1);
       }
     } else { // don't run length or attribute checks on S4
+    // - Attributes ------------------------------------------------------------
 
+      if (
+        !err &&
+        strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+      ) {
+        err = 1;
+        err_base = err_attr;
+        err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
+      }
     // - Type ------------------------------------------------------------------
 
       if(
@@ -142,16 +151,7 @@ SEXP ALIKEC_alike_internal(
         err_tok2 = ALIKEC_xlen_to_char(cur_len);
         err_tok3 = err_tok4 = "";
       }
-    // - Attributes ------------------------------------------------------------
-
-      if (
-        !err &&
-        strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
-      ) {
-        err = 1;
-        err_base = err_attr;
-        err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
-    } }
+    }
     // - Known Limitations -----------------------------------------------------
 
     tar_type = TYPEOF(target);

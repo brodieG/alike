@@ -13,10 +13,12 @@ const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, do
 
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
+const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode);
 
 SEXP ALIKEC_test(SEXP obj1);
 const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e);
 const char * ALIKEC_xlen_to_char(R_xlen_t a);
+int ALIKEC_int_charlen (R_xlen_t a);
 
 // - Init and pre-install Symbols ----------------------------------------------
 

@@ -68,37 +68,35 @@ const char * ALIKEC_compare_dims(
       "`dim` attribute for `%s` is not an integer vector; if you are using custom dim attributes please set `attr_mode` to 1L or 2L",
       rev ? (type_err == 1 ? "current" : "target") : (type_err == 2 ? "current" : "target"), "", "", ""
   );}
-  if(sec == R_NilValue && !rev)
-    error("Logic Error: cannot have missing `target` here; contact maintainer.");
-
   SEXP prim_obj = rev ? current : target, sec_obj = rev ? target : current;
 
   // Dims -> implicit class
 
-  R_xlen_t prim_len = XLENGTH(prim);
-  prim_len = prim_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : prim_len;
-  R_xlen_t sec_len = XLENGTH(sec);
-  sec_len = sec_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : sec_len;
+  R_xlen_t prim_len = XLENGTH(prim), prim_len_cap;
+  prim_len_cap = prim_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : prim_len;
+  R_xlen_t sec_len = XLENGTH(sec), sec_len_cap;
+  sec_len_cap = sec_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : sec_len;
 
   const char * class_err_string = "";
 
-  if(prim_len > 1 && isVectorAtomic(prim_obj)) {
+  if(prim_len_cap > 1 && isVectorAtomic(prim_obj)) {
     if(sec == R_NilValue) {  // current is matrix/array
       class_err_string = ALIKEC_sprintf(
-        "`current` is \"%s\" but `target` does not have a \"dim\" attribute",
-        prim_len > 2 ? "array" : "matrix", "", "", ""
+        "`%s` is \"%s\" but `%s` does not have a \"dim\" attribute",
+        rev ? "current" : "target", prim_len_cap > 2 ? "array" : "matrix",
+        !rev ? "current" : "target", ""
       );
-    } else if(isVectorAtomic(sec_obj) && sec_len != prim_len) {  // target is matrix/array
+    } else if(isVectorAtomic(sec_obj) && sec_len_cap != prim_len_cap) {  // target is matrix/array
       class_err_string = ALIKEC_sprintf(
         "`target` is \"%s\" but `current` is \"%s\"",
-        prim_len > 2 ? "array" : "matrix",
-        sec_len == 2 ? "matrix" : (sec_len == 1 ? "vector" : "array"), "", ""
+        prim_len_cap > 2 ? "array" : "matrix",
+        sec_len_cap == 2 ? "matrix" : (sec_len_cap == 1 ? "vector" : "array"), "", ""
     );}
-  } else if (sec_len > 1 && isVectorAtomic(sec_obj)) {
+  } else if (sec_len_cap > 1 && isVectorAtomic(sec_obj)) {
     if(isVectorAtomic(prim_obj)) {
       class_err_string = ALIKEC_sprintf(
         "`target` is \"vector\" but `current` is \"%s\"",
-        sec_len == 2 ? "matrix" : "array", "", "", ""
+        sec_len_cap == 2 ? "matrix" : "array", "", "", ""
       );
     } else {
       class_err_string = "`target` is \"vector\" but `current` is not";
@@ -112,6 +110,12 @@ const char * ALIKEC_compare_dims(
 
   if(sec == R_NilValue)
     return "`target` has a \"dim\" attribute but `current` does not";
+
+  if(prim_len != sec_len)
+    return ALIKEC_sprintf(
+      "`target` has %s dimensions but `current` has %s",
+      ALIKEC_xlen_to_char(prim_len), ALIKEC_xlen_to_char(sec_len), "", ""
+    );
 
   R_xlen_t attr_i;
   int tar_dim_val;
@@ -494,14 +498,12 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
   // Now determine which error to throw, if any
 
   int i;
-  for(i = 0; i < 5; i++) {
-    if(strlen(err_major[i])) return err_major[i];
-  }
-  // Missing target only reported if in super strict
+  for(i = 0; i < 5; i++)
+    if(strlen(err_major[i]) && (!rev || (rev && attr_mode == 2)))
+      return err_major[i];
 
-  if(strlen(err_major[5])) {
-    if(!rev || (rev && attr_mode == 2)) return err_major[5];
-  }
+  // Passed
+
   return "";
 }
 /*-----------------------------------------------------------------------------\
