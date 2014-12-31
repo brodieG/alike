@@ -149,8 +149,6 @@ const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP curren
 
   if(target == R_NilValue)
     error("Logic Error: target may not be NULL in compare_special_chars");
-  if(current == R_NilValue)
-    return"`target` is missing attribute";
 
   /* From now on, `target` really is `target` (didn't have to be before) because
   we switch arguments in calling loop when `target` is missing*/
