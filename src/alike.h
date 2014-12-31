@@ -14,6 +14,8 @@ const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, do
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
 const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode);
+SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
+SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
 
 SEXP ALIKEC_test(SEXP obj1);
 const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e);

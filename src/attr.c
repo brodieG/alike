@@ -48,6 +48,9 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
   }
   return "";
 }
+SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev) {
+  return mkString(ALIKEC_compare_class(prim, sec, asInteger(rev)));
+}
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
@@ -135,13 +138,32 @@ const char * ALIKEC_compare_dims(
   }
   return "";
 }
+SEXP ALIKEC_compare_dim_ext(
+  SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev
+) {
+  int tmp = 0;
+  int * class_err =& tmp;
+
+  SEXP err_msg = mkString(
+    ALIKEC_compare_dims(prim, sec, target, current, asInteger(rev), class_err)
+  );
+  SEXP res = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(res, 0, err_msg);
+  SET_VECTOR_ELT(res, 1, ScalarInteger(*class_err));
+
+  UNPROTECT(1);
+  return res;
+}
+
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
-Implements comparing character vectors element for element, allowing zero lenght
-strings in `target` to match any length string in `current`
-*/
+Implements comparing character vectors element for element:
+  - allowing zero length strings in `target` to match any length string in `current`
+  - zero length `target` to match any `current`
 
+This is used to compare names, row.names, etc.
+*/
 const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP current) {
 
   SEXPTYPE cur_type, tar_type;
@@ -287,6 +309,9 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
         );
   } } }
   return "";
+}
+SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec) {
+  return(mkString(ALIKEC_compare_dimnames(prim, sec)));
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/

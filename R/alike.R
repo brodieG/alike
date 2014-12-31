@@ -203,6 +203,9 @@ attr_compare <- function(target, current, attr.mode=0L)
 name_compare <- function(target, current)
   .Call(ALIKEC_compare_names, target, current)
 
+class_compare <- function(target, current, rev)
+  .Call(ALIKEC_compare_class, target, current, rev)
+
 #' Used for testing C code
 #'
 #' @keywords internal
