@@ -1,3 +1,6 @@
 library(unitizer)
 unitize("unitizer/alike.R")
+unitize("unitizer/datatable.R", search.path.clean=FALSE)
+unitize("unitizer/classes.R")
+unitize("unitizer/language.R")
 unitize("unitizer/helper.R")
