@@ -83,7 +83,7 @@ alike(1.1, 1L)   # but integers can match numerics
 
 ### Attribute Comparison
 
-Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.
+Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current`.
 
 #### `dim`
 
