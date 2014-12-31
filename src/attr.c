@@ -17,7 +17,9 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
       rev ? "current" : "target",
       CHAR(STRING_ELT(prim, 1)), !rev ? "current" : "target", ""
     );
-  } else if(rev) error("Logic Error: should never get here 19; contact maintainer.");
+  } else if(rev)
+    error("Logic Error: should never get here 19; contact maintainer.");
+  if(rev > 1 || rev < 0) error("Logic Error: `rev` should be 0 or 1.");
 
   int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i;
   const char * cur_class;
@@ -183,7 +185,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP curren
       "type mismatch between `target` and `current` (%s vs %s)",
       type2char(tar_type), type2char(cur_type), "", ""
     );
-  } else if ((cur_len = XLENGTH(current)) != (tar_len = XLENGTH(target))) {
+  } else if (!(tar_len = XLENGTH(target))) { // zero len match to anything
+    return "";
+  } else if ((cur_len = XLENGTH(current)) != tar_len) {
     return ALIKEC_sprintf(
       "length mismatch between `target` and `current` (%s vs %s)",
       ALIKEC_xlen_to_char(tar_len), ALIKEC_xlen_to_char(cur_len), "", ""
