@@ -1,3 +1,12 @@
+alike 0.2.3
+===========
+
+* Clearer error messages focus on highest level differences first (e.g. class)
+* `names`/`row.names` may now be shorter in `target` than `current`
+* major internal re-structuring; should be transparent to user
+
+**NOTE**: `alike` will likely cease to exist as a stand alone package and become part of `validate` at some point in the future.  If this happens the interface will be unchanged, but the functions will be in a different package.
+
 alike 0.2.2
 ===========
 

@@ -1,5 +1,7 @@
 # alike - Verify S3 Object Structure
 
+**NOTE**: `alike` will likely cease to exist as a stand alone package and become part of `validate` at some point in the future.  If this happens the interface will be unchanged, but the functions will be in a different package.
+
 ## Overview
 
 `alike` is similar to `all.equal` from base R, except it focuses on comparing object structure rather than actual values.  A simple example:

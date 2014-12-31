@@ -85,6 +85,28 @@ alike(1.1, 1L)   # but integers can match numerics
 
 Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current`.
 
+#### `row.names` and `names`
+
+If present in `target`, then must be matched exactly by the corresponding attribute in `current`, except that:
+
+* zero length character values (i.e. `""`) in `target` `names`/`row.names` will match any character value in the corresponding position of the `current` `names`/`row.names`
+* zero length `target` attribute (i.e. `character(0L)`, contrast to above) will match any character `names`/`row.names`
+
+These exceptions are necessary to allow you to partially specify names and dimensions:
+```{r}
+df.tpl <- data.frame(id=integer(), numeric(), numeric()),
+df.dat1 <- data.frame(id=1:3, x=runif(3), y=runif(3))
+df.dat2 <- data.frame(bogus=1:3, x=runif(3), y=runif(3))
+
+alike(df.tpl, df.dat1)
+names(df.tpl)
+names(df.dat1)
+rownames(df.tpl)
+rownames(df.dat1)
+
+alike(df.tp, df.dat2)
+```
+
 #### `dim`
 
 `dim` attributes must be identical between `target` and `current`, except that if a value of the `dim` vector is zero in `target` then the corresponding value in `current` can be any value.  This is how comparisons like the following succeed:
@@ -113,10 +135,6 @@ alike(mx.tpl, mx.cur)
 alike(mx.tpl, mx.cur2)
 names(dimnames(mx.tpl))
 ```
-
-#### `row.names` and `names`
-
-If present in `target`, then must be matched exactly by `current`, except that zero length character values (i.e. `""`) in `target` will match any character value in the corresponding position of the `current` vector.
 
 #### `class`
 
@@ -206,10 +224,11 @@ df.tpl <- data.frame(integer(), numeric())
 df.cur <- data.frame(a=1:10, b=1:10 + .1)
 
 library(microbenchmark)
-microbenchmark(
+mb <- microbenchmark(
   alike(df.tpl, df.cur),
   alike(data.frame(integer(), numeric()), df.cur)
 )
+summary(mb)[1:4]
 ```
 
 `data.frame` is a particularly slow constructor, but in general you are best served by defining your templates outside of your function if you want to keep things at their snappiest.
