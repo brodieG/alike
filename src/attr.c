@@ -278,13 +278,13 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
       if(strcmp(prim_tag, CHAR(PRINTNAME(TAG(sec_attr_cpy)))) == 0) {
         if(!R_compute_identical(CAR(prim_attr_cpy), CAR(sec_attr_cpy), 16)) {
           return ALIKEC_sprintf(
-            "\"dimnames\" attribute `%s` is not identical in target and current (check `attr(dimnames(obj), \"%s\")`)",
+            "\"dimnames\" attribute `%s` is not identical in `target` and `current` (check `attr(dimnames(obj), \"%s\")`)",
             prim_tag, prim_tag, "", ""
           );
         } else continue;
     } }
     return ALIKEC_sprintf(
-      "\"dimnames\" attribute `%s` is missing from current but present in target (check `attr(dimnames(obj), \"%s\")`)",
+      "\"dimnames\" attribute `%s` is missing from `current` but `present` in target (check `attr(dimnames(obj), \"%s\")`)",
       prim_tag, prim_tag, "", ""
     );
   }
