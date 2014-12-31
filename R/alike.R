@@ -193,7 +193,7 @@ type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
 #' R interface for an internal C functions used by \code{`alike`}.  Provided
 #' primarily for unit testing purposes
 #'
-#' @aliases name_compare
+#' @aliases name_compare, class_compare, dimname_compare, dim_compare
 #' @keywords internal
 #' @param int_mode
 
@@ -209,6 +209,10 @@ class_compare <- function(target, current, rev)
 dimname_compare <- function(target, current)
   .Call(ALIKEC_compare_dimnames, target, current)
 
+dim_compare <- function(
+  target, current, tar_obj=integer(), cur_obj=integer(), rev=0L
+)
+  .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
 
 #' Used for testing C code
 #'

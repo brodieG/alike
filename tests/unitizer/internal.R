@@ -93,7 +93,41 @@ unitizer_sect("compare dimnames", {
   dimname_compare(dimn14, dimn13)
 })
 unitizer_sect("compare dims", {
+  dim1 <- rep(2, 2)
+  dim2 <- rep(2, 3)
+  dim3 <- rep(2, 4)
+  dim4 <- c(1, 1)
+  dim5 <- 2
+  dim6 <- c(1, 2, 3)
+  dim7 <- rep(0, 2)
+  dim8 <- c(0, 0, 2)
+  dim9 <- NULL
+  dim10 <- letters[1:2]
+  dim11 <- list(2, 2)
 
+  dim_compare(dim1, dim2)  # fail
+  dim_compare(dim2, dim3)  # fail
+  dim_compare(dim1, dim4)  # fail
+  dim_compare(dim2, dim6)  # fail
+  dim_compare(dim7, dim1)  # works
+  dim_compare(dim7, dim4)  # works
+  dim_compare(dim1, dim7)  # fail
+  dim_compare(dim7, dim2)  # works
+  dim_compare(dim8, dim2)  # works
+  dim_compare(dim8, dim6)  # fail
+  dim_compare(dim6, dim9)  # works
+
+  # With non atomic objects
+
+  dim_compare(dim1, dim2, list())          # fail
+  dim_compare(dim1, dim2, cur_obj=list())  # fail
+  dim_compare(dim1, dim2, list(), list())  # fail
+
+  # Errors
+
+  dim_compare(dim6, dim9, rev=1L)  # fail
+  dim_compare(dim9, dim6)  # fail
+  dim_compare(dim10, dim1) # fail
 })
 
 unitizer_sect("Name like attributes", {

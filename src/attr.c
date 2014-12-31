@@ -138,7 +138,7 @@ const char * ALIKEC_compare_dims(
       tar_dim_val != INTEGER(sec)[attr_i]
     ) {
       return ALIKEC_sprintf(
-        "`dim` mismatch at dimension %s: expected %s but got %s%s",
+        "`dim` size mismatch at dimension %s: expected %s but got %s%s",
         ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val),
         ALIKEC_xlen_to_char((R_xlen_t)(INTEGER(sec)[attr_i])), ""
       );
