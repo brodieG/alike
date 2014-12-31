@@ -206,6 +206,10 @@ name_compare <- function(target, current)
 class_compare <- function(target, current, rev)
   .Call(ALIKEC_compare_class, target, current, rev)
 
+dimname_compare <- function(target, current)
+  .Call(ALIKEC_compare_dimnames, target, current)
+
+
 #' Used for testing C code
 #'
 #' @keywords internal
