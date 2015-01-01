@@ -1,6 +1,8 @@
 # redefine funs to give us flexibility if we change packages without having
 # to export the internal functions
 
+library(alike)
+
 attr_compare <- alike:::attr_compare
 name_compare <- alike:::name_compare
 class_compare <- alike:::class_compare
@@ -93,17 +95,17 @@ unitizer_sect("compare dimnames", {
   dimname_compare(dimn14, dimn13)
 })
 unitizer_sect("compare dims", {
-  dim1 <- rep(2, 2)
-  dim2 <- rep(2, 3)
-  dim3 <- rep(2, 4)
-  dim4 <- c(1, 1)
-  dim5 <- 2
-  dim6 <- c(1, 2, 3)
-  dim7 <- rep(0, 2)
-  dim8 <- c(0, 0, 2)
+  dim1 <- rep(2L, 2)
+  dim2 <- rep(2L, 3)
+  dim3 <- rep(2L, 4)
+  dim4 <- c(1L, 1L)
+  dim5 <- 2L
+  dim6 <- c(1L, 2L, 3L)
+  dim7 <- rep(0L, 2)
+  dim8 <- c(0L, 0L, 2L)
   dim9 <- NULL
   dim10 <- letters[1:2]
-  dim11 <- list(2, 2)
+  dim11 <- list(2L, 2L)
 
   dim_compare(dim1, dim2)  # fail
   dim_compare(dim2, dim3)  # fail

@@ -15,7 +15,7 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
     return ALIKEC_sprintf(
       "`%s` is of S3 class \"%s\", but `%s` is unclassed",
       rev ? "current" : "target",
-      CHAR(STRING_ELT(prim, 1)), !rev ? "current" : "target", ""
+      CHAR(STRING_ELT(prim, 0)), !rev ? "current" : "target", ""
     );
   } else if(rev)
     error("Logic Error: should never get here 19; contact maintainer.");
@@ -53,6 +53,7 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
       "`target` inherits from \"%s\" but `current` does not",
       CHAR(STRING_ELT(prim, tar_class_i)), "", "", ""
   );}
+
   if(!R_compute_identical(ATTRIB(prim), ATTRIB(sec), 16)) {
     return "attribute `class` has mismatching attributes (check `attributes(class(obj))`)";
   }
