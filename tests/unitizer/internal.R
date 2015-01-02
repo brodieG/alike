@@ -9,7 +9,15 @@ class_compare <- alike:::class_compare
 dimname_compare <- alike:::dimname_compare
 dim_compare <- alike:::dim_compare
 
-unitizer_sect("compare class", {
+unitizer_sect("Name like attributes", {
+  name_compare(c("", "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c("abc", "hello"))
+  name_compare(c(NA_character_, "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c(NA_character_, "hello"))
+  name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
+} )
+
+unitizer_sect("S3 Classes", {
   class1 <- letters[1:5]
   class2 <- letters[3:5]
   class3 <- letters[c(4, 3, 5)]
@@ -43,7 +51,7 @@ unitizer_sect("compare class", {
   class_compare(class2, class1, -1);
   class_compare(class2, class1, NA_integer_);
 })
-unitizer_sect("compare dimnames", {
+unitizer_sect("Dimnames", {
   dimn1 <- list(NULL, NULL, NULL)
   dimn2 <- list(a=letters[1:3], b=letters[4:6], c=letters[7:9])
   dimn3 <- list(letters[1:3], b=letters[4:6], c=letters[7:9])
@@ -94,7 +102,7 @@ unitizer_sect("compare dimnames", {
   dimname_compare(dimn13, dimn14)
   dimname_compare(dimn14, dimn13)
 })
-unitizer_sect("compare dims", {
+unitizer_sect("Dims", {
   dim1 <- rep(2L, 2)
   dim2 <- rep(2L, 3)
   dim3 <- rep(2L, 4)
@@ -132,15 +140,7 @@ unitizer_sect("compare dims", {
   dim_compare(dim10, dim1) # fail
 })
 
-unitizer_sect("Name like attributes", {
-  name_compare(c("", "hello"), c("abc", "hello"))
-  name_compare(c("ab", "hello"), c("abc", "hello"))
-  name_compare(c(NA_character_, "hello"), c("abc", "hello"))
-  name_compare(c("ab", "hello"), c(NA_character_, "hello"))
-  name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
-} )
-
-unitizer_sect("compare attributes, default", {
+unitizer_sect("All Attributes, default", {
   attr_compare(1, 1)                                           # TRUE
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), "hello")  # Error
@@ -204,7 +204,7 @@ unitizer_sect("compare attributes, default", {
     structure(list("hello"), class=letters[1:4])
   )
 } )
-unitizer_sect("compare attributes, strict", {
+unitizer_sect("All attributes, strict", {
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
   attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
   attr_compare(                                                         # dimnames mismatch

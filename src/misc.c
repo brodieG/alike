@@ -44,21 +44,6 @@ int ALIKEC_int_charlen (R_xlen_t a) {
 // - Testing Function ----------------------------------------------------------
 
 SEXP ALIKEC_test(SEXP obj1) {
-
-  //return(ScalarInteger(obj1 == ALIKEC_SYM_package));
-  return(ScalarInteger(!strcmp(CHAR(asChar(obj1)), "package")));
-  // klass = getAttrib(obj1, R_ClassSymbol);
-
-  // t = s = PROTECT(allocList(3));
-  // SET_TYPEOF(s, LANGSXP);
-  // SETCAR(t, install("inherits")); t = CDR(t);
-  // SETCAR(t,  obj2); t = CDR(t);
-  // SETCAR(t, klass);
-  // UNPROTECT(1);
-  // return eval(s, rho);
-  // CHAR(asChar(klass))
-  // // UNPROTECT(1);
-
-  // Rprintf("class: %s\n", CHAR(asChar(klass)));
-  // return ScalarLogical(inherits(obj2, CHAR(asChar(klass))));
+  Rprintf("boom %s\n", type2char(TYPEOF(allocVector(VECSXP, 1))));
+  return R_NilValue;
 }
