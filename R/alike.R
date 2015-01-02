@@ -35,8 +35,7 @@
 #'     }
 #'   \item 1: all attributes present in \code{target} must be present in
 #'     \code{current} and be identical.
-#'   \item 2: all attributes present in \code{target} must be present in
-#'     \code{current} and there may be no additional attributes in \code{current}
+#'   \item 2: attributes in \code{target} and \code{current} must be identical
 #' }
 #' Please see vignette for details on for how special attributes are compared.
 #' Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
