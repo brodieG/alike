@@ -38,6 +38,7 @@ unitizer_sect("S4", {
 
   # S4 nested in list
 
+  lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61)))))
   lst.5 <- lst.6 <- lst.2
   lst.5[[2]][[2]][[1]] <- x
   lst.6[[2]][[2]][[1]] <- v
