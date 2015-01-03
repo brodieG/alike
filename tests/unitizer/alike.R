@@ -46,6 +46,8 @@ unitizer_sect("Matrix / Arrays", {
   alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(NULL, c("R", "G", "B"))))
   alike(matrix(integer(), nrow=3, dimnames=list(c("R", "G", "B"), NULL)), matrix(1:9, nrow=3, dimnames=list(c("R", "G", "B"), c("bacon", "turkey", "bravo"))))
 
+  alike(matrix(1:9, nrow = 3), 1:9)
+
   # Adding tests from docs
 
   mx.tpl <- matrix(integer(), ncol=3, dimnames=list(row.id=NULL, c("R", "G", "B")))
@@ -56,6 +58,8 @@ unitizer_sect("Matrix / Arrays", {
   alike(mx.tpl, mx.cur2)
 } )
 unitizer_sect("Data Frames", {
+  alike(mtcars, 1:3)
+  alike(1:3, mtcars)
   alike(data.frame(), data.frame(a=1:3, b=letters[1:3]))  # TRUE
   alike(data.frame(a=integer(), b=factor()), data.frame(a=1:3, b=letters[1:3]))        # TRUE, note this is recursive
   alike(data.frame(a=factor(), b=factor()), data.frame(a=1:3, b=letters[1:3]))         # FALSE mis-match at index[[1]]
