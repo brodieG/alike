@@ -200,7 +200,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP curren
 
   if(tar_type != cur_type) {
     return ALIKEC_sprintf(
-      "type mismatch: expected \"%s\", but got \"%s\")",
+      "type mismatch: expected \"%s\", but got \"%s\"",
       type2char(tar_type), type2char(cur_type), "", ""
     );
   } else if (!(tar_len = XLENGTH(target))) { // zero len match to anything
