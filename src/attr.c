@@ -4,27 +4,24 @@
 \-----------------------------------------------------------------------------*/
 /*
 Compare class attribute
+
+Note that expectation is that unclassed objects will get sent here with their
+implicit class defined by ALIKEC_mode
 */
 const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
   if(rev == NA_INTEGER || rev > 1 || rev < 0) error("Logic Error: `rev` should be 0 or 1.");
-  if(
-    (TYPEOF(sec) != STRSXP && sec != R_NilValue) || TYPEOF(prim) != STRSXP
-  ) {
+  if(prim == R_NilValue || sec == R_NilValue)
+    error("Logic Error: NULL classes should not be possible; contact maintainer.");
+  if(TYPEOF(sec) != STRSXP || TYPEOF(prim) != STRSXP) {
     return "\"class\" attribute not character vector for both `target` and `current`; if you are using custom `class` attributes please set `attr_mode` to 1L or 2L";
   }
-  if(sec == R_NilValue) {
-    return ALIKEC_sprintf(
-      "S3 class mismatch: expected \"%s\", but got \"%s\"",
-      rev ? "unclassed" : CHAR(STRING_ELT(prim, 0)),
-      !rev ? "unclassed" : CHAR(STRING_ELT(prim, 0)), "", ""
-    );
-  } else if(rev)
-    error("Logic Error: should never get here 19; contact maintainer.");
-
   int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i;
   const char * cur_class;
   const char * tar_class;
 
+  if(rev) { // Flip args
+    SEXP tmp = prim; prim = sec; sec = tmp;
+  }
   tar_class_len = XLENGTH(prim);
   cur_class_len = XLENGTH(sec);
   R_xlen_t class_stop =
@@ -43,19 +40,24 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
         tar_class = CHAR(STRING_ELT(prim, tar_class_i))
       ) != 0
     ) {
-      return ALIKEC_sprintf(
-        "\"class\" mismatch at `class(your.obj)[[%s]]`: expected \"%s\", but got \"%s\"%s",
-        ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
-        tar_class, cur_class, ""
-  );} }
+      if(cur_class_len > 1) {
+        return ALIKEC_sprintf(
+          "\"class\" mismatch at class element #%s: expected \"%s\", but got \"%s\"%s",
+          ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
+          tar_class, cur_class, ""
+        );
+      } else {
+        return ALIKEC_sprintf(
+          "\"class\" mismatch: expected \"%s\", but got \"%s\"%s",
+          tar_class, cur_class, "", ""
+  );} } }
   if(tar_class_len > cur_class_len) {
     return ALIKEC_sprintf(
       "class inheritance mismatch, should inherit from \"%s\" but does not",
       CHAR(STRING_ELT(prim, tar_class_i)), "", "", ""
   );}
-
   if(!R_compute_identical(ATTRIB(prim), ATTRIB(sec), 16)) {
-    return "attribute \"class\" has mismatching attributes (check `attributes(class(obj))`)";
+    return "attribute \"class\" has mismatching attributes (check `attributes(class(.))`)";
   }
   return "";
 }
@@ -146,7 +148,7 @@ const char * ALIKEC_compare_dims(
       tar_dim_val != INTEGER(sec)[attr_i]
     ) {
       return ALIKEC_sprintf(
-        "\"dim\" size mismatch at dimension %s: expected %s, but got %s%s",
+        "\"dim\" length mismatch at dimension %s: expected %s, but got %s%s",
         ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val),
         ALIKEC_xlen_to_char((R_xlen_t)(INTEGER(sec)[attr_i])), ""
       );
@@ -272,7 +274,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
       if(strcmp(prim_tag, CHAR(PRINTNAME(TAG(sec_attr_cpy)))) == 0) {
         if(!R_compute_identical(CAR(prim_attr_cpy), CAR(sec_attr_cpy), 16)) {
           return ALIKEC_sprintf(
-            "\"dimnames\" attribute \"%s\" is not identical in `target` and `current` (check `attr(dimnames(your.obj.name), \"%s\")`)",
+            "\"dimnames\" attribute \"%s\" is not identical in `target` and `current` (check `attr(dimnames(.), \"%s\")`)",
             prim_tag, prim_tag, "", ""
           );
         } else {
@@ -281,7 +283,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
     } } }
     if(do_continue) continue;
     return ALIKEC_sprintf(
-      "expected \"dimnames\" attribute \"%s\", but it is missing (check `attr(dimnames(your.obj.name), \"%s\")`)",
+      "expected \"dimnames\" attribute \"%s\", but it is missing (check `attr(dimnames(.), \"%s\")`)",
       prim_tag, prim_tag, "", ""
     );
   }
@@ -526,9 +528,16 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
       class error*/
 
       if(!strcmp(tx, "class")) {
+        SEXP sec_attr_el_val_tmp;
+        if(sec_attr_el_val == R_NilValue) { // Implicit classes
+          sec_attr_el_val_tmp = PROTECT(ALIKEC_mode(rev ? target : current));
+        } else {
+          sec_attr_el_val_tmp = PROTECT(sec_attr_el_val);
+        }
         const char * class_comp = ALIKEC_compare_class(
-          prim_attr_el_val, sec_attr_el_val, rev
+          prim_attr_el_val, sec_attr_el_val_tmp, rev
         );
+        UNPROTECT(1);
         if(strlen(class_comp)) {
           err_major[0] = class_comp;
           break;

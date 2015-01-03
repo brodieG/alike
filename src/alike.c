@@ -110,7 +110,7 @@ SEXP ALIKEC_alike_internal(
         SETCAR(t, klass);
         if(!asLogical(eval(s, R_BaseEnv))) {
           err = 1;
-          err_base = "current does not contain class \"%s\" (package: %s)";
+          err_base = "current does not inherit from class \"%s\" (package: %s)";
           err_tok1 = CHAR(asChar(klass));
           err_tok2 = CHAR(asChar(klass_attrib));
           err_tok3 = err_tok4 = "";
@@ -202,9 +202,9 @@ SEXP ALIKEC_alike_internal(
       /* Create final error and store in STRSXP */
 
       if(ind_lvl > 0) {
-        err_final = (const char *) ALIKEC_sprintf("%s at index %s%s%s", err_msg, err_chr_indeces, "", "");
+        err_final = ALIKEC_sprintf("Mismatch at index %s: %s%s", err_chr_indeces, err_msg, "", "");
       } else {
-        err_final = (const char *) ALIKEC_sprintf("%s%s%s%s", (char *) err_msg, "", "", "");
+        err_final = ALIKEC_sprintf("%s%s%s%s", err_msg, "", "", "");
       }
       SEXP res;
       res = PROTECT(allocVector(STRSXP, 1));
