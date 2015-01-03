@@ -99,8 +99,10 @@ const char * ALIKEC_compare_dims(
     if(sec == R_NilValue) {  // current is matrix/array
       class_err_string = ALIKEC_sprintf(
         "expected \"%s\", but got \"%s\"",
-        rev ? "dimension-less object" : prim_len_cap > 2 ? "array" : "matrix",
-        !rev ? "dimension-less object" : prim_len_cap > 2 ? "array" : "matrix", "", ""
+        rev ? CHAR(asChar(ALIKEC_mode(sec_obj))) :
+          prim_len_cap > 2 ? "array" : "matrix",
+        !rev ? CHAR(asChar(ALIKEC_mode(sec_obj))) :
+          prim_len_cap > 2 ? "array" : "matrix", "", ""
       );
     } else if(isVectorAtomic(sec_obj) && sec_len_cap != prim_len_cap) {  // target is matrix/array
       class_err_string = ALIKEC_sprintf(
@@ -110,19 +112,20 @@ const char * ALIKEC_compare_dims(
       );
     } else if(!isVectorAtomic(sec_obj)) {
       class_err_string = ALIKEC_sprintf(
-        "expected \"atomic vector\", but got \"%s\"",
-        type2char(TYPEOF(sec_obj)), "", "", ""
+        "expected \"%s\", but got \"%s\"",
+        CHAR(asChar(ALIKEC_mode(prim_obj))), type2char(TYPEOF(sec_obj)), "", ""
     );}
   } else if (sec_len_cap > 1 && isVectorAtomic(sec_obj)) {
     if(isVectorAtomic(prim_obj)) {
       class_err_string = ALIKEC_sprintf(
-        "expected \"atomic vector\", but got \"%s\"",
-        sec_len_cap == 2 ? "matrix" : "array", "", "", ""
+        "expected \"%s\", but got \"%s\"",
+        CHAR(asChar(ALIKEC_mode(prim_obj))),
+          sec_len_cap == 2 ? "matrix" : "array", "", ""
       );
     } else {
       class_err_string = ALIKEC_sprintf(
-        "expected \"%s\", but got \"atomic vector\"", type2char(TYPEOF(prim_obj)),
-        "", "", ""
+        "expected \"%s\", but got \"%s\"", CHAR(asChar(ALIKEC_mode(prim_obj))),
+        CHAR(asChar(ALIKEC_mode(sec_obj))), "", ""
     );}
   }
   if(strlen(class_err_string)) {
@@ -588,10 +591,10 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
   // Now determine which error to throw, if any
 
   int i;
-  for(i = 0; i < 6; i++)
+  for(i = 0; i < 6; i++) {
     if(strlen(err_major[i]) && (!rev || (rev && attr_mode == 2)))
       return err_major[i];
-
+  }
   // Passed
 
   return "";
