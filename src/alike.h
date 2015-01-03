@@ -25,6 +25,7 @@ SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP
 
 // - Utility Funs --------------------------------------------------------------
 
+SEXP ALIKEC_mode(SEXP obj);
 SEXP ALIKEC_test(SEXP obj1);
 const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e);
 const char * ALIKEC_xlen_to_char(R_xlen_t a);
