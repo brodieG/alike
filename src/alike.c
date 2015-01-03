@@ -122,7 +122,9 @@ SEXP ALIKEC_alike_internal(
 
       if (
         !err &&
-        strlen(err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode))
+        strlen(
+          err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode)
+        )
       ) {
         err = 1;
         err_base = err_attr;
@@ -131,7 +133,11 @@ SEXP ALIKEC_alike_internal(
     // - Type ------------------------------------------------------------------
 
       if(
-        strlen(err_type = ALIKEC_type_alike_internal(target, current, int_mode, int_tolerance))
+        !err &&
+        strlen(
+          err_type = ALIKEC_type_alike_internal(
+            target, current, int_mode, int_tolerance
+        ) )
       ) {
         err = 1;
         err_base = "Type mismatch, %s";
