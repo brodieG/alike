@@ -242,8 +242,12 @@ const char * ALIKEC_compare_special_char_attrs_internal(
       "length mismatch: expected %s, but got %s",
       ALIKEC_xlen_to_char(tar_len), ALIKEC_xlen_to_char(cur_len), "", ""
     );
-  } else if (tar_type == INTSXP && !R_compute_identical(target, current, 16)) {
-    return "`target` and `current` are integer and not identical";
+  } else if (tar_type == INTSXP) {
+    if(!R_compute_identical(target, current, 16)){
+      return "`target` and `current` are integer and not identical";
+    } else {
+      return "";
+    }
   } else if (tar_type == STRSXP) {
     for(i = (R_xlen_t) 0; i < tar_len; i++) {
       const char * cur_name_val, * tar_name_val = CHAR(STRING_ELT(target, i));
@@ -257,7 +261,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         );
     } }
     return "";
-  } else if (tar_type != STRSXP || tar_type != INTSXP) {
+  } else if (tar_type != STRSXP && tar_type != INTSXP) {
     return ALIKEC_sprintf(
       "unexpected attribute type %s; if you are using custom attributes consider setting `attr_mode=1`",
       type2char(tar_type), "", "", ""
