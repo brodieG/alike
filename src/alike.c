@@ -79,10 +79,11 @@ SEXP ALIKEC_alike_internal(
 
     // Don't run custom checks for S4 objects, just use inherits
 
+    tar_type = TYPEOF(target);
     int s4_cur, s4_tar;
     s4_tar = ((IS_S4_OBJECT)(target) != 0);
     s4_cur = ((IS_S4_OBJECT)(current) != 0);
-    if(!err && (s4_cur || s4_tar)) {
+    if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
       if(s4_tar + s4_cur == 1) {
         err = 1;
         err_base = "target %s S4 but current %s";
@@ -118,7 +119,7 @@ SEXP ALIKEC_alike_internal(
         }
         UNPROTECT(1);
       }
-    } else { // don't run length or attribute checks on S4
+    } else if(target != R_NilValue) {  // Nil objects match anything
     // - Attributes ------------------------------------------------------------
 
       if (
@@ -162,7 +163,6 @@ SEXP ALIKEC_alike_internal(
     }
     // - Known Limitations -----------------------------------------------------
 
-    tar_type = TYPEOF(target);
     switch(tar_type) {
       case NILSXP:
       case LGLSXP:

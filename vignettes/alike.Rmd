@@ -48,7 +48,9 @@ The rules governing what makes objects alike are complex to explain, but should 
 
 ## Templates
 
-The basic concept behind `alike` is to allow the user to define templates to use as the `target` argument that the user can then compare objects against with the `current` argument.  Templates can specify as little or as much structure as desired, and `alike` will only compare the object against the aspects of the template that are defined.  This is how we are able to define our matrix template in the introduction that only checks for the number of columns in an object.
+### Overview
+
+The basic concept behind `alike` is to allow the user to define templates to use as the `target` argument to compare against the `current` argument.  Templates can specify as little or as much structure as desired, and `alike` will only compare the object against the aspects of the template that are defined.  This is how we are able to define our matrix template in the introduction that only checks for the number of columns in an object.
 
 One implication of this is that `alike` is not "commutative".  Compare the following to our previous examples:
 
@@ -59,6 +61,17 @@ alike(matrix(1:12, ncol=4), matrix(integer(), nrow=3))   # reverse args
 
 Our template now defines a non-zero length object so `current` must match its length.
 
+### Structure Wildcards
+
+In addition to zero length `target` matching any length `current`, NULL `target` will match anything at all in current:
+
+```{r}
+alike(integer(), 1:10)
+alike(NULL, mtcars)
+alike(list(), list(iris, mtcars))
+alike(list(NULL, NULL), list(iris, mtcars))
+alike(list(NULL, NULL), list(iris, mtcars, warpbreaks))
+```
 ## Comparison Details
 
 ### Overview
@@ -83,6 +96,8 @@ alike(1.1, 1L)   # but integers can match numerics
 
 ### Attribute Comparison
 
+#### Overview
+
 Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current`.
 
 #### `row.names` and `names`
@@ -94,7 +109,8 @@ If present in `target`, then must be matched exactly by the corresponding attrib
 
 These exceptions are necessary to allow you to partially specify names and dimensions:
 ```{r}
-df.tpl <- data.frame(id=integer(), numeric(), numeric()),
+# we use `structure` to circumvent default data.frame names
+df.tpl <- structure(list(id=integer(), numeric(), numeric()), class="data.frame")
 df.dat1 <- data.frame(id=1:3, x=runif(3), y=runif(3))
 df.dat2 <- data.frame(bogus=1:3, x=runif(3), y=runif(3))
 
@@ -104,7 +120,7 @@ names(df.dat1)
 rownames(df.tpl)
 rownames(df.dat1)
 
-alike(df.tp, df.dat2)
+alike(df.tpl, df.dat2)
 ```
 
 #### `dim`
@@ -114,10 +130,13 @@ alike(df.tp, df.dat2)
 ```{r}
 mx.tpl <- matrix(integer(), ncol=3);
 mx.cur <- matrix(1:12, nrow=4)
+mx.cur2 <- matrix(1:12, nrow=3)
 alike(mx.tpl, mx.cur)
 
 dim(mx.tpl)    # notice the 0 for the first value in the `dim` vector
 dim(mx.cur)
+
+alike(mx.tpl, mx.cur2)
 ```
 
 #### `dimnames`
@@ -169,6 +188,8 @@ Attributes containing objects of the following types are actually references to 
 * Byte codes
 
 Because `identical` will return `FALSE` if the objects don't point to the same memory location, even if they are technically equivalent, we only require that `target` and `current` be of the same type in order to meet the `alike` requirements.  This isn't ideal, but should lead to reasonable results in most circumstances.
+
+If you want these attributes to be comapred with `identical` set `attr.mode` to 1 or 2.
 
 ## Objects That Might Be Treated Differently in Future
 

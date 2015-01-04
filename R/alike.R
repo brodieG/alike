@@ -1,17 +1,22 @@
 #' Compare Object Structure
 #'
 #' Similar to \code{\link{all.equal}}, but compares object structure rather than
-#' value.
+#' value.  The \code{target} argument defines a template that the \code{current}
+#' argument must match.
 #'
-#' Exactly what makes two objects \code{alike} is complex to explain in words,
-#' but should be clear from the examples.  We recommend you review those.  If you
-#' are interested in more details, see the vignette.
+#' Exactly what makes two objects \code{alike} is complex, but should be
+#' intuitive.  The best way to understand "alikenes" is to review the examples.
+#' If you are interested in more details, see the vignette.
+#'
+#' @section Value Comparisons:
+#'
+#' Values are never compared explicitly by \code{alike}.
 #'
 #' @section Length Comparisons:
 #'
-#' Generally speaking the lengths of two objects must be equal in order for them
-#' to be considered alike, though in the special case where \code{target} is
-#' length zero, then \code{current} may be any length.
+#' The lengths of two objects must be equal in order for them to be considered
+#' alike, though in the special case where \code{target} is length zero, then
+#' \code{current} may be any length..
 #'
 #' @section Types:
 #'
@@ -75,6 +80,15 @@
 #' alike(logical(1L), y)
 #' alike(integer(1L), x.2)
 #' alike(logical(1L), y.2)
+#'
+#' # Zero length match any length of same type
+#'
+#' alike(integer(), 1:10)
+#'
+#' # NULL matches anything
+#'
+#' alike(NULL, mtcars)
+#' alike(list(NULL, NULL), list(iris, mtcars))
 #'
 #' # `alike` will compare data frame columns
 #'

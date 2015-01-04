@@ -22,19 +22,26 @@ TRUE if target and current are alike, character(1L) describing why they are not 
 }
 \description{
 Similar to \code{\link{all.equal}}, but compares object structure rather than
-value.
+value.  The \code{target} argument defines a template that the \code{current}
+argument must match.
 }
 \details{
-Exactly what makes two objects \code{alike} is complex to explain in words,
-but should be clear from the examples.  We recommend you review those.  If you
-are interested in more details, see the vignette.
+Exactly what makes two objects \code{alike} is complex, but should be
+intuitive.  The best way to understand "alikenes" is to review the examples.
+If you are interested in more details, see the vignette.
 }
+\section{Value Comparisons}{
+
+
+Values are never compared explicitly by \code{alike}.
+}
+
 \section{Length Comparisons}{
 
 
-Generally speaking the lengths of two objects must be equal in order for them
-to be considered alike, though in the special case where \code{target} is
-length zero, then \code{current} may be any length.
+The lengths of two objects must be equal in order for them to be considered
+alike, though in the special case where \code{target} is length zero, then
+\code{current} may be any length..
 }
 
 \section{Types}{
@@ -62,8 +69,7 @@ Paramter \code{attr.mode} controls how attributes are compared:
     }
   \item 1: all attributes present in \code{target} must be present in
     \code{current} and be identical.
-  \item 2: all attributes present in \code{target} must be present in
-    \code{current} and there may be no additional attributes in \code{current}
+  \item 2: attributes in \code{target} and \code{current} must be identical
 }
 Please see vignette for details on for how special attributes are compared.
 Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
@@ -96,6 +102,15 @@ alike(integer(1L), x)
 alike(logical(1L), y)
 alike(integer(1L), x.2)
 alike(logical(1L), y.2)
+
+# Zero length match any length of same type
+
+alike(integer(), 1:10)
+
+# NULL matches anything
+
+alike(NULL, mtcars)
+alike(list(NULL, NULL), list(iris, mtcars))
 
 # `alike` will compare data frame columns
 

@@ -36,6 +36,13 @@ unitizer_sect("lists", {
   alike(lst.4, lst)     # should match
   alike(lst, lst.4)     # should not match because template has more detail
 } )
+unitizer_sect("NULL values as wildcards", {
+  alike(NULL, 1:3)
+  alike(1:3, NULL)
+  alike(list(NULL, NULL), list(list(list(1, 2, 3)), 1:25))
+  alike(list(NULL), list(1, 2))
+  alike(list(), list(1, 2))
+})
 unitizer_sect("Matrix / Arrays", {
   alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
   alike(matrix(integer(), nrow=3), matrix(1:21, nrow=3))
@@ -114,49 +121,58 @@ unitizer_sect(".alike", {
 # detected during development and not the last minute package checks
 
 unitizer_sect("Examples", {
-  alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
-  alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
-  alike(1.1, 1L)         # TRUE, by default, integers are always considered real
-  alike(integer(), 1:4)  # TRUE, Zero length `target` matches any length `current`
-  alike(1:4, integer())  # But not vice versa
+ alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
+ alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
+ alike(1.1, 1L)         # TRUE, by default, integers are always considered real
+ alike(integer(), 1:4)  # TRUE, Zero length `target` matches any length `current`
+ alike(1:4, integer())  # But not vice versa
 
-  # Ever notice how annoying it is to test for "scalarness", consider:
+ # Scalarness can now be checked at same time as type
 
-  x <- 1
-  x.2 <- 1:3
-  y <- TRUE
-  y.2 <- c(TRUE, TRUE)
+ x <- 1
+ x.2 <- 1:3
+ y <- TRUE
+ y.2 <- c(TRUE, TRUE)
 
-  alike(integer(1L), x)
-  alike(logical(1L), y)
-  alike(integer(1L), x.2)
-  alike(logical(1L), y.2)
+ alike(integer(1L), x)
+ alike(logical(1L), y)
+ alike(integer(1L), x.2)
+ alike(logical(1L), y.2)
 
-  # `alike` will compare data frame columns
+ # Zero length match any length of same type
 
-  df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
-  df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
-  df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
+ alike(integer(), 1:10)
 
-  alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
-  alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
+ # NULL matches anything
 
-  # factor levels must match; makes sense, otherwise it really isn't the same
-  # type of data (note this is a recursive comparison); for better understanding
-  # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
+ alike(NULL, mtcars)
+ alike(list(NULL, NULL), list(iris, mtcars))
 
-  alike(df.tpl, df.cur2)
+ # `alike` will compare data frame columns
 
-  alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
-  alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
+ df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
+ df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
+ df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
 
-  # In order for objects to be alike, they must share a family tree, not just
-  # a common class
+ alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
+ alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
 
-  obj.tpl <- structure(TRUE, class=letters[1:3])
-  obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
-  obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
+ # factor levels must match; makes sense, otherwise it really isn't the same
+ # type of data (note this is a recursive comparison); for better understanding
+ # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
 
-  alike(obj.tpl, obj.cur.1)
-  alike(obj.tpl, obj.cur.2)
+ alike(df.tpl, df.cur2)
+
+ alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
+ alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
+
+ # In order for objects to be alike, they must share a family tree, not just
+ # a common class
+
+ obj.tpl <- structure(TRUE, class=letters[1:3])
+ obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
+ obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
+
+ alike(obj.tpl, obj.cur.1)
+ alike(obj.tpl, obj.cur.2)
 } )
