@@ -417,8 +417,10 @@ const char * ALIKEC_compare_attributes_internal_simple(
       type2char(tae_type), type2char(cae_type), ""
     );
   } else if (
-    tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
-    tae_type == BCODESXP || tae_type == ENVSXP
+    (
+      tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
+      tae_type == BCODESXP || tae_type == ENVSXP
+    ) && attr_mode
   ) {
     // Because these attributes are references to other objects that
     // we cannot directly compare, and could for all intents and
