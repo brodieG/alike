@@ -482,7 +482,7 @@ Unit: microseconds
 */
 
 const char * ALIKEC_compare_attributes_internal(
-  SEXP target, SEXP current, int attr_mode, int * is_df
+  SEXP target, SEXP current, int attr_mode, int * is_df, int * err_lvl
 ) {
   /*
   Array to store major errors from, in order:
@@ -640,8 +640,10 @@ const char * ALIKEC_compare_attributes_internal(
 
   int i;
   for(i = 0; i < 6; i++) {
-    if(strlen(err_major[i]) && (!rev || (rev && attr_mode == 2)))
+    if(strlen(err_major[i]) && (!rev || (rev && attr_mode == 2))) {
+      *err_lvl = i;
       return err_major[i];
+    }
   }
   // Passed
 
@@ -655,16 +657,15 @@ external interface for compare attributes
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
   const char * comp_res;
-  int tmp = 0;
-  int * is_df =& tmp;
+  int tmp = 0, tmp2 = -1;
+  int * is_df =& tmp, * err_lvl =& tmp2;
 
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
 
   comp_res = ALIKEC_compare_attributes_internal(
-    target, current, asInteger(attr_mode), is_df
+    target, current, asInteger(attr_mode), is_df, err_lvl
   );
-
   if(strlen(comp_res)) {
     return mkString(comp_res);
   } else {

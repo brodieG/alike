@@ -121,12 +121,14 @@ SEXP ALIKEC_alike_internal(
       }
     } else if(target != R_NilValue) {  // Nil objects match anything
     // - Attributes ------------------------------------------------------------
+      int tmp = -1;
+      int * err_lvl =& tmp;
 
       if (
         !err &&
         strlen(
           err_attr = ALIKEC_compare_attributes_internal(
-            target, current, attr_mode, is_df
+            target, current, attr_mode, is_df, err_lvl
         ) )
       ) {
         err = 1;
@@ -151,11 +153,16 @@ SEXP ALIKEC_alike_internal(
     // - Length ----------------------------------------------------------------
 
       if(
-        !err && (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
+        (!err || (*is_df && *err_lvl > 0))  &&   // if attribute error is not class, override with col count error
+        (tar_len = xlength(target)) > 0 &&  /* zero lengths match any length */
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
-        err_base =  "Length mismatch, expected %s but got %s%s%s";
+        if(*is_df) {
+          err_base = "Column count mismatch: expected %s but got %s%s%s";
+        } else {
+          err_base =  "Length mismatch: expected %s but got %s%s%s";
+        }
         err_tok1 = ALIKEC_xlen_to_char(tar_len);
         err_tok2 = ALIKEC_xlen_to_char(cur_len);
         err_tok3 = err_tok4 = "";
