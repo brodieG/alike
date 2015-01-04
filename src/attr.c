@@ -6,9 +6,13 @@
 Compare class attribute
 
 Note that expectation is that unclassed objects will get sent here with their
-implicit class defined by ALIKEC_mode
+implicit class defined by ALIKEC_mode.
+
+Will set prim_is_df to 1 if prim is data frame (or sec if ref==1)
 */
-const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
+const char * ALIKEC_compare_class(
+  SEXP prim, SEXP sec, int rev, int * prim_is_df
+) {
   if(rev == NA_INTEGER || rev > 1 || rev < 0) error("Logic Error: `rev` should be 0 or 1.");
   if(prim == R_NilValue || sec == R_NilValue)
     error("Logic Error: NULL classes should not be possible; contact maintainer.");
@@ -26,6 +30,8 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
   cur_class_len = XLENGTH(sec);
   R_xlen_t class_stop =
     tar_class_len > cur_class_len ? cur_class_len : tar_class_len;
+  const char * err_msg = "";
+  int err_found = 0;
 
   len_delta = cur_class_len - class_stop;
 
@@ -34,23 +40,24 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
     cur_class_i < cur_class_len;
     cur_class_i++, tar_class_i++
   ) {
-    if(
-      strcmp(
-        cur_class = CHAR(STRING_ELT(sec, cur_class_i)),
-        tar_class = CHAR(STRING_ELT(prim, tar_class_i))
-      ) != 0
-    ) {
+    cur_class = CHAR(STRING_ELT(sec, cur_class_i));
+    tar_class = CHAR(STRING_ELT(prim, tar_class_i));
+    if(!*prim_is_df && !strcmp(tar_class, "data.frame")) *prim_is_df = 1;
+
+    if(!err_found && strcmp(cur_class, tar_class)) { // class mismatch
+      err_found = 1;
       if(cur_class_len > 1) {
-        return ALIKEC_sprintf(
+        err_msg =  ALIKEC_sprintf(
           "\"class\" mismatch at class element #%s: expected \"%s\", but got \"%s\"%s",
           ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
           tar_class, cur_class, ""
         );
       } else {
-        return ALIKEC_sprintf(
+        err_msg =  ALIKEC_sprintf(
           "\"class\" mismatch: expected \"%s\", but got \"%s\"%s",
           tar_class, cur_class, "", ""
   );} } }
+  if(err_found) return err_msg;
   if(tar_class_len > cur_class_len) {
     return ALIKEC_sprintf(
       "class inheritance mismatch, should inherit from \"%s\" but does not",
@@ -62,7 +69,14 @@ const char * ALIKEC_compare_class(SEXP prim, SEXP sec, int rev) {
   return "";
 }
 SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev) {
-  return mkString(ALIKEC_compare_class(prim, sec, asInteger(rev)));
+  SEXP res = PROTECT(allocVector(VECSXP, 2));
+  int tmp = 0;
+  int * is_df =& tmp;
+  const char * err_msg = ALIKEC_compare_class(prim, sec, asInteger(rev), is_df);
+  SET_VECTOR_ELT(res, 0, mkString(err_msg));
+  SET_VECTOR_ELT(res, 1, ScalarInteger(*is_df));
+  UNPROTECT(1);
+  return res;
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -187,8 +201,9 @@ Implements comparing character vectors element for element:
 
 This is used to compare names, row.names, etc.
 */
-const char * ALIKEC_compare_special_char_attrs_internal(SEXP target, SEXP current) {
-
+const char * ALIKEC_compare_special_char_attrs_internal(
+  SEXP target, SEXP current
+) {
   SEXPTYPE cur_type, tar_type;
   R_xlen_t cur_len, tar_len, i;
 
@@ -434,8 +449,9 @@ Unit: microseconds
  attr_compare(mx.1, mx.2) 2.406 2.5380 2.6100 2.7150 13.482   100
 */
 
-const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode) {
-
+const char * ALIKEC_compare_attributes_internal(
+  SEXP target, SEXP current, int attr_mode, int * is_df
+) {
   /*
   Array to store major errors from, in order:
     0. class,
@@ -538,7 +554,7 @@ const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int a
           sec_attr_el_val_tmp = PROTECT(sec_attr_el_val);
         }
         const char * class_comp = ALIKEC_compare_class(
-          prim_attr_el_val, sec_attr_el_val_tmp, rev
+          prim_attr_el_val, sec_attr_el_val_tmp, rev, is_df
         );
         UNPROTECT(1);
         if(strlen(class_comp)) {
@@ -607,11 +623,15 @@ external interface for compare attributes
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
   const char * comp_res;
+  int tmp = 0;
+  int * is_df =& tmp;
 
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
 
-  comp_res = ALIKEC_compare_attributes_internal(target, current, asInteger(attr_mode));
+  comp_res = ALIKEC_compare_attributes_internal(
+    target, current, asInteger(attr_mode), is_df
+  );
 
   if(strlen(comp_res)) {
     return mkString(comp_res);

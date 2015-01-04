@@ -34,9 +34,10 @@ SEXP ALIKEC_alike_internal(
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
   int i;
+  int was_df;    // whether prior loop was in a data.frame
+  int tmp = 0;
+  int * is_df = &tmp;
   SEXPTYPE tar_type;
-
-  /* Define error message; need to figure out how to move this out of here */
 
   int err = 0;
   const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
@@ -123,8 +124,9 @@ SEXP ALIKEC_alike_internal(
       if (
         !err &&
         strlen(
-          err_attr = ALIKEC_compare_attributes_internal(target, current, attr_mode)
-        )
+          err_attr = ALIKEC_compare_attributes_internal(
+            target, current, attr_mode, is_df
+        ) )
       ) {
         err = 1;
         err_base = err_attr;
@@ -198,17 +200,41 @@ SEXP ALIKEC_alike_internal(
           ind_sz_max = ind_sz;  /* we will use to allocate a char vec of appropriate size */
         ind_len = ind_len + ind_sz;
       }
-      char err_chr_indeces[ind_len + 4 * (ind_lvl + 1) + 1];
+      char err_chr_indeces[ind_len + 4 * (ind_lvl + 1) + 1];  //err_chr_indeces should be over-allocated by one element due to some changes we made
       char err_chr_index[ind_sz_max + 4 + 1];
       err_chr_indeces[0] = err_chr_index[0] = '\0';
-      for(i = 0; i < ind_lvl; i++) {
+      for(i = 0; i < ind_lvl - 1; i++) {
         sprintf(err_chr_index, "[[%d]]", ind_stk[i] + 1);
         strcat(err_chr_indeces, err_chr_index);
       }
       /* Create final error and store in STRSXP */
 
       if(ind_lvl > 0) {
-        err_final = ALIKEC_sprintf("Mismatch at index %s: %s%s", err_chr_indeces, err_msg, "", "");
+        const char * err_interim, * err_col_type;
+
+        if(  // Dealing with the column of a data frame like object
+          was_df && TYPEOF(sxp_stk_tar[ind_lvl - 1]) == VECSXP
+        ) {
+          err_col_type = "column";
+          SEXP col_names = getAttrib(sxp_stk_tar[ind_lvl - 1], R_NamesSymbol);
+          if(
+            col_names != R_NilValue && XLENGTH(col_names) > ind_stk[i]
+          ) {
+            err_interim = ALIKEC_sprintf(
+              "`%s`", CHAR(asChar(STRING_ELT(col_names, ind_stk[i]))), "", "", ""
+            );
+          } else {
+            err_interim = ALIKEC_xlen_to_char(ind_stk[i] + 1);
+          }
+        } else {
+          err_col_type = "index";
+          err_interim = ALIKEC_sprintf(
+            "%s[[%s]]", err_chr_indeces,
+            ALIKEC_xlen_to_char(ind_stk[i] + 1), "", ""
+        );}
+        err_final = ALIKEC_sprintf(
+          "Mismatch at %s %s: %s%s", err_col_type, err_interim, err_msg, ""
+        );
       } else {
         err_final = ALIKEC_sprintf("%s%s%s%s", err_msg, "", "", "");
       }
@@ -217,8 +243,6 @@ SEXP ALIKEC_alike_internal(
       SET_STRING_ELT(res, 0, mkChar(err_final));
       UNPROTECT(1);
       return res;
-
-      //return mkString(err_final);
     }
     // - Get Next Elements -----------------------------------------------------
 
@@ -249,6 +273,7 @@ SEXP ALIKEC_alike_internal(
       ind_stk[ind_lvl - 1]++;
       ind_lvl--;
     }
+    was_df = *is_df;
   }
   // - Finalize ----------------------------------------------------------------
 

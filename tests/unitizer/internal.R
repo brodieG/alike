@@ -50,6 +50,11 @@ unitizer_sect("S3 Classes", {
   class_compare(class2, class1, 2);
   class_compare(class2, class1, -1);
   class_compare(class2, class1, NA_integer_);
+
+  class7 <- c("a", "data.frame")
+
+  class_compare(class7, class1, 0)
+  class_compare(class1, class7, 0)
 })
 unitizer_sect("Dimnames", {
   dimn1 <- list(NULL, NULL, NULL)
