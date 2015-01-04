@@ -153,20 +153,34 @@ const char * ALIKEC_compare_dims(
 
   if(prim_len != sec_len)
     return ALIKEC_sprintf(
-      "dimension mismatch: expected %s, but got %s",
+      "dimension count mismatch: expected %s, but got %s",
       ALIKEC_xlen_to_char(prim_len), ALIKEC_xlen_to_char(sec_len), "", ""
     );
 
   R_xlen_t attr_i;
   int tar_dim_val;
+  const char * err_dim;
+
   for(attr_i = (R_xlen_t)0; attr_i < prim_len; attr_i++) {
     if(
       (tar_dim_val = INTEGER(prim)[attr_i]) &&
       tar_dim_val != INTEGER(sec)[attr_i]
     ) {
+      if(prim_len == 2) {  // Matrix
+        switch(attr_i) {
+          case (R_xlen_t) 0: err_dim = "row count mismatch"; break;
+          case (R_xlen_t) 1: err_dim = "column count mismatch"; break;
+          default:
+            error("Logic error: inconsistent matrix dimensions; contact maintainer.");
+        }
+      } else {
+        err_dim = ALIKEC_sprintf(
+          "\"dim\" length mismatch at dimension %s",
+          ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), "", "", ""
+      );}
       return ALIKEC_sprintf(
-        "\"dim\" length mismatch at dimension %s: expected %s, but got %s%s",
-        ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val),
+        "%s: expected %s, but got %s%s",
+        err_dim, ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val),
         ALIKEC_xlen_to_char((R_xlen_t)(INTEGER(sec)[attr_i])), ""
       );
   } }
@@ -307,7 +321,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
   }
   // Compare actual dimnames attr
 
-  R_xlen_t prim_len = xlength(prim), sec_len = xlength(sec);
+  R_xlen_t prim_len = XLENGTH(prim), sec_len = XLENGTH(sec);
   SEXPTYPE prim_type = TYPEOF(prim);
 
   if(
@@ -344,9 +358,21 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
           prim_obj, sec_obj
       );
       if(strlen(dimnames_comp)) {
+        const char * err_msg;
+        if(prim_len == 2) { // matrix like
+          switch(attr_i) {
+            case (R_xlen_t) 0: err_msg = "row names mismatch"; break;
+            case (R_xlen_t) 1: err_msg = "column names mismatch"; break;
+            default: error("Logic Error: dimnames dimension mismatch; contact maintainer.");
+          }
+        } else {
+          err_msg = ALIKEC_sprintf(
+            "\"dimnames\" mismatch for dimension %s",
+            ALIKEC_xlen_to_char(attr_i + (R_xlen_t) 1), "", "", ""
+        );}
         return ALIKEC_sprintf(
-          "\"dimnames\" mismatch for dimension %s: %s",
-          ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), dimnames_comp, "", ""
+          "%s: %s",
+          err_msg, dimnames_comp, "", ""
   );} } }
   return "";
 }
