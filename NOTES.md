@@ -1,8 +1,8 @@
 These are internal developer notes
 
-# C Benchmarking
+## C Benchmarking
 
-## Assessing General Overhead
+### Assessing General Overhead
 
 microbenchmark(typeof(5.1), typeof2(5.1), type_of(5.1))
 Unit: nanoseconds
@@ -32,7 +32,7 @@ Unit: nanoseconds
                        fun1()  756  822.0  881.5  994.0  3504   500
                 fun2(a, b, c)  799  929.5 1055.0 1220.0  2990   500
                 fun3(a, b, c) 1115 1229.5 1358.0 1533.5  3330   500
-                fun4(a, b, c)  921 1036.5 1188.0 1292.5  2158   100                
+                fun4(a, b, c)  921 1036.5 1188.0 1292.5  2158   100
 
 fun overhead is ~200ns
 vars in .Call is ~130ns
@@ -44,7 +44,7 @@ In C function calls negligible (seems to be on the order of 15ns)
 internal accept C level non main arguments coerced by the externals interface
 functions
 
-Using PACKAGE argument to .Call seems to slow things down a fair bit, though 
+Using PACKAGE argument to .Call seems to slow things down a fair bit, though
 this is with fully registered functions.
 
 Rcpp seems to be generally 2-3x slower than inline, and not just in terms of
@@ -61,7 +61,7 @@ typealike:
 - base version with no adjustments for speed, default mode (0), and tolerance
 - alternate with both tolerance and mode
 
-## Alike
+### Initial Benchmarks
 
 Initial benchmarks (before attr checking):
 
@@ -83,13 +83,13 @@ Initial benchmarks (before attr checking):
      alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
    .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
 
-After adding S4 checks (and also upgrading to OSX 10.9 and R 3.1.1: 
+After adding S4 checks (and also upgrading to OSX 10.9 and R 3.1.1:
 
     setClass("x", list(a="integer"))
     setClass("z", contains="x", list(b="integer"))
     y <- new("x")
     w <- new("z")
-    
+
     microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst), .alike2(y, w))
 
     Unit: microseconds
@@ -107,7 +107,23 @@ And some that cause errors:
      .alike2(lst, lst.2) 3.662 3.7625 3.8665 4.0015 19.204   100
            .alike2(w, y) 2.944 3.2205 3.3315 3.5265 37.653   100
 
-## Stack Manipulation
+### As of v0.2.2
+
+```
+lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61, 62, 63)))))
+lst.3 <- list(list(11, 21), list(31, list(41, list(51, list(61         )))))
+
+library(alike)
+library(microbenchmark)
+microbenchmark(times=1000, .alike(lst.2, lst), .alike(lst.3, lst))
+Unit: microseconds
+               expr   min    lq median    uq    max neval
+ .alike(lst.2, lst) 1.769 1.865  1.947 2.012  4.253  1000   # no error
+ .alike(lst.3, lst) 3.226 3.372  3.440 3.535 55.883  1000   # with error
+```
+
+### Stack Manipulation
 
 The is the baseline:
 
@@ -132,3 +148,20 @@ And add a `substitute`:
 
 At this point we've replicated a promise of sorts, by capturing the expression,
 as well as the evaluation environment, but we've add 600ns in evaluation time.
+
+## Comparisons
+
+### Most Meaningful Elements
+
+1. Check class
+2. Check dimensions: infer implicit matrix class
+
+### row.names
+
+We need to treat row.names specially here because of the totally bullshit, well, not truly, way data.frame row names are stored c(NA, n) where "n" is the number of rows; the `getAttrib` access expands that to the full sequence; entirely unclear why we can't just compare the two `c(NA, n)` and just be done; do we really want to allow two row.names attributes that are stored differently but compute to the same value to be identical???
+
+Actually, for now we're just treating this as any other attribute and we'll see if it causes problems.
+
+### Rf_identical
+
+not entirely sure what the "default" flag is for `identical`, seems to be 16 by the convention that all the flags that are TRUE get set to zero, but very confusing why `ignore.environment` basically is the opposite of all the others.  Otherwise it would have made sense to have the default flag be 0  NEED TO TEST CLOSURE COMPARISON!!

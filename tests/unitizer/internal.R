@@ -9,14 +9,15 @@ class_compare <- alike:::class_compare
 dimname_compare <- alike:::dimname_compare
 dim_compare <- alike:::dim_compare
 
-gctorture(TRUE)
-
+unitizer_sect("Name like attributes", {
   name_compare(c("", "hello"), c("abc", "hello"))
   name_compare(c("ab", "hello"), c("abc", "hello"))
   name_compare(c(NA_character_, "hello"), c("abc", "hello"))
   name_compare(c("ab", "hello"), c(NA_character_, "hello"))
   name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
+} )
 
+unitizer_sect("S3 Classes", {
   class1 <- letters[1:5]
   class2 <- letters[3:5]
   class3 <- letters[c(4, 3, 5)]
@@ -29,6 +30,9 @@ gctorture(TRUE)
   class_compare(class1, class1[1:3], 0);
   class_compare(class3, class2, 0);
   class_compare(class3, class1, 0);
+  class_compare(class5, class2, 0);
+  class_compare(class2, class5, 0);
+  class_compare(class5, class5, 0);
   class_compare(class6, class2, 0);
   class_compare(class2, class6, 0);
 
@@ -37,14 +41,22 @@ gctorture(TRUE)
   class_compare(class1, class1[1:3], 1);
   class_compare(class3, class2, 1);
   class_compare(class3, class1, 1);
+  class_compare(class5, class2, 1);
+  class_compare(class2, class5, 1);
+  class_compare(class5, class5, 1);
   class_compare(class6, class2, 1);
   class_compare(class2, class6, 1);
+
+  class_compare(class2, class1, 2);
+  class_compare(class2, class1, -1);
+  class_compare(class2, class1, NA_integer_);
 
   class7 <- c("a", "data.frame")
 
   class_compare(class7, class1, 0)
   class_compare(class1, class7, 0)
-
+})
+unitizer_sect("Dimnames", {
   dimn1 <- list(NULL, NULL, NULL)
   dimn2 <- list(a=letters[1:3], b=letters[4:6], c=letters[7:9])
   dimn3 <- list(letters[1:3], b=letters[4:6], c=letters[7:9])
@@ -94,7 +106,8 @@ gctorture(TRUE)
   dimname_compare(dimn13, dimn2)
   dimname_compare(dimn13, dimn14)
   dimname_compare(dimn14, dimn13)
-
+})
+unitizer_sect("Dims", {
   dim1 <- rep(2L, 2)
   dim2 <- rep(2L, 3)
   dim3 <- rep(2L, 4)
@@ -130,16 +143,13 @@ gctorture(TRUE)
   dim_compare(dim6, dim9, rev=1L)  # fail
   dim_compare(dim9, dim6)  # fail
   dim_compare(dim10, dim1) # fail
+})
 
-gctorture(FALSE)
-
-  df.1 <- data.frame(a=1:10, b=letters[1:10])
-  df.2 <- data.frame(integer(), character())
-
-gctorture(TRUE)
-
+unitizer_sect("All Attributes, default", {
   attr_compare(1, 1)                                           # TRUE
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
+  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), "hello")  # Error
+  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1.1)      # Error
   attr_compare(matrix(integer(), 4), matrix(integer(), 3, 3))           # Dim 1 error
   attr_compare(matrix(integer(), ncol=4), matrix(integer(), 3, 3))      # Dim 2 error
   attr_compare(                                                         # TRUE
@@ -164,15 +174,15 @@ gctorture(TRUE)
   )
   attr_compare(                                                         # TRUE
     structure(list(integer(), character())),
-    df.1
+    data.frame(a=1:10, b=letters[1:10])
   )
   attr_compare(                                                         # TRUE
     structure(list(integer(), character()), class="data.frame"),
-    df.1
+    data.frame(a=1:10, b=letters[1:10])
   )
   attr_compare(                                                         # TRUE
-    structure(unname(df.2), class="data.frame"),
-    df.1
+    structure(unname(data.frame(integer(), character())), class="data.frame"),
+    data.frame(a=1:10, b=letters[1:10])
   )
   attr_compare(                                                         # TRUE, zero length attr
     structure(list(), welp=list()),
@@ -198,7 +208,8 @@ gctorture(TRUE)
     structure(list(), class=letters[2:4]),
     structure(list("hello"), class=letters[1:4])
   )
-
+} )
+unitizer_sect("All attributes, strict", {
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
   attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
   attr_compare(                                                         # dimnames mismatch
@@ -218,12 +229,12 @@ gctorture(TRUE)
   )
   attr_compare(                                                         # TRUE
     structure(list(integer(), character())),
-    df.1,
+    data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
   attr_compare(                                                         # TRUE
     structure(list(integer(), character()), class="data.frame"),
-    df.1,
+    data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
   attr_compare(                                                         # Class mismatch
@@ -233,12 +244,12 @@ gctorture(TRUE)
   )
   attr_compare(                                                         # Too many attrs
     structure(list(integer(), character())),
-    df.1,
+    data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
   attr_compare(                                                         # Too many attrs
     structure(list(integer(), character()), class="data.frame"),
-    df.1,
+    data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
   attr_compare(                                                         # Missing attr
@@ -251,3 +262,4 @@ gctorture(TRUE)
     structure(list("hello"), welp=list(NULL, 1:3), kelp=20),
     attr.mode=2
   )
+} )

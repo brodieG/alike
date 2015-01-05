@@ -1,17 +1,22 @@
 #' Compare Object Structure
 #'
 #' Similar to \code{\link{all.equal}}, but compares object structure rather than
-#' value.
+#' value.  The \code{target} argument defines a template that the \code{current}
+#' argument must match.
 #'
-#' Exactly what makes two objects \code{alike} is complex to explain in words,
-#' but should be clear from the examples.  We recommend you review those.  If you
-#' are interested in more details, see the vignette.
+#' Exactly what makes two objects \code{alike} is complex, but should be
+#' intuitive.  The best way to understand "alikenes" is to review the examples.
+#' If you are interested in more details, see the vignette.
+#'
+#' @section Value Comparisons:
+#'
+#' Values are never compared explicitly by \code{alike}.
 #'
 #' @section Length Comparisons:
 #'
-#' Generally speaking the lengths of two objects must be equal in order for them
-#' to be considered alike, though in the special case where \code{target} is
-#' length zero, then \code{current} may be any length.
+#' The lengths of two objects must be equal in order for them to be considered
+#' alike, though in the special case where \code{target} is length zero, then
+#' \code{current} may be any length..
 #'
 #' @section Types:
 #'
@@ -35,8 +40,7 @@
 #'     }
 #'   \item 1: all attributes present in \code{target} must be present in
 #'     \code{current} and be identical.
-#'   \item 2: all attributes present in \code{target} must be present in
-#'     \code{current} and there may be no additional attributes in \code{current}
+#'   \item 2: attributes in \code{target} and \code{current} must be identical
 #' }
 #' Please see vignette for details on for how special attributes are compared.
 #' Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
@@ -76,6 +80,15 @@
 #' alike(logical(1L), y)
 #' alike(integer(1L), x.2)
 #' alike(logical(1L), y.2)
+#'
+#' # Zero length match any length of same type
+#'
+#' alike(integer(), 1:10)
+#'
+#' # NULL matches anything
+#'
+#' alike(NULL, mtcars)
+#' alike(list(NULL, NULL), list(iris, mtcars))
 #'
 #' # `alike` will compare data frame columns
 #'
@@ -193,7 +206,7 @@ type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
 #' R interface for an internal C functions used by \code{`alike`}.  Provided
 #' primarily for unit testing purposes
 #'
-#' @aliases name_compare
+#' @aliases name_compare, class_compare, dimname_compare, dim_compare
 #' @keywords internal
 #' @param int_mode
 
@@ -202,6 +215,17 @@ attr_compare <- function(target, current, attr.mode=0L)
 
 name_compare <- function(target, current)
   .Call(ALIKEC_compare_names, target, current)
+
+class_compare <- function(target, current, rev)
+  .Call(ALIKEC_compare_class, target, current, rev)
+
+dimname_compare <- function(target, current)
+  .Call(ALIKEC_compare_dimnames, target, current)
+
+dim_compare <- function(
+  target, current, tar_obj=integer(), cur_obj=integer(), rev=0L
+)
+  .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
 
 #' Used for testing C code
 #'
