@@ -1,212 +1,253 @@
-# version of helper unitizer tests for use with valgrind
+# redefine funs to give us flexibility if we change packages without having
+# to export the internal functions
 
 library(alike)
-gctorture(TRUE)
-# Redefine names; necessary because we renamed functions when moving to C versions
 
-.typeof2 <- .type_of
-typeof2 <- type_of
-.type_alike2 <- .type_alike
-type_alike2 <- type_alike
 attr_compare <- alike:::attr_compare
 name_compare <- alike:::name_compare
+class_compare <- alike:::class_compare
+dimname_compare <- alike:::dimname_compare
+dim_compare <- alike:::dim_compare
 
-.Machine$double.eps    # just to record precision these tests were run in
-a <- b <- 1:100
-a[[1]] <- a[[1]] + .0000001
-b[[1]] <- b[[1]] + .00000001
+gctorture(TRUE)
 
-.typeof2(1 + .Machine$double.eps ^ .5)          # integer, this is the threshold 
-.typeof2(1 + .Machine$double.eps ^ .5 * 1.0001) # double
-.typeof2(1:100)
-.typeof2(1.1)
-.typeof2(1.0000001)           # double
-.typeof2(a)                   # double
-.typeof2(1.00000001)          # integer
-.typeof2(b)                   # integer
-.typeof2(1e6 + .1)            # double
-.typeof2(1e7 + .1)            # integer
-.typeof2(NA_real_)            # integer
-.typeof2(Inf)                 # integer
-.typeof2(-Inf)                # integer
-.typeof2(list())
-.typeof2(data.frame(a=1:10))
-.typeof2(matrix("", 10, 10))
+  name_compare(c("", "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c("abc", "hello"))
+  name_compare(c(NA_character_, "hello"), c("abc", "hello"))
+  name_compare(c("ab", "hello"), c(NA_character_, "hello"))
+  name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
 
-typeof2(1:100)
-typeof2(1.1)
-typeof2(1.0000001)           # double
-typeof2(a)                   # double
-typeof2(1.00000001)          # integer
-typeof2(b)                   # integer
-typeof2(1e6 + .1)            # double
-typeof2(1e7 + .1)            # integer
-typeof2(NA_real_)            # integer
-typeof2(Inf)                 # integer
-typeof2(-Inf)                # integer
-typeof2(1e7 + .1, tolerance = .Machine$double.eps ^ .5 / 10) # double
-# typeof2(1e7 + .1, tolerance=1L)       # error, might change in future
-# typeof2(1e7 + .1, tolerance="hello")  # error
+  class1 <- letters[1:5]
+  class2 <- letters[3:5]
+  class3 <- letters[c(4, 3, 5)]
+  class4 <- character()
+  class5 <- NULL
+  class6 <- list("a", "b", "c")
 
-.type_alike2(1, 1.1)
-.type_alike2(1, 1.00000001)
-.type_alike2(list(), integer())
-.type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
-.type_alike2(1:100, a)        # FALSE
-.type_alike2(1:100, b)        # TRUE
-.type_alike2(1000000L, 1000000L + .1)     # FALSE
-.type_alike2(10000000L, 10000000L + .1)   # TRUE
-.type_alike2(data.frame(a=1:10), list())
-.type_alike2(NULL, NULL)
-.type_alike2(1/0, NA)
+  class_compare(class2, class1, 0);
+  class_compare(class1, class2, 0);
+  class_compare(class1, class1[1:3], 0);
+  class_compare(class3, class2, 0);
+  class_compare(class3, class1, 0);
+  class_compare(class6, class2, 0);
+  class_compare(class2, class6, 0);
 
-type_alike2(1, 1.1)          # TRUE, 1 is numeric
-type_alike2(1L, 1.1)         # FALSE
-type_alike2(1L, 1.00000001)  # TRUE
-type_alike2(numeric(), c(1.1, 0.053, 41.8))  # TRUE
-type_alike2(numeric(), list(1.1))  # FALSE
-type_alike2(list(), integer())     # FALSE
-type_alike2(a, 1:100)        # TRUE, integer can be considered numeric
-type_alike2(1:100, a)        # FALSE
-type_alike2(1:100, b)        # TRUE
-type_alike2(1000000L, 1000000L + .1)     # FALSE
-type_alike2(10000000L, 10000000L + .1)   # TRUE
-type_alike2(data.frame(a=1:10), list())
-type_alike2(NULL, NULL)
-type_alike2(1/0, NA)
+  class_compare(class2, class1, 1);
+  class_compare(class1, class2, 1);
+  class_compare(class1, class1[1:3], 1);
+  class_compare(class3, class2, 1);
+  class_compare(class3, class1, 1);
+  class_compare(class6, class2, 1);
+  class_compare(class2, class6, 1);
 
-type_alike2(1:100, a, tolerance=.Machine$double.eps ^ .5 * 10)  # TRUE
-type_alike2(a, 1:100, mode=1.0)      # TRUE
-type_alike2(a, 1:100, mode=1L)       # TRUE
-type_alike2(1:100, b, mode=1L)       # FALSE
-type_alike2(a, 1:100, mode=2L)       # FALSE
+  class7 <- c("a", "data.frame")
 
-# type_alike2(1:100, a, tolerance=1L)       # error
-# type_alike2(1:100, a, tolerance=1:2)      # error
-# type_alike2(1:100, a, tolerance="hello")  # error
-# type_alike2(1:100, a, mode=1.1)           # error
-# type_alike2(1:100, a, mode=1:2)           # error
+  class_compare(class7, class1, 0)
+  class_compare(class1, class7, 0)
 
-attr_compare(1, 1)                                           # TRUE
-attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
-# attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), "hello")  # Error
-# attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1.1)      # Error
-attr_compare(matrix(integer(), 4), matrix(integer(), 3, 3))           # Dim 1 error
-attr_compare(matrix(integer(), ncol=4), matrix(integer(), 3, 3))      # Dim 2 error
-attr_compare(                                                         # TRUE
-  matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-)  
-attr_compare(                                                         # dimnames error
-  matrix(integer(), 3, 3, dimnames=list(NULL, letters[2:4])), 
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-)  
-attr_compare(                                                         # dimnames error
-  matrix(integer(), 3, 3, dimnames=list(letters[1:3], letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
-)  
-attr_compare(                                                         # TRUE
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
-)  
-attr_compare(                                                         # dimnames error
-  matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
-)
-attr_compare(                                                         # TRUE
-  structure(list(integer(), character())),
-  data.frame(a=1:10, b=letters[1:10])
-)  
-attr_compare(                                                         # TRUE
-  structure(list(integer(), character()), class="data.frame"),
-  data.frame(a=1:10, b=letters[1:10])
-)  
-attr_compare(                                                         # TRUE
-  structure(unname(data.frame(integer(), character())), class="data.frame"),
-  data.frame(a=1:10, b=letters[1:10])
-)
-attr_compare(                                                         # TRUE, zero length attr
-  structure(list(), welp=list()), 
-  structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
-)
-attr_compare(                                                         # Attr length mismatch
-  structure(list(), welp=list(NULL)), 
-  structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
-)
-attr_compare(                                                         # Missing attr
-  structure(list(), welp=list(), belp=1:3), 
-  structure(list("hello"), welp=list(NULL, 1:3))
-)
-attr_compare(                                                         # TRUE
-  structure(list(), class=letters[1:3]), 
-  structure(list("hello"), class=letters[1:3])
-)
-attr_compare(                                                         # class mismatch
-  structure(list(), class=letters[1:3]), 
-  structure(list("hello"), class=letters[1:4])
-)
-attr_compare(                                                         # TRUE
-  structure(list(), class=letters[2:4]), 
-  structure(list("hello"), class=letters[1:4])
-)
+  dimn1 <- list(NULL, NULL, NULL)
+  dimn2 <- list(a=letters[1:3], b=letters[4:6], c=letters[7:9])
+  dimn3 <- list(letters[1:3], b=letters[4:6], c=letters[7:9])
+  dimn4 <- list(letters[1:3], B=letters[4:6], C=letters[7:9])
+  dimn5 <- list(a=LETTERS[1:3], b=letters[4:6], c=letters[7:9])
+  dimn6 <- list(a="", b=letters[4:6], c=letters[7:9])
+  dimn7 <- list()
+  dimn8 <- list(a=LETTERS[1:3], b=letters[4:6], c=letters[7:9], d=letters[24:26])
+  dimn9 <- list(a=1:3, b=letters[4:6], c=letters[7:9])
+  dimn10 <- list(a=list("a", "b", "c"), b=letters[4:6], c=letters[7:9])
+  dimn11 <- NULL
+  dimn12 <- matrix(letters[1:9], nrow=3)
+  dimn13 <- `attr<-`(dimn2, "bar", "yowza")
+  dimn14 <- `attr<-`(dimn2, "bar", "yowz")
 
-attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
-attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
-attr_compare(                                                         # dimnames mismatch
-  matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-  attr.mode=1
-)  
-attr_compare(                                                         # dimnames mismatch
-  matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
-  attr.mode=1
-)  
-attr_compare(                                                         # dimnames error
-  matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])), 
-  matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
-  attr.mode=1
-)
-attr_compare(                                                         # TRUE
-  structure(list(integer(), character())),
-  data.frame(a=1:10, b=letters[1:10]),
-  attr.mode=1
-)  
-attr_compare(                                                         # TRUE
-  structure(list(integer(), character()), class="data.frame"),
-  data.frame(a=1:10, b=letters[1:10]),
-  attr.mode=1
-)  
-attr_compare(                                                         # Class mismatch
-  structure(list(), class=letters[2:4]), 
-  structure(list("hello"), class=letters[1:4]),
-  attr.mode=1
-)
-attr_compare(                                                         # Too many attrs
-  structure(list(integer(), character())),
-  data.frame(a=1:10, b=letters[1:10]),
-  attr.mode=2
-)  
-attr_compare(                                                         # Too many attrs
-  structure(list(integer(), character()), class="data.frame"),
-  data.frame(a=1:10, b=letters[1:10]),
-  attr.mode=2
-)
-attr_compare(                                                         # Missing attr
-  structure(list(), welp=list(NULL, 1:3), belp=1:3), 
-  structure(list("hello"), welp=list(NULL, 1:3)),
-  attr.mode=2
-)
-attr_compare(                                                         # Missing attr, but attr count same
-  structure(list(), welp=list(NULL, 1:3), belp=1:3), 
-  structure(list("hello"), welp=list(NULL, 1:3), kelp=20),  
-  attr.mode=2
-)
+  # baseline cases
 
-name_compare(c("", "hello"), c("abc", "hello"))
-name_compare(c("ab", "hello"), c("abc", "hello"))
-name_compare(c(NA_character_, "hello"), c("abc", "hello"))
-name_compare(c("ab", "hello"), c(NA_character_, "hello"))
-name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
+  dimname_compare(dimn3, dimn2)
+  dimname_compare(dimn2, dimn3)
+  dimname_compare(dimn3, dimn4)
+  dimname_compare(dimn2, dimn5)
+  dimname_compare(dimn6, dimn5)
+  dimname_compare(dimn5, dimn6)
+
+  # "empty-ish" cases
+
+  dimname_compare(dimn2, dimn1)
+  dimname_compare(dimn1, dimn2)
+  dimname_compare(dimn11, dimn2)
+  dimname_compare(dimn11, dimn11)
+  dimname_compare(dimn7, dimn2)
+  dimname_compare(dimn2, dimn7)
+  dimname_compare(dimn7, dimn7)
+
+  # Breaking cases
+
+  dimname_compare(dimn5, dimn8)
+  dimname_compare(dimn8, dimn5)
+  dimname_compare(dimn9, dimn2)
+  dimname_compare(dimn2, dimn9)
+  dimname_compare(dimn2, dimn12)
+  dimname_compare(dimn12, dimn12)
+
+  # Attr on attr
+
+  dimname_compare(dimn2, dimn13)
+  dimname_compare(dimn13, dimn2)
+  dimname_compare(dimn13, dimn14)
+  dimname_compare(dimn14, dimn13)
+
+  dim1 <- rep(2L, 2)
+  dim2 <- rep(2L, 3)
+  dim3 <- rep(2L, 4)
+  dim4 <- c(1L, 1L)
+  dim5 <- 2L
+  dim6 <- c(1L, 2L, 3L)
+  dim7 <- rep(0L, 2)
+  dim8 <- c(0L, 0L, 2L)
+  dim9 <- NULL
+  dim10 <- letters[1:2]
+  dim11 <- list(2L, 2L)
+
+  dim_compare(dim1, dim2)  # fail
+  dim_compare(dim2, dim3)  # fail
+  dim_compare(dim1, dim4)  # fail
+  dim_compare(dim2, dim6)  # fail
+  dim_compare(dim7, dim1)  # works
+  dim_compare(dim7, dim4)  # works
+  dim_compare(dim1, dim7)  # fail
+  dim_compare(dim7, dim2)  # works
+  dim_compare(dim8, dim2)  # works
+  dim_compare(dim8, dim6)  # fail
+  dim_compare(dim6, dim9)  # works
+
+  # With non atomic objects
+
+  dim_compare(dim1, dim2, list())          # fail
+  dim_compare(dim1, dim2, cur_obj=list())  # fail
+  dim_compare(dim1, dim2, list(), list())  # fail
+
+  # Errors
+
+  dim_compare(dim6, dim9, rev=1L)  # fail
+  dim_compare(dim9, dim6)  # fail
+  dim_compare(dim10, dim1) # fail
 
 gctorture(FALSE)
+
+  df.1 <- data.frame(a=1:10, b=letters[1:10])
+  df.2 <- data.frame(integer(), character())
+
+gctorture(TRUE)
+
+  attr_compare(1, 1)                                           # TRUE
+  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
+  attr_compare(matrix(integer(), 4), matrix(integer(), 3, 3))           # Dim 1 error
+  attr_compare(matrix(integer(), ncol=4), matrix(integer(), 3, 3))      # Dim 2 error
+  attr_compare(                                                         # TRUE
+    matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
+  )
+  attr_compare(                                                         # dimnames error
+    matrix(integer(), 3, 3, dimnames=list(NULL, letters[2:4])),
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
+  )
+  attr_compare(                                                         # dimnames error
+    matrix(integer(), 3, 3, dimnames=list(letters[1:3], letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3]))
+  )
+  attr_compare(                                                         # TRUE
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
+  )
+  attr_compare(                                                         # dimnames error
+    matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3]))
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(integer(), character())),
+    df.1
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(integer(), character()), class="data.frame"),
+    df.1
+  )
+  attr_compare(                                                         # TRUE
+    structure(unname(df.2), class="data.frame"),
+    df.1
+  )
+  attr_compare(                                                         # TRUE, zero length attr
+    structure(list(), welp=list()),
+    structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
+  )
+  attr_compare(                                                         # Attr length mismatch
+    structure(list(), welp=list(NULL)),
+    structure(list("hello"), welp=list(NULL, 1:3), belp=1:3)
+  )
+  attr_compare(                                                         # Missing attr
+    structure(list(), welp=list(), belp=1:3),
+    structure(list("hello"), welp=list(NULL, 1:3))
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(), class=letters[1:3]),
+    structure(list("hello"), class=letters[1:3])
+  )
+  attr_compare(                                                         # class mismatch
+    structure(list(), class=letters[1:3]),
+    structure(list("hello"), class=letters[1:4])
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(), class=letters[2:4]),
+    structure(list("hello"), class=letters[1:4])
+  )
+
+  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
+  attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
+  attr_compare(                                                         # dimnames mismatch
+    matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
+    attr.mode=1
+  )
+  attr_compare(                                                         # dimnames mismatch
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
+    attr.mode=1
+  )
+  attr_compare(                                                         # dimnames error
+    matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
+    attr.mode=1
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(integer(), character())),
+    df.1,
+    attr.mode=1
+  )
+  attr_compare(                                                         # TRUE
+    structure(list(integer(), character()), class="data.frame"),
+    df.1,
+    attr.mode=1
+  )
+  attr_compare(                                                         # Class mismatch
+    structure(list(), class=letters[2:4]),
+    structure(list("hello"), class=letters[1:4]),
+    attr.mode=1
+  )
+  attr_compare(                                                         # Too many attrs
+    structure(list(integer(), character())),
+    df.1,
+    attr.mode=2
+  )
+  attr_compare(                                                         # Too many attrs
+    structure(list(integer(), character()), class="data.frame"),
+    df.1,
+    attr.mode=2
+  )
+  attr_compare(                                                         # Missing attr
+    structure(list(), welp=list(NULL, 1:3), belp=1:3),
+    structure(list("hello"), welp=list(NULL, 1:3)),
+    attr.mode=2
+  )
+  attr_compare(                                                         # Missing attr, but attr count same
+    structure(list(), welp=list(NULL, 1:3), belp=1:3),
+    structure(list("hello"), welp=list(NULL, 1:3), kelp=20),
+    attr.mode=2
+  )
