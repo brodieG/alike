@@ -1,0 +1,258 @@
+---
+title: "alike"
+author: "Brodie Gaslam"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
+
+vignette: >
+  %\VignetteIndexEntry{alike}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
+## Introduction
+
+`alike` is similar to `all.equal` from base R, except it focuses on comparing object structure rather than actual values.  A simple example:
+
+```{r}
+library(alike)
+alike(
+  matrix(integer(), ncol=3),
+  matrix(1:12, nrow=4)
+)
+```
+
+The structure of these objects is the same: they are both integer matrices with three columns.
+
+`alike` was written to bring some of the guarantees about object structure that S4 provides to S3 objects.  While the best way to achieve that objective is to use S4 classes, so much existing R code relies on S3 classes that a backstop approach is warranted.
+
+To illustrate, suppose that we write a function that is intended to operate on a data frame with an `id` integer column and a `grade` factor column with possible levels `LETTERS[1:6]`:
+
+```{r, error=TRUE, purl=FALSE}
+my_fun <- function(x) {
+  df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
+  if(!isTRUE(err <- alike(df.tpl, x)))
+    stop("Argument `x` error: ", err)
+  TRUE
+}
+df.correct <- data.frame(id=1:3, grade=c("F", "A", "C", levels=LETTERS[1:6]))
+df.wrong <- data.frame(id=4:6, grade=rep("A", 3))
+
+my_fun(df.correct)
+my_fun(df.wrong)
+```
+
+The rules governing what makes objects alike are complex to explain, but should be intuitive to understand.  We recommend you look at the examples in the documentation for `alike` to get a sense for how `alike` works.  If you want to understand the specifics, read on.
+
+## Templates
+
+### Overview
+
+The basic concept behind `alike` is to allow the user to define templates to use as the `target` argument to compare against the `current` argument.  Templates can specify as little or as much structure as desired, and `alike` will only compare the object against the aspects of the template that are defined.  This is how we are able to define our matrix template in the introduction that only checks for the number of columns in an object.
+
+One implication of this is that `alike` is not "commutative".  Compare the following to our previous examples:
+
+```{r}
+alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))   # same as in intro
+alike(matrix(1:12, ncol=4), matrix(integer(), nrow=3))   # reverse args
+```
+
+Our template now defines a non-zero length object so `current` must match its length.
+
+### Structure Wildcards
+
+In addition to zero length `target` matching any length `current`, NULL `target` will match anything at all in current:
+
+```{r}
+alike(integer(), 1:10)
+alike(NULL, mtcars)
+alike(list(), list(iris, mtcars))
+alike(list(NULL, NULL), list(iris, mtcars))
+alike(list(NULL, NULL), list(iris, mtcars, warpbreaks))
+```
+## Comparison Details
+
+### Overview
+
+`alike` will compare the internal types of objects (see `base::typeof`), their lengths, and their attributes.  Generally speaking objects are considered alike if they are of the same type, length, and have identical attributes, though there are exceptions we will discuss later.
+
+`alike` will recurse through lists and do pairwise alikeness comparisons between the corresponding elements of the `target` and `current` lists.  Among other things, this means that `alike` will compare the structures of the component vectors of `data.frame` as these are lists.
+
+### Length Comparison
+
+`target` and `current` object lengths must be the same, unless the `target` object has length zero, in which case the `current` object can have any length.  If your template does not need to restrict the length of an object then you would use a zero length element as the `target` object.  Note the implication here is that you cannot create a template that requires the `current` object to have length zero, but this should be a rare requirement.
+
+### Type Comparison
+
+Type comparison is done as if it were done using `typeof` with the notable exception that numerics and integers are treated specially.  For example:
+```{r}
+alike(1L, 1)     # note 1 is not integer
+alike(1L, 1.1)   # 1.1 is not integer-like
+alike(1.1, 1L)   # but integers can match numerics
+```
+`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.
+
+### Attribute Comparison
+
+#### Overview
+
+Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current`.
+
+#### `row.names` and `names`
+
+If present in `target`, then must be matched exactly by the corresponding attribute in `current`, except that:
+
+* zero length character values (i.e. `""`) in `target` `names`/`row.names` will match any character value in the corresponding position of the `current` `names`/`row.names`
+* zero length `target` attribute (i.e. `character(0L)`, contrast to above) will match any character `names`/`row.names`
+
+These exceptions are necessary to allow you to partially specify names and dimensions:
+```{r}
+# we use `structure` to circumvent default data.frame names
+df.tpl <- structure(list(id=integer(), numeric(), numeric()), class="data.frame")
+df.dat1 <- data.frame(id=1:3, x=runif(3), y=runif(3))
+df.dat2 <- data.frame(bogus=1:3, x=runif(3), y=runif(3))
+
+alike(df.tpl, df.dat1)
+names(df.tpl)
+names(df.dat1)
+rownames(df.tpl)
+rownames(df.dat1)
+
+alike(df.tpl, df.dat2)
+```
+
+#### `dim`
+
+`dim` attributes must be identical between `target` and `current`, except that if a value of the `dim` vector is zero in `target` then the corresponding value in `current` can be any value.  This is how comparisons like the following succeed:
+
+```{r}
+mx.tpl <- matrix(integer(), ncol=3);
+mx.cur <- matrix(1:12, nrow=4)
+mx.cur2 <- matrix(1:12, nrow=3)
+alike(mx.tpl, mx.cur)
+
+dim(mx.tpl)    # notice the 0 for the first value in the `dim` vector
+dim(mx.cur)
+
+alike(mx.tpl, mx.cur2)
+```
+
+#### `dimnames`
+
+Must also be identical, except that if the `target` value of the `dimnames` list for a particular dimension is `NULL`, then the corresponding `dimnames` value in `current` may be anything.
+
+Note that `dimnames` itself can also have a `names` attribute.  If the `names` attribute to `dimnames` is specified in `target`, then it must be identical in `current`, with the exception that zero length character values (i.e. `""`) in `target` will match any string in the corresponding name in `target`:
+
+```{r}
+mx.tpl <- matrix(integer(), ncol=3, dimnames=list(row.id=NULL, c("R", "G", "B")))
+mx.cur <- matrix(sample(0:255, 12), ncol=3, dimnames=list(row.id=1:4, rgb=c("R", "G", "B")))
+mx.cur2 <- matrix(sample(0:255, 12), ncol=3, dimnames=list(1:4, c("R", "G", "B")))
+
+alike(mx.tpl, mx.cur)
+alike(mx.tpl, mx.cur2)
+names(dimnames(mx.tpl))
+```
+
+#### `class`
+
+S3 objects are considered alike if the `current` class inherits from the `target` class.  Note that "inheritance" here is used in a stricter context than in the typical S3 application:
+
+* Every class present in `target` must be present in `current`
+* The overlapping classes must be in the same order
+* The last class in `current` must be the same as the last class in `target`
+
+To illustrate:
+
+```{r}
+tpl <- structure(NULL, class=c("a", "b", "c"))
+cur <- structure(NULL, class=c("x", "a", "b", "c"))
+cur2 <- structure(NULL, class=c("a", "b", "c", "x"))
+
+alike(tpl, cur)
+alike(tpl, cur2)
+```
+
+#### S4 and Reference Class (R5) Objects
+
+S4 and RC objects are considered alike if `current` inherits from `class(target)`.
+
+#### Reference Objects
+
+Attributes containing objects of the following types are actually references to specific memory locations and as such are treated specially:
+
+* Environments
+* External Pointers
+* Weak References
+* Byte codes
+
+Because `identical` will return `FALSE` if the objects don't point to the same memory location, even if they are technically equivalent, we only require that `target` and `current` be of the same type in order to meet the `alike` requirements.  This isn't ideal, but should lead to reasonable results in most circumstances.
+
+If you want these attributes to be comapred with `identical` set `attr.mode` to 1 or 2.
+
+## Objects That Might Be Treated Differently in Future
+
+The following object types are not handled specially by alike, but might be in the future:
+
+* Language objects (calls)
+* Expressions
+* Formulas
+
+Currently they are compared purely on length and internal type.
+
+## `alike` as an S3 generic
+
+`alike` is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable perforance profile.
+
+## Performance Considerations
+
+### Overview
+
+`alike` is implemented in C and is relatively fast:
+
+```{r}
+library(microbenchmark)
+microbenchmark(
+  all.equal(1:10, 1:10),
+  identical(1:10, 1:10),
+  alike(1:10, 1:10),
+  all.equal(mtcars, mtcars),
+  identical(mtcars, mtcars),
+  alike(mtcars, mtcars)
+)
+```
+
+`identical` will pull ahead with more complex objects, but `alike` should remain substantially faster than `all.equal`.
+
+### `.alike`
+
+`.alike` does not accept any parameters outside of `target` and `current`, but as a result is slightly faster than `alike`:
+
+```{r}
+library(microbenchmark)
+microbenchmark(
+  alike(1:10, 1:10),
+  .alike(1:10, 1:10)
+)
+```
+
+You should use `.alike` if you don't require access to the other `alike` parameters and if you're looking to minimize overhead, but keep in mind the difference is pretty small.
+
+### Pre-defining Templates
+
+Some fairly innocuous R expressions carry substantial overhead.  Consider:
+
+```{r}
+df.tpl <- data.frame(integer(), numeric())
+df.cur <- data.frame(a=1:10, b=1:10 + .1)
+
+library(microbenchmark)
+mb <- microbenchmark(
+  alike(df.tpl, df.cur),
+  alike(data.frame(integer(), numeric()), df.cur)
+)
+summary(mb)[1:4]
+```
+
+`data.frame` is a particularly slow constructor, but in general you are best served by defining your templates outside of your function if you want to keep things at their snappiest.
