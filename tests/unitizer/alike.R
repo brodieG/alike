@@ -94,6 +94,12 @@ unitizer_sect("Data Frames", {
 
   alike(df.tpl, df.tpl)
   alike(df.tpl, df.cur)
+
+  # special treatment
+
+  alike(mtcars, iris)
+  alike(mtcars, mtcars[1:10,])
+  alike(mtcars[-5], mtcars)
 })
 
 unitizer_sect("Errors", {

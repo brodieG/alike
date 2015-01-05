@@ -29,7 +29,7 @@ SEXP ALIKEC_alike_internal(
   int ind_lvl_max = -1;     /* deepest we've gone in current stack */
   int ind_stk_sz = 32;      /* current size of stack */
   int ind_stk[ind_stk_sz];  /* track the stack */
-  int tar_len, cur_len;
+  R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
   SEXP sxp_stk_tar[ind_stk_sz]; /* track the parent objects */
   SEXP sxp_stk_cur[ind_stk_sz]; /* track the parent objects */
   int emr_brk = 0;
@@ -38,6 +38,7 @@ SEXP ALIKEC_alike_internal(
   int tmp = 0;
   int * is_df = &tmp;
   SEXPTYPE tar_type;
+  SEXP tar_first_el, cur_first_el;
 
   int err = 0;
   const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
@@ -166,6 +167,20 @@ SEXP ALIKEC_alike_internal(
         err_tok1 = ALIKEC_xlen_to_char(tar_len);
         err_tok2 = ALIKEC_xlen_to_char(cur_len);
         err_tok3 = err_tok4 = "";
+      } else if (
+        *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
+        TYPEOF(current) == VECSXP && XLENGTH(current) &&
+        isVectorAtomic((tar_first_el = VECTOR_ELT(target, 0))) &&
+        isVectorAtomic((cur_first_el = VECTOR_ELT(current, 0))) &&
+        (tar_first_el_len = XLENGTH(tar_first_el)) && tar_first_el_len &&
+        tar_first_el_len != (cur_first_el_len = XLENGTH(cur_first_el))
+      ) {
+        // check for row count error, note this isn't a perfect check since we
+        // check the first column only
+
+        err_base = "Row count mismatch: expected %s but got %s%s%s";
+        err_tok1 = ALIKEC_xlen_to_char(tar_first_el_len);
+        err_tok2 = ALIKEC_xlen_to_char(cur_first_el_len);
       }
     }
     // - Known Limitations -----------------------------------------------------
