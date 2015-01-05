@@ -216,7 +216,10 @@ library(microbenchmark)
 microbenchmark(
   all.equal(1:10, 1:10),
   identical(1:10, 1:10),
-  alike(1:10, 1:10)
+  alike(1:10, 1:10),
+  all.equal(mtcars, mtcars),
+  identical(mtcars, mtcars),
+  alike(mtcars, mtcars)
 )
 ```
 
