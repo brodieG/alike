@@ -37,8 +37,8 @@ unitizer_sect("lists", {
   alike(lst, lst.4)     # should not match because template has more detail
 } )
 unitizer_sect("NULL values as wildcards", {
-  alike(NULL, 1:3)
-  alike(1:3, NULL)
+  alike(NULL, 1:3)                  # not a wild card at top level
+  alike(list(NULL), list(1:3))      # but yes when nested
   alike(list(NULL, NULL), list(list(list(1, 2, 3)), 1:25))
   alike(list(NULL), list(1, 2))
   alike(list(), list(1, 2))
