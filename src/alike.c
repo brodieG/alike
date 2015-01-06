@@ -120,7 +120,7 @@ SEXP ALIKEC_alike_internal(
         }
         UNPROTECT(1);
       }
-    } else if(target != R_NilValue) {  // Nil objects match anything
+    } else if(target != R_NilValue ||ind_lvl < 1) {  // Nil objects match anything when nested
     // - Attributes ------------------------------------------------------------
       int tmp = -1;
       int * err_lvl =& tmp;
