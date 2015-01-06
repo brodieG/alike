@@ -63,15 +63,19 @@ Our template now defines a non-zero length object so `current` must match its le
 
 ### Structure Wildcards
 
-In addition to zero length `target` matching any length `current`, NULL `target` will match anything at all in current:
+In addition to zero length `target` matching any length `current`, any `NULL` values nested in `target` will match anything at all in current, but if `target` is `NULL` then current must be `NULL`:
 
 ```{r}
-alike(integer(), 1:10)
-alike(NULL, mtcars)
-alike(list(), list(iris, mtcars))
-alike(list(NULL, NULL), list(iris, mtcars))
-alike(list(NULL, NULL), list(iris, mtcars, warpbreaks))
+alike(integer(), 1:10)               # zero length matches any length of same type
+alike(NULL, mtcars)                  # NULL only matches NULL
+alike(list(NULL), list(mtcars))      # but inside a list, NULL matches anything
+alike(list(), list(1:10, mtcars, iris))      # zero length list matches any list
+alike(list(NULL, NULL), list(1:10, mtcars))  # two NULLs match two length list
+alike(list(NULL, NULL), list(1:10, mtcars, iris))   # but not three length list
 ```
+
+Treating `NULL` differently depending on whether it is nested or not is a compromise designed to make `alike` a better fit for argument validation.  Arguments that are `NULL` by default are fairly common, so it is useful for `alike` to be able to determine whether something is `NULL`.  At the same time, we need some mechanism for specifying arbitrary contents in lists of fixed length, so we allow `NULL` to act as a wildcard when nested inside other objects.  This inconsistent treatment is rendered necessary by `NULL` being both a type and a zero length value (or a value-less type).
+
 ## Comparison Details
 
 ### Overview
@@ -89,16 +93,20 @@ alike(list(NULL, NULL), list(iris, mtcars, warpbreaks))
 Type comparison is done as if it were done using `typeof` with the notable exception that numerics and integers are treated specially.  For example:
 ```{r}
 alike(1L, 1)     # note 1 is not integer
+is.integer(1)
 alike(1L, 1.1)   # 1.1 is not integer-like
 alike(1.1, 1L)   # but integers can match numerics
 ```
-`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.
+`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.  While this feature may seem superfluous it avoids convolutions such as:
+```{r, eval=FALSE}
+is.numeric(x) && all.equal(x, floor(x))
+```
 
 ### Attribute Comparison
 
 #### Overview
 
-Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current`.
+Attributes present in `target` must be present in `current`, but `current` may have additional attributes not present in `target`.  The attributes that overlap must be `identical`, with some important exceptions outlined below. You can engage stricter comparison modes with the `attr.mode` parameter.  Note that length zero attributes in `target` do not match arbitrary length attributes in `current` except as detailed below.
 
 #### `row.names` and `names`
 
@@ -203,7 +211,7 @@ Currently they are compared purely on length and internal type.
 
 ## `alike` as an S3 generic
 
-`alike` is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable perforance profile.
+`alike` is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable performance profile.
 
 ## Performance Considerations
 

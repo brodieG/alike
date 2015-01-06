@@ -10,16 +10,21 @@ alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))   # same as in intro
 alike(matrix(1:12, ncol=4), matrix(integer(), nrow=3))   # reverse args
 
 ## ------------------------------------------------------------------------
-alike(integer(), 1:10)
-alike(NULL, mtcars)
-alike(list(), list(iris, mtcars))
-alike(list(NULL, NULL), list(iris, mtcars))
-alike(list(NULL, NULL), list(iris, mtcars, warpbreaks))
+alike(integer(), 1:10)               # zero length matches any length of same type
+alike(NULL, mtcars)                  # NULL only matches NULL
+alike(list(NULL), list(mtcars))      # but inside a list, NULL matches anything
+alike(list(), list(1:10, mtcars, iris))      # zero length list matches any list
+alike(list(NULL, NULL), list(1:10, mtcars))  # two NULLs match two length list
+alike(list(NULL, NULL), list(1:10, mtcars, iris))   # but not three length list
 
 ## ------------------------------------------------------------------------
 alike(1L, 1)     # note 1 is not integer
+is.integer(1)
 alike(1L, 1.1)   # 1.1 is not integer-like
 alike(1.1, 1L)   # but integers can match numerics
+
+## ----, eval=FALSE--------------------------------------------------------
+#  is.numeric(x) && all.equal(x, floor(x))
 
 ## ------------------------------------------------------------------------
 # we use `structure` to circumvent default data.frame names

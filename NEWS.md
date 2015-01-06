@@ -1,3 +1,8 @@
+alike 0.2.4
+===========
+
+* NULLs are only wildcard when nested inside other objects
+
 alike 0.2.3
 ===========
 
