@@ -4,7 +4,7 @@ Description: Compares object structures rather than values.  This is
     particularly useful when one has an object template (e.g. matrix(integer(),
     ncol=3)) that they wish to compare other objects against (e.g. three column
     integer matrices).
-Version: 0.2.3
+Version: 0.2.4
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
