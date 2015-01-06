@@ -120,17 +120,20 @@ df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span 
 </div>
 <div id="structure-wildcards" class="section level3">
 <h3>Structure Wildcards</h3>
-<p>In addition to zero length <code>target</code> matching any length <code>current</code>, NULL <code>target</code> will match anything at all in current:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">10</span>)</code></pre>
+<p>In addition to zero length <code>target</code> matching any length <code>current</code>, any <code>NULL</code> values nested in <code>target</code> will match anything at all in current, but if <code>target</code> is <code>NULL</code> then current must be <code>NULL</code>:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">10</span>)               <span class="co"># zero length matches any length of same type</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="ot">NULL</span>, mtcars)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="ot">NULL</span>, mtcars)                  <span class="co"># NULL only matches NULL</span></code></pre>
+<pre><code>## [1] &quot;Type mismatch, expected \&quot;NULL\&quot;, but got \&quot;list\&quot;&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>), <span class="kw">list</span>(mtcars))      <span class="co"># but inside a list, NULL matches anything</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(), <span class="kw">list</span>(iris, mtcars))</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars, iris))      <span class="co"># zero length list matches any list</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(iris, mtcars))</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars))  <span class="co"># two NULLs match two length list</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(iris, mtcars, warpbreaks))</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars, iris))   <span class="co"># but not three length list</span></code></pre>
 <pre><code>## [1] &quot;Length mismatch: expected 2 but got 3&quot;</code></pre>
+<p>Treating <code>NULL</code> differently depending on whether it is nested or not is a compromise designed to make <code>alike</code> a better fit for argument validation. Arguments that are <code>NULL</code> by default are fairly common, so it is useful for <code>alike</code> to be able to determine whether something is <code>NULL</code>. At the same time, we need some mechanism for specifying arbitrary contents in lists of fixed length, so we allow <code>NULL</code> to act as a wildcard when nested inside other objects. This inconsistent treatment is rendered necessary by <code>NULL</code> being both a type and a zero length value (or a value-less type).</p>
 </div>
 </div>
 <div id="comparison-details" class="section level2">
@@ -149,17 +152,20 @@ df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span 
 <p>Type comparison is done as if it were done using <code>typeof</code> with the notable exception that numerics and integers are treated specially. For example:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="dv">1</span>)     <span class="co"># note 1 is not integer</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">is.integer</span>(<span class="dv">1</span>)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="fl">1.1</span>)   <span class="co"># 1.1 is not integer-like</span></code></pre>
 <pre><code>## [1] &quot;Type mismatch, expected \&quot;integer-like\&quot;, but got \&quot;double\&quot;&quot;</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="fl">1.1</span>, 1L)   <span class="co"># but integers can match numerics</span></code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<p><code>alike</code> treats integer-like numerics as integers. Additionally, integers can match numeric templates. If this is not the desired behavior you can use the <code>int.mode</code> parameter to engage a stricter comparison mode.</p>
+<p><code>alike</code> treats integer-like numerics as integers. Additionally, integers can match numeric templates. If this is not the desired behavior you can use the <code>int.mode</code> parameter to engage a stricter comparison mode. While this feature may seem superfluous it avoids convolutions such as:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">is.numeric</span>(x) &amp;&amp;<span class="st"> </span><span class="kw">all.equal</span>(x, <span class="kw">floor</span>(x))</code></pre>
 </div>
 <div id="attribute-comparison" class="section level3">
 <h3>Attribute Comparison</h3>
 <div id="overview-2" class="section level4">
 <h4>Overview</h4>
-<p>Attributes present in <code>target</code> must be present in <code>current</code>, but <code>current</code> may have additional attributes not present in <code>target</code>. The attributes that overlap must be <code>identical</code>, with some important exceptions outlined below. You can engage stricter comparison modes with the <code>attr.mode</code> parameter. Note that length zero attributes in <code>target</code> do not match arbitrary length attributes in <code>current</code>.</p>
+<p>Attributes present in <code>target</code> must be present in <code>current</code>, but <code>current</code> may have additional attributes not present in <code>target</code>. The attributes that overlap must be <code>identical</code>, with some important exceptions outlined below. You can engage stricter comparison modes with the <code>attr.mode</code> parameter. Note that length zero attributes in <code>target</code> do not match arbitrary length attributes in <code>current</code> except as detailed below.</p>
 </div>
 <div id="row.names-and-names" class="section level4">
 <h4><code>row.names</code> and <code>names</code></h4>
@@ -265,7 +271,7 @@ cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class
 </div>
 <div id="alike-as-an-s3-generic" class="section level2">
 <h2><code>alike</code> as an S3 generic</h2>
-<p><code>alike</code> is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable perforance profile.</p>
+<p><code>alike</code> is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable performance profile.</p>
 </div>
 <div id="performance-considerations" class="section level2">
 <h2>Performance Considerations</h2>
@@ -283,12 +289,12 @@ cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class
 )</code></pre>
 <pre><code>## Unit: nanoseconds
 ##                       expr    min     lq median     uq     max neval
-##      all.equal(1:10, 1:10)  21945  24338  25604  27276   94753   100
-##      identical(1:10, 1:10)   1151   1862   2246   2636   12987   100
-##          alike(1:10, 1:10)   1580   2173   2754   3679   13082   100
-##  all.equal(mtcars, mtcars) 388978 405696 418759 444970 1197157   100
-##  identical(mtcars, mtcars)    912   1432   1710   2004   13286   100
-##      alike(mtcars, mtcars)  14152  14898  15809  16879   40937   100</code></pre>
+##      all.equal(1:10, 1:10)  40363  43874  46618  51812  935057   100
+##      identical(1:10, 1:10)   1426   1852   2256   2662   17064   100
+##          alike(1:10, 1:10)   1659   2173   3191   4211   19872   100
+##  all.equal(mtcars, mtcars) 417070 455739 481430 512713 1081305   100
+##  identical(mtcars, mtcars)    866   1279   1720   2146   19478   100
+##      alike(mtcars, mtcars)  14400  15283  16450  17648   35638   100</code></pre>
 <p><code>identical</code> will pull ahead with more complex objects, but <code>alike</code> should remain substantially faster than <code>all.equal</code>.</p>
 </div>
 <div id="alike" class="section level3">
@@ -301,8 +307,8 @@ cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class
 )</code></pre>
 <pre><code>## Unit: microseconds
 ##                expr   min    lq median    uq   max neval
-##   alike(1:10, 1:10) 3.275 3.454  3.735 4.054 41.98   100
-##  .alike(1:10, 1:10) 2.493 2.659  2.809 3.025 36.59   100</code></pre>
+##   alike(1:10, 1:10) 1.354 1.523  1.633 1.866 85.78   100
+##  .alike(1:10, 1:10) 1.017 1.066  1.153 1.359 46.30   100</code></pre>
 <p>You should use <code>.alike</code> if you don’t require access to the other <code>alike</code> parameters and if you’re looking to minimize overhead, but keep in mind the difference is pretty small.</p>
 </div>
 <div id="pre-defining-templates" class="section level3">
@@ -318,8 +324,8 @@ mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(
 )
 <span class="kw">summary</span>(mb)[<span class="dv">1</span>:<span class="dv">4</span>]</code></pre>
 <pre><code>##                                              expr     min      lq  median
-## 1                           alike(df.tpl, df.cur)   3.586   4.226   4.579
-## 2 alike(data.frame(integer(), numeric()), df.cur) 245.043 252.731 257.570</code></pre>
+## 1                           alike(df.tpl, df.cur)   3.439   4.176   4.684
+## 2 alike(data.frame(integer(), numeric()), df.cur) 245.897 256.613 269.506</code></pre>
 <p><code>data.frame</code> is a particularly slow constructor, but in general you are best served by defining your templates outside of your function if you want to keep things at their snappiest.</p>
 </div>
 </div>
