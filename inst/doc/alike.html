@@ -80,31 +80,28 @@ code > span.er { color: #ff0000; font-weight: bold; }
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p><code>alike</code> is similar to <code>all.equal</code> from base R, except it focuses on comparing object structure rather than actual values. A simple example:</p>
+<p><code>alike</code> is similar to <code>all.equal</code> from base R, except it focuses on comparing object structure rather than actual values:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(alike)
-<span class="kw">alike</span>(
-  <span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>),
-  <span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">nrow=</span><span class="dv">4</span>)
-)</code></pre>
+<span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<p>The structure of these objects is the same: they are both integer matrices with three columns.</p>
-<p><code>alike</code> was written to bring some of the guarantees about object structure that S4 provides to S3 objects. While the best way to achieve that objective is to use S4 classes, so much existing R code relies on S3 classes that a backstop approach is warranted.</p>
-<p>To illustrate, suppose that we write a function that is intended to operate on a data frame with an <code>id</code> integer column and a <code>grade</code> factor column with possible levels <code>LETTERS[1:6]</code>:</p>
-<pre class="sourceCode r"><code class="sourceCode r">my_fun &lt;-<span class="st"> </span>function(x) {
-  df.tpl &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="kw">integer</span>(), <span class="dt">grade=</span><span class="kw">factor</span>(<span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
-  if(!<span class="kw">isTRUE</span>(err &lt;-<span class="st"> </span><span class="kw">alike</span>(df.tpl, x)))
-    <span class="kw">stop</span>(<span class="st">&quot;Argument `x` error: &quot;</span>, err)
-  <span class="ot">TRUE</span>
-}
-df.correct &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">grade=</span><span class="kw">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
-df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">4</span>:<span class="dv">6</span>, <span class="dt">grade=</span><span class="kw">rep</span>(<span class="st">&quot;A&quot;</span>, <span class="dv">3</span>))
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), letters[<span class="dv">1</span>:<span class="dv">5</span>])</code></pre>
+<pre><code>## [1] &quot;Type mismatch, expected \&quot;integer-like\&quot;, but got \&quot;character\&quot;&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">4</span>), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
+<pre><code>## [1] &quot;Length mismatch: expected 4 but got 5&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">5</span>), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p><code>alike</code> only compares the structure of the objects (e.g. type, length, class, attributes, etc.), which is how we can match <code>1:5</code> to <code>integer(5)</code> even though these have clearly different values.</p>
+<p><code>alike</code> will also compare recursive structures element by element, which allows things such as:</p>
+<pre class="sourceCode r"><code class="sourceCode r">df.tpl &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="kw">integer</span>(), <span class="dt">grade=</span><span class="kw">factor</span>(<span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
+df.correct &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">grade=</span><span class="kw">factor</span>(<span class="kw">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>), <span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
+df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">4</span>:<span class="dv">6</span>, <span class="dt">grade=</span><span class="kw">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>))
 
-<span class="kw">my_fun</span>(df.correct)</code></pre>
+<span class="kw">alike</span>(df.tpl, df.correct)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">my_fun</span>(df.wrong)</code></pre>
-<pre><code>## Error: Argument `x` error: Mismatch at column `grade`: length mismatch for
-## attribute &quot;levels&quot;: expected 6, but got 1</code></pre>
-<p>The rules governing what makes objects alike are complex to explain, but should be intuitive to understand. We recommend you look at the examples in the documentation for <code>alike</code> to get a sense for how <code>alike</code> works. If you want to understand the specifics, read on.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(df.tpl, df.wrong)</code></pre>
+<pre><code>## [1] &quot;Mismatch at column `grade`: length mismatch for attribute \&quot;levels\&quot;: expected 6, but got 3&quot;</code></pre>
+<p><code>alike</code> will be used in <code>validate</code> to provide a template based mechanism for validating user inputs to functions, but can be used in any place that verifying object structure is useful.</p>
+<p>The rules governing what makes objects alike are complex to explain, but should result in intuitive outcomes. We recommend you look at the examples in the documentation for <code>alike</code> to get a sense for how <code>alike</code> works. If you want to understand the specifics, read on.</p>
 </div>
 <div id="templates" class="section level2">
 <h2>Templates</h2>
@@ -112,7 +109,7 @@ df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span 
 <h3>Overview</h3>
 <p>The basic concept behind <code>alike</code> is to allow the user to define templates to use as the <code>target</code> argument to compare against the <code>current</code> argument. Templates can specify as little or as much structure as desired, and <code>alike</code> will only compare the object against the aspects of the template that are defined. This is how we are able to define our matrix template in the introduction that only checks for the number of columns in an object.</p>
 <p>One implication of this is that <code>alike</code> is not “commutative”. Compare the following to our previous examples:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">nrow=</span><span class="dv">3</span>), <span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">ncol=</span><span class="dv">4</span>))   <span class="co"># same as in intro</span></code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">nrow=</span><span class="dv">3</span>), <span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">ncol=</span><span class="dv">4</span>))</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">ncol=</span><span class="dv">4</span>), <span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">nrow=</span><span class="dv">3</span>))   <span class="co"># reverse args</span></code></pre>
 <pre><code>## [1] &quot;column count mismatch: expected 4, but got 0&quot;</code></pre>
@@ -289,12 +286,12 @@ cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class
 )</code></pre>
 <pre><code>## Unit: nanoseconds
 ##                       expr    min     lq median     uq     max neval
-##      all.equal(1:10, 1:10)  40363  43874  46618  51812  935057   100
-##      identical(1:10, 1:10)   1426   1852   2256   2662   17064   100
-##          alike(1:10, 1:10)   1659   2173   3191   4211   19872   100
-##  all.equal(mtcars, mtcars) 417070 455739 481430 512713 1081305   100
-##  identical(mtcars, mtcars)    866   1279   1720   2146   19478   100
-##      alike(mtcars, mtcars)  14400  15283  16450  17648   35638   100</code></pre>
+##      all.equal(1:10, 1:10)  39746  43502  46042  48793  129283   100
+##      identical(1:10, 1:10)   1281   1794   2333   2730   44172   100
+##          alike(1:10, 1:10)   1542   2216   2882   3883    6535   100
+##  all.equal(mtcars, mtcars) 412035 519658 534947 560886 1613267   100
+##  identical(mtcars, mtcars)    873   1424   1766   2033    3729   100
+##      alike(mtcars, mtcars)  14457  15038  16267  17348   28601   100</code></pre>
 <p><code>identical</code> will pull ahead with more complex objects, but <code>alike</code> should remain substantially faster than <code>all.equal</code>.</p>
 </div>
 <div id="alike" class="section level3">
@@ -306,9 +303,9 @@ cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class
   <span class="kw">.alike</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>)
 )</code></pre>
 <pre><code>## Unit: microseconds
-##                expr   min    lq median    uq   max neval
-##   alike(1:10, 1:10) 1.354 1.523  1.633 1.866 85.78   100
-##  .alike(1:10, 1:10) 1.017 1.066  1.153 1.359 46.30   100</code></pre>
+##                expr   min    lq median    uq    max neval
+##   alike(1:10, 1:10) 2.676 2.831  3.029 3.442  52.33   100
+##  .alike(1:10, 1:10) 2.010 2.149  2.250 2.507 251.82   100</code></pre>
 <p>You should use <code>.alike</code> if you don’t require access to the other <code>alike</code> parameters and if you’re looking to minimize overhead, but keep in mind the difference is pretty small.</p>
 </div>
 <div id="pre-defining-templates" class="section level3">
@@ -324,8 +321,8 @@ mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(
 )
 <span class="kw">summary</span>(mb)[<span class="dv">1</span>:<span class="dv">4</span>]</code></pre>
 <pre><code>##                                              expr     min      lq  median
-## 1                           alike(df.tpl, df.cur)   3.439   4.176   4.684
-## 2 alike(data.frame(integer(), numeric()), df.cur) 245.897 256.613 269.506</code></pre>
+## 1                           alike(df.tpl, df.cur)   3.654   4.246   4.648
+## 2 alike(data.frame(integer(), numeric()), df.cur) 252.166 257.531 299.694</code></pre>
 <p><code>data.frame</code> is a particularly slow constructor, but in general you are best served by defining your templates outside of your function if you want to keep things at their snappiest.</p>
 </div>
 </div>

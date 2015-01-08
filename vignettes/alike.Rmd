@@ -14,37 +14,30 @@ vignette: >
 
 ## Introduction
 
-`alike` is similar to `all.equal` from base R, except it focuses on comparing object structure rather than actual values.  A simple example:
+`alike` is similar to `all.equal` from base R, except it focuses on comparing object structure rather than actual values:
 
 ```{r}
 library(alike)
-alike(
-  matrix(integer(), ncol=3),
-  matrix(1:12, nrow=4)
-)
+alike(integer(), 1:5)
+alike(integer(), letters[1:5])
+alike(integer(4), 1:5)
+alike(integer(5), 1:5)
 ```
+`alike` only compares the structure of the objects (e.g. type, length, class, attributes, etc.), which is how we can match `1:5` to `integer(5)` even though these have clearly different values.
 
-The structure of these objects is the same: they are both integer matrices with three columns.
+`alike` will also compare recursive structures element by element, which allows things such as:
 
-`alike` was written to bring some of the guarantees about object structure that S4 provides to S3 objects.  While the best way to achieve that objective is to use S4 classes, so much existing R code relies on S3 classes that a backstop approach is warranted.
+```{r}
+df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
+df.correct <- data.frame(id=1:3, grade=factor(c("F", "A", "C"), levels=LETTERS[1:6]))
+df.wrong <- data.frame(id=4:6, grade=c("F", "A", "C"))
 
-To illustrate, suppose that we write a function that is intended to operate on a data frame with an `id` integer column and a `grade` factor column with possible levels `LETTERS[1:6]`:
-
-```{r, error=TRUE, purl=FALSE}
-my_fun <- function(x) {
-  df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
-  if(!isTRUE(err <- alike(df.tpl, x)))
-    stop("Argument `x` error: ", err)
-  TRUE
-}
-df.correct <- data.frame(id=1:3, grade=c("F", "A", "C", levels=LETTERS[1:6]))
-df.wrong <- data.frame(id=4:6, grade=rep("A", 3))
-
-my_fun(df.correct)
-my_fun(df.wrong)
+alike(df.tpl, df.correct)
+alike(df.tpl, df.wrong)
 ```
+`alike` will be used in `validate` to provide a template based mechanism for validating user inputs to functions, but can be used in any place that verifying object structure is useful.
 
-The rules governing what makes objects alike are complex to explain, but should be intuitive to understand.  We recommend you look at the examples in the documentation for `alike` to get a sense for how `alike` works.  If you want to understand the specifics, read on.
+The rules governing what makes objects alike are complex to explain, but should result in intuitive outcomes.  We recommend you look at the examples in the documentation for `alike` to get a sense for how `alike` works.  If you want to understand the specifics, read on.
 
 ## Templates
 
@@ -55,7 +48,7 @@ The basic concept behind `alike` is to allow the user to define templates to use
 One implication of this is that `alike` is not "commutative".  Compare the following to our previous examples:
 
 ```{r}
-alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))   # same as in intro
+alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))
 alike(matrix(1:12, ncol=4), matrix(integer(), nrow=3))   # reverse args
 ```
 
