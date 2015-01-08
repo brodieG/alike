@@ -1,12 +1,20 @@
 ## ------------------------------------------------------------------------
 library(alike)
-alike(
-  matrix(integer(), ncol=3),
-  matrix(1:12, nrow=4)
-)
+alike(integer(), 1:5)
+alike(integer(), letters[1:5])
+alike(integer(4), 1:5)
+alike(integer(5), 1:5)
 
 ## ------------------------------------------------------------------------
-alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))   # same as in intro
+df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
+df.correct <- data.frame(id=1:3, grade=factor(c("F", "A", "C"), levels=LETTERS[1:6]))
+df.wrong <- data.frame(id=4:6, grade=c("F", "A", "C"))
+
+alike(df.tpl, df.correct)
+alike(df.tpl, df.wrong)
+
+## ------------------------------------------------------------------------
+alike(matrix(integer(), nrow=3), matrix(1:12, ncol=4))
 alike(matrix(1:12, ncol=4), matrix(integer(), nrow=3))   # reverse args
 
 ## ------------------------------------------------------------------------
