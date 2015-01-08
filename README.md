@@ -4,7 +4,7 @@
 
 ## Introduction
 
-**NOTE**: this is a snippet from the **[vignette](http://http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/alike/master/inst/doc/alike.html)**; we recommend you look at the actual vignette as it will evaluate the expressions below.
+**NOTE**: this is a snippet from the **[vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/alike/master/inst/doc/alike.html)**; we recommend you look at the actual vignette as it will evaluate the expressions below.
 
 `alike` is similar to `all.equal` from base R, except it focuses on comparing object structure rather than actual values:
 
