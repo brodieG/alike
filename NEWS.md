@@ -1,3 +1,9 @@
+alike 0.2.5
+===========
+
+* Doc updates
+* removed C library files to allow installs on platforms with different compilers
+
 alike 0.2.4
 ===========
 
