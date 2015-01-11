@@ -13,7 +13,7 @@ const char * ALIKEC_xlen_to_char(R_xlen_t a) {
   int int_len = (int) ceil(log10(a + 1.00001));  // + 1.00001 to account for 0
   char * res;
   res = R_alloc(int_len + 1, sizeof(char));
-  sprintf(res, "%td", a);    // Correct type of R_xlen_t?
+  sprintf(res, "%d", (int) a);    // used to be %td, but doesn't work on windows?
   return (const char *) res;
 }
 /* Returns a character pointer containing the results of using `a` as the parent
