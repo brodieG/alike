@@ -146,7 +146,7 @@ SEXP ALIKEC_alike_internal(
         ) )
       ) {
         err = 1;
-        err_base = "Type mismatch, %s";
+        err_base = "Type mismatch: %s";
         err_tok1 = err_type;
         err_tok2 = err_tok3 = err_tok4 = "";
       }
