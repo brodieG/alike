@@ -24,12 +24,12 @@ note:
   not be an "%s" in `a`
 */
 
-const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
+const char * ALIKEC_sprintf(const char * a, const char * b, const char * c, const char * d, const char * e) {
   int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) + 1;
   char * res;
   res = R_alloc(full_len, sizeof(char));
   sprintf(res, a, b, c, d, e);
-  return res;
+  return (const char *) res;
 }
 
 /* Estimate how many characters an integer can be represented with */
