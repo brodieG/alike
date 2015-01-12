@@ -87,9 +87,9 @@ SEXP ALIKEC_alike_internal(
     if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
       if(s4_tar + s4_cur == 1) {
         err = 1;
-        err_base = "target %s S4 but current %s";
-        err_tok1 = (s4_tar ? "is" : "isn't");
-        err_tok2 = (s4_cur ? "is" : "isn't");
+        err_base = "expected object to %s S4, but %s";
+        err_tok1 = (s4_tar ? "be" : "not be");
+        err_tok2 = (s4_cur ? "is" : "is not");
         err_tok3 = err_tok4 = "";
       } else {
         // Here we pull the class symbol, install "inherits" from R proper, and
@@ -113,7 +113,7 @@ SEXP ALIKEC_alike_internal(
         SETCAR(t, klass);
         if(!asLogical(eval(s, R_BaseEnv))) {
           err = 1;
-          err_base = "current does not inherit from class \"%s\" (package: %s)";
+          err_base = "expected to inherit from class \"%s\" (package: %s), but does not";
           err_tok1 = CHAR(asChar(klass));
           err_tok2 = CHAR(asChar(klass_attrib));
           err_tok3 = err_tok4 = "";
@@ -146,9 +146,8 @@ SEXP ALIKEC_alike_internal(
         ) )
       ) {
         err = 1;
-        err_base = "Type mismatch: %s";
-        err_tok1 = err_type;
-        err_tok2 = err_tok3 = err_tok4 = "";
+        err_base = err_type;
+        err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
       }
 
     // - Length ----------------------------------------------------------------
@@ -160,9 +159,12 @@ SEXP ALIKEC_alike_internal(
       ) {
         err = 1;
         if(*is_df) {
-          err_base = "Column count mismatch: expected %s but got %s%s%s";
+          err_base = ALIKEC_sprintf(
+            "expected %%s column%s, but got %%s",
+            err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
+          );
         } else {
-          err_base =  "Length mismatch: expected %s but got %s%s%s";
+          err_base =  "expected length %s, but got %s%s%s";
         }
         err_tok1 = ALIKEC_xlen_to_char(tar_len);
         err_tok2 = ALIKEC_xlen_to_char(cur_len);
@@ -178,9 +180,10 @@ SEXP ALIKEC_alike_internal(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "Row count mismatch: expected %s but got %s%s%s";
+        err_base = "expected %s row%s, but got %s%s%s";
         err_tok1 = ALIKEC_xlen_to_char(tar_first_el_len);
-        err_tok2 = ALIKEC_xlen_to_char(cur_first_el_len);
+        err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
+        err_tok3 = ALIKEC_xlen_to_char(cur_first_el_len);
       }
     }
     // - Known Limitations -----------------------------------------------------
@@ -258,7 +261,13 @@ SEXP ALIKEC_alike_internal(
           "Mismatch at %s %s: %s%s", err_col_type, err_interim, err_msg, ""
         );
       } else {
-        err_final = ALIKEC_sprintf("%s%s%s%s", err_msg, "", "", "");
+        char * err_msg_up = R_alloc(strlen(err_msg) + 1, sizeof(char));
+        if(!strcpy(err_msg_up, err_msg))
+          error("Logic Error: failed copying string 264; contact maintainer.");
+        err_msg_up[0] = toupper(err_msg_up[0]);
+        err_final = ALIKEC_sprintf(
+          "%s%s%s%s", (const char *) err_msg_up, "", "", ""
+        );
       }
       SEXP res;
       res = PROTECT(allocVector(STRSXP, 1));

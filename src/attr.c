@@ -48,23 +48,23 @@ const char * ALIKEC_compare_class(
       err_found = 1;
       if(cur_class_len > 1) {
         err_msg =  ALIKEC_sprintf(
-          "Class mismatch at class element #%s: expected \"%s\", but got \"%s\"%s",
-          ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
-          tar_class, cur_class, ""
+          "expected class \"%s\" at class element #%s, but got \"%s\"%s",
+          tar_class, ALIKEC_xlen_to_char((R_xlen_t)(cur_class_i + 1)),
+          cur_class, ""
         );
       } else {
         err_msg =  ALIKEC_sprintf(
-          "Class mismatch: expected \"%s\", but got \"%s\"%s",
+          "expected class \"%s\", but got \"%s\"%s",
           tar_class, cur_class, "", ""
   );} } }
   if(err_found) return err_msg;
   if(tar_class_len > cur_class_len) {
     return ALIKEC_sprintf(
-      "Class inheritance mismatch: should inherit from \"%s\", but does not",
+      "should inherit from class \"%s\", but does not",
       CHAR(STRING_ELT(prim, tar_class_i)), "", "", ""
   );}
   if(!R_compute_identical(ATTRIB(prim), ATTRIB(sec), 16)) {
-    return "Attribute \"class\" has mismatching attributes (check `attributes(class(.))`)";
+    return "attribute \"class\" has mismatching attributes (check `attributes(class(.))`)";
   }
   return "";
 }
@@ -108,7 +108,7 @@ const char * ALIKEC_compare_dims(
   sec_len_cap = sec_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : sec_len;
 
   const char * class_err_string = "";
-  const char * class_err_base = "Class mismatch: expected \"%s\", but got \"%s\"";
+  const char * class_err_base = "expected class \"%s\", but got \"%s\"";
 
   if(prim_len_cap > 1 && isVectorAtomic(prim_obj)) {
     if(sec == R_NilValue) {  // current is matrix/array
@@ -149,43 +149,51 @@ const char * ALIKEC_compare_dims(
   // Normal dim checking
 
   if(sec == R_NilValue)
-    return "Expected a \"dim\" attribute, but it is missing";
+    return "expected a \"dim\" attribute, but it is missing";
 
   if(prim_len != sec_len)
     return ALIKEC_sprintf(
-      "Dimension count mismatch: expected %s, but got %s",
-      ALIKEC_xlen_to_char(prim_len), ALIKEC_xlen_to_char(sec_len), "", ""
+      "expected %s dimension%s, but got %s",
+      ALIKEC_xlen_to_char(prim_len), prim_len == (R_xlen_t) 1 ? "" : "s",
+      ALIKEC_xlen_to_char(sec_len), ""
     );
 
   R_xlen_t attr_i;
   int tar_dim_val;
-  const char * err_dim;
 
   for(attr_i = (R_xlen_t)0; attr_i < prim_len; attr_i++) {
-    if(
-      (tar_dim_val = INTEGER(prim)[attr_i]) &&
-      tar_dim_val != INTEGER(sec)[attr_i]
-    ) {
+
+    tar_dim_val = INTEGER(prim)[attr_i];
+    const char * tar_dim_chr = ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val);
+    char * err_dim1, * err_dim2;
+
+    if(tar_dim_val && tar_dim_val != INTEGER(sec)[attr_i]) {
       if(prim_len == 2) {  // Matrix
+        err_dim1 = "";
+        const char * err_dimtmp;
         switch(attr_i) {
-          case (R_xlen_t) 0: err_dim = "Row count mismatch"; break;
-          case (R_xlen_t) 1: err_dim = "Column count mismatch"; break;
+          case (R_xlen_t) 0: err_dimtmp = "row%s"; break;
+          case (R_xlen_t) 1: err_dimtmp = "column%s"; break;
           default:
             error("Logic error: inconsistent matrix dimensions; contact maintainer.");
         }
+        err_dim2 = (char *) ALIKEC_sprintf(
+          err_dimtmp, tar_dim_val == 1 ? "" : "s", "", "", ""
+        );
       } else {
-        err_dim = ALIKEC_sprintf(
-          "Dimension size mismatch at dimension %s",
+        err_dim1 = "size ";
+        err_dim2 = (char *) ALIKEC_sprintf(
+          "at dimension %s",
           ALIKEC_xlen_to_char((R_xlen_t)(attr_i + 1)), "", "", ""
       );}
       return ALIKEC_sprintf(
-        "%s: expected %s, but got %s%s",
-        err_dim, ALIKEC_xlen_to_char((R_xlen_t)tar_dim_val),
-        ALIKEC_xlen_to_char((R_xlen_t)(INTEGER(sec)[attr_i])), ""
+        "expected %s%s %s, but got %s",
+        (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2,
+        ALIKEC_xlen_to_char((R_xlen_t)(INTEGER(sec)[attr_i]))
       );
   } }
   if(!R_compute_identical(ATTRIB(prim), ATTRIB(sec), 16)) {
-    return "Attribute \"dim\" has mismatching attributes (check `attributes(dim(obj))`)";
+    return "attribute \"dim\" has mismatching attributes (check `attributes(dim(obj))`)";
   }
   return "";
 }
@@ -232,14 +240,14 @@ const char * ALIKEC_compare_special_char_attrs_internal(
 
   if(tar_type != cur_type) {
     return ALIKEC_sprintf(
-      "type mismatch: expected \"%s\", but got \"%s\"",
+      "expected type \"%s\" for %%s, but got \"%s\"",
       type2char(tar_type), type2char(cur_type), "", ""
     );
   } else if (!(tar_len = XLENGTH(target))) { // zero len match to anything
     return "";
   } else if ((cur_len = XLENGTH(current)) != tar_len) {
     return ALIKEC_sprintf(
-      "length mismatch: expected %s, but got %s",
+      "expected length %s for %%s, but got %s",
       ALIKEC_xlen_to_char(tar_len), ALIKEC_xlen_to_char(cur_len), "", ""
     );
   } else if (tar_type == INTSXP) {
@@ -256,8 +264,8 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         strcmp(tar_name_val, cur_name_val = CHAR(STRING_ELT(current, i))) != 0
       ) {
         return ALIKEC_sprintf(
-          "mismatch at index [[%s]]: expected \"%s\", but got \"%s\"",
-          ALIKEC_xlen_to_char((R_xlen_t)(i + 1)), tar_name_val, cur_name_val, ""
+          "expected \"%s\" at index [[%s]] for %%s, but got \"%s\"",
+          tar_name_val, ALIKEC_xlen_to_char((R_xlen_t)(i + 1)), cur_name_val, ""
         );
     } }
     return "";
@@ -332,13 +340,13 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
     prim_type != TYPEOF(sec) || prim_type != VECSXP
   ) {
     return ALIKEC_sprintf(
-      "\"dimnames\" type mismatch: expected list for both `target` and `current`, but got \"%s\" and \"%s\" respectively; if you are using custom dimnames attributes please set `attr_mode` to 1L or 2L",
+      "expected \"dimnames\" to be \"list\" type for both `target` and `current`, but got \"%s\" and \"%s\" respectively; if you are using custom dimnames attributes please set `attr_mode` to 1L or 2L",
       type2char(prim_type), type2char(TYPEOF(sec)), "", ""
   );}
   if(!prim_len) return "";  // zero length list matches anything
   if(prim_len != sec_len) {
     return ALIKEC_sprintf(
-      "\"dimnames\" length mismatch: expected %s, but got %s",
+      "expected \"dimnames\" length %s, but got %s",
       ALIKEC_xlen_to_char(prim_len), ALIKEC_xlen_to_char(sec_len), "", ""
   );}
   // dimnames names
@@ -348,7 +356,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
       prim_names, sec_names
     );
     if(strlen(dimnames_name_comp))
-      return ALIKEC_sprintf("\"dimnames\" _names_ mismatch: %s", dimnames_name_comp, "", "", "");
+      return ALIKEC_sprintf(dimnames_name_comp, "\"dimnames\" _names_", "", "", "");
   }
   // look at dimnames themselves
 
@@ -365,19 +373,17 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
         const char * err_msg;
         if(prim_len == 2) { // matrix like
           switch(attr_i) {
-            case (R_xlen_t) 0: err_msg = "row names mismatch"; break;
-            case (R_xlen_t) 1: err_msg = "column names mismatch"; break;
+            case (R_xlen_t) 0: err_msg = "row names"; break;
+            case (R_xlen_t) 1: err_msg = "column names"; break;
             default: error("Logic Error: dimnames dimension mismatch; contact maintainer.");
           }
         } else {
           err_msg = ALIKEC_sprintf(
-            "\"dimnames\" mismatch for dimension %s",
+            "\"dimnames\" at dimension %s",
             ALIKEC_xlen_to_char(attr_i + (R_xlen_t) 1), "", "", ""
         );}
-        return ALIKEC_sprintf(
-          "%s: %s",
-          err_msg, dimnames_comp, "", ""
-  );} } }
+        return ALIKEC_sprintf(dimnames_comp, err_msg, "" , "", "");
+  } } }
   return "";
 }
 SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec) {
@@ -403,18 +409,18 @@ const char * ALIKEC_compare_attributes_internal_simple(
   if(tae_type == NILSXP && cae_type == NILSXP) return "";
   else if(tae_type == NILSXP)
     return ALIKEC_sprintf(
-      "Expected attribute \"%s\" to be missing, but it is present",
+      "expected attribute \"%s\" to be missing, but it is present",
       attr_name, "", "", ""
     );
   else if(cae_type == NILSXP)
     return ALIKEC_sprintf(
-      "Expected attribute \"%s\", but it is missing",
+      "expected attribute \"%s\", but it is missing",
       attr_name, "", "", ""
     );
   else if(tae_type != cae_type) {
     return ALIKEC_sprintf(
-      "Type mismatch for attribute `%s`: expected \"%s\", but got \"%s\"", attr_name,
-      type2char(tae_type), type2char(cae_type), ""
+      "expected type \"%s\" for attribute `%s`, but got \"%s\"",
+      type2char(tae_type), attr_name, type2char(cae_type), ""
     );
   } else if (
     (
@@ -436,15 +442,15 @@ const char * ALIKEC_compare_attributes_internal_simple(
   ) {
     if(attr_mode || tae_val_len) {
       return ALIKEC_sprintf(
-        "Length mismatch for attribute \"%s\": expected %s, but got %s",
-        attr_name, ALIKEC_xlen_to_char(tae_val_len),
+        "expected length %s for attribute \"%s\", but got %s",
+        ALIKEC_xlen_to_char(tae_val_len), attr_name,
         ALIKEC_xlen_to_char(cae_val_len), ""
     );}
   } else if (!attr_mode && !tae_val_len) {
     return "";
   } else if (!R_compute_identical(target, current, 16)) {
     return ALIKEC_sprintf(
-      "Attribute value mismatch for attribute `%s`%s%s%s", attr_name, "", "", ""
+      "attribute value mismatch for attribute `%s`%s%s%s", attr_name, "", "", ""
     );
   }
   return "";
@@ -600,9 +606,7 @@ const char * ALIKEC_compare_attributes_internal(
           prim_attr_el_val, sec_attr_el_val
         );
         if(strlen(name_comp))
-          err_major[1] = ALIKEC_sprintf(
-            "\"%s\" mismatch: %s", tx, name_comp, "", ""
-          );
+          err_major[1] = ALIKEC_sprintf(name_comp, tx, "", "", "");
         continue;
       // - Dims ----------------------------------------------------------------
 

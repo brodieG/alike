@@ -1,5 +1,6 @@
 #include <R.h>
 #include <Rinternals.h>
+#include <locale.h>
 
 // - Main Funs -----------------------------------------------------------------
 

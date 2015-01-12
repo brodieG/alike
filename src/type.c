@@ -41,7 +41,7 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
     what = type2char(tar_type);
   }
   return ALIKEC_sprintf(
-    "expected \"%s\", but got \"%s\"", what, type2char(cur_type), "", ""
+    "expected type \"%s\", but got \"%s\"", what, type2char(cur_type), "", ""
   );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {
