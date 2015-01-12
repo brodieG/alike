@@ -35,3 +35,6 @@ And helpers to go in the opposite direction:
     ScalarInteger(x): int -> INTSXP
     ScalarReal(x): double -> REALSXP
     mkString(x): const char* -> STRSXP
+
+## Understanding How to Read C Types
+
