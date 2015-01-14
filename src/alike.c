@@ -159,15 +159,15 @@ SEXP ALIKEC_alike_internal(
       ) {
         err = 1;
         if(*is_df) {
-          err_base = ALIKEC_sprintf(
-            "expected %%s column%s, but got %%s",
+          err_base = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "expected %%s column%s, but got %%s",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
-          err_base =  "expected length %s, but got %s%s%s";
+          err_base = "expected length %s, but got %s%s%s";
         }
-        err_tok1 = ALIKEC_xlen_to_char(tar_len);
-        err_tok2 = ALIKEC_xlen_to_char(cur_len);
+        err_tok1 = CSR_len_as_chr(tar_len);
+        err_tok2 = CSR_len_as_chr(cur_len);
         err_tok3 = err_tok4 = "";
       } else if (
         *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
@@ -181,9 +181,9 @@ SEXP ALIKEC_alike_internal(
         // check the first column only
 
         err_base = "expected %s row%s, but got %s%s%s";
-        err_tok1 = ALIKEC_xlen_to_char(tar_first_el_len);
+        err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
-        err_tok3 = ALIKEC_xlen_to_char(cur_first_el_len);
+        err_tok3 = CSR_len_as_chr(cur_first_el_len);
       }
     }
     // - Known Limitations -----------------------------------------------------
@@ -208,9 +208,10 @@ SEXP ALIKEC_alike_internal(
 
     if(err) {
       const char * err_final, * err_msg;
-
-      err_msg = (const char *) ALIKEC_sprintf((char *) err_base, err_tok1, err_tok2, err_tok3, err_tok4);
-
+      err_msg = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, err_base, err_tok1, err_tok2, err_tok3,
+        err_tok4
+      );
       /*
       Compute the part of the error that gives the index where the discrepancy
       occurred.  Note that last level is meaningless as it has not been dived
@@ -221,12 +222,12 @@ SEXP ALIKEC_alike_internal(
       int ind_sz_max = 0;
 
       for(i = 0; i < ind_lvl; i++) {
-        if((ind_sz = ALIKEC_int_charlen((R_xlen_t)ind_stk[i])) > ind_sz_max)
+        if((ind_sz = CSR_len_chr_len((R_xlen_t)ind_stk[i])) > ind_sz_max)
           ind_sz_max = ind_sz;  /* we will use to allocate a char vec of appropriate size */
         ind_len = ind_len + ind_sz;
       }
-      char err_chr_indeces[ind_len + 4 * (ind_lvl + 1) + 1];  //err_chr_indeces should be over-allocated by one element due to some changes we made
-      char err_chr_index[ind_sz_max + 4 + 1];
+      char * err_chr_indeces = R_alloc(ind_len + 4 * (ind_lvl + 1) + 1, sizeof(char));  //err_chr_indeces should be over-allocated by one element due to some changes we made
+      char * err_chr_index = R_alloc(ind_sz_max + 4 + 1, sizeof(char));
       err_chr_indeces[0] = err_chr_index[0] = '\0';
       for(i = 0; i < ind_lvl - 1; i++) {
         sprintf(err_chr_index, "[[%d]]", ind_stk[i] + 1);
@@ -245,28 +246,30 @@ SEXP ALIKEC_alike_internal(
           if(
             col_names != R_NilValue && XLENGTH(col_names) > ind_stk[i]
           ) {
-            err_interim = ALIKEC_sprintf(
-              "`%s`", CHAR(asChar(STRING_ELT(col_names, ind_stk[i]))), "", "", ""
+            err_interim = CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "`%s`",
+              CHAR(asChar(STRING_ELT(col_names, ind_stk[i]))), "", "", ""
             );
           } else {
-            err_interim = ALIKEC_xlen_to_char(ind_stk[i] + 1);
+            err_interim = CSR_len_as_chr(ind_stk[i] + 1);
           }
         } else {
           err_col_type = "index";
-          err_interim = ALIKEC_sprintf(
-            "%s[[%s]]", err_chr_indeces,
-            ALIKEC_xlen_to_char(ind_stk[i] + 1), "", ""
+          err_interim = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "%s[[%s]]", err_chr_indeces,
+            CSR_len_as_chr(ind_stk[i] + 1), "", ""
         );}
-        err_final = ALIKEC_sprintf(
-          "Mismatch at %s %s: %s%s", err_col_type, err_interim, err_msg, ""
+        err_final = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "Mismatch at %s %s: %s%s", err_col_type, err_interim,
+          err_msg, ""
         );
       } else {
         char * err_msg_up = R_alloc(strlen(err_msg) + 1, sizeof(char));
         if(!strcpy(err_msg_up, err_msg))
           error("Logic Error: failed copying string 264; contact maintainer.");
         err_msg_up[0] = toupper(err_msg_up[0]);
-        err_final = ALIKEC_sprintf(
-          "%s%s%s%s", (const char *) err_msg_up, "", "", ""
+        err_final = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "%s%s%s%s", (const char *) err_msg_up, "", "", ""
         );
       }
       SEXP res;

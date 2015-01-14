@@ -54,6 +54,7 @@
 #' is slightly faster.
 #'
 #' @export
+#' @import cstringr
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
 #' @seealso type_alike, type_of
 #' @param target the template to compare the object to

@@ -26,6 +26,14 @@ void R_init_alike(DllInfo *info)
   */
   ALIKEC_SYM_package = install("package");
   ALIKEC_SYM_inherits = install("inherits");
+  CSR_smprintf4 = (
+    const char *(*)(
+      size_t, const char *, const char *, const char *,  const char *,  const char *
+    )
+  ) R_GetCCallable("cstringr", "CSR_smprintf4");
+  CSR_len_chr_len = (size_t(*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_chr_len");
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
   R_RegisterCCallable("alike", "ALIKEC_alike_fast", (DL_FUNC) ALIKEC_alike_fast);
+  CSR_len_as_chr = (const char * (*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_as_chr");
 }
+

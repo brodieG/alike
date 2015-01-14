@@ -1,9 +1,9 @@
 Package: alike
 Title: Determine Whether Two Objects Are Similar
 Description: Compares object structures rather than values.  This is
-    particularly useful when a user has an object template (e.g. matrix(integer(),
-    ncol=3)) that they wish to compare other objects against (e.g. three column
-    integer matrices).
+    particularly useful when a user has an object template (e.g.
+    matrix(integer(), ncol=3)) that they wish to compare other objects against
+    (e.g. three column integer matrices).
 Version: 0.2.5
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
@@ -12,6 +12,8 @@ Depends:
 License: GPL-2
 LazyData: true
 VignetteBuilder: knitr
+Imports:
+    cstringr
 Suggests:
     knitr,
     microbenchmark,

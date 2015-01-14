@@ -1,6 +1,6 @@
 #include <R.h>
 #include <Rinternals.h>
-#include <locale.h>
+#include <ctype.h>
 
 // - Main Funs -----------------------------------------------------------------
 
@@ -28,11 +28,22 @@ SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP
 
 SEXP ALIKEC_mode(SEXP obj);
 SEXP ALIKEC_test(SEXP obj1);
-const char * ALIKEC_sprintf(const char * a, const char * b, const char * c, const char * d, const char * e);
-const char * ALIKEC_xlen_to_char(R_xlen_t a);
-int ALIKEC_int_charlen (R_xlen_t a);
+
+// - Imported Funs -------------------------------------------------------------
+
+const char * (*CSR_smprintf4)(
+  size_t, const char *, const char *, const char *, const char *, const char *
+);
+const char * (*CSR_len_as_chr)(R_xlen_t);
+size_t (*CSR_len_chr_len)(R_xlen_t);
 
 // - Init and pre-install Symbols ----------------------------------------------
 
 SEXP ALIKEC_SYM_inherits;
 SEXP ALIKEC_SYM_package;
+
+// - Constants -----------------------------------------------------------------
+
+#ifndef ALIKEC_MAX_CHAR
+# define ALIKEC_MAX_CHAR 10000
+#endif

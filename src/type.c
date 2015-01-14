@@ -40,7 +40,8 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
   } else {
     what = type2char(tar_type);
   }
-  return ALIKEC_sprintf(
+  return CSR_smprintf4(
+    ALIKEC_MAX_CHAR,
     "expected type \"%s\", but got \"%s\"", what, type2char(cur_type), "", ""
   );
 }
