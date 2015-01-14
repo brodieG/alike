@@ -207,7 +207,8 @@ SEXP ALIKEC_alike_internal(
     // - Handle Errors ---------------------------------------------------------
 
     if(err) {
-      const char * err_final, * err_msg;
+      const char * err_final;
+      char * err_msg;
       err_msg = CSR_smprintf4(
         ALIKEC_MAX_CHAR, err_base, err_tok1, err_tok2, err_tok3,
         err_tok4
@@ -264,12 +265,9 @@ SEXP ALIKEC_alike_internal(
           err_msg, ""
         );
       } else {
-        char * err_msg_up = R_alloc(strlen(err_msg) + 1, sizeof(char));
-        if(!strcpy(err_msg_up, err_msg))
-          error("Logic Error: failed copying string 264; contact maintainer.");
-        err_msg_up[0] = toupper(err_msg_up[0]);
+        if(err_msg) err_msg[0] = toupper(err_msg[0]);
         err_final = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "%s%s%s%s", (const char *) err_msg_up, "", "", ""
+          ALIKEC_MAX_CHAR, "%s%s%s%s", (const char *) err_msg, "", "", ""
         );
       }
       SEXP res;
