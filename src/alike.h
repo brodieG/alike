@@ -31,10 +31,10 @@ SEXP ALIKEC_test(SEXP obj1);
 
 // - Imported Funs -------------------------------------------------------------
 
-const char * (*CSR_smprintf4)(
+char * (*CSR_smprintf4)(
   size_t, const char *, const char *, const char *, const char *, const char *
 );
-const char * (*CSR_len_as_chr)(R_xlen_t);
+char * (*CSR_len_as_chr)(R_xlen_t);
 size_t (*CSR_len_chr_len)(R_xlen_t);
 
 // - Init and pre-install Symbols ----------------------------------------------
