@@ -376,7 +376,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
     if((prim_obj = VECTOR_ELT(prim, attr_i)) != R_NilValue) {
       sec_obj = VECTOR_ELT(sec, attr_i);
       const char * dimnames_comp = ALIKEC_compare_special_char_attrs_internal(
-          prim_obj, sec_obj
+        prim_obj, sec_obj
       );
       if(strlen(dimnames_comp)) {
         const char * err_msg;
