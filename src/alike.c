@@ -1,7 +1,8 @@
 #include "alike.h"
 
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode
+  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
+  const char * prepend
 ) {
   if(int_mode < 0 || int_mode > 2)
     error("Argument `int.mode` must be in 0:2");
@@ -87,9 +88,9 @@ SEXP ALIKEC_alike_internal(
     if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
       if(s4_tar + s4_cur == 1) {
         err = 1;
-        err_base = "expected object to %s S4, but %s";
-        err_tok1 = (s4_tar ? "be" : "not be");
-        err_tok2 = (s4_cur ? "is" : "is not");
+        err_base = "%sS4 type class";
+        err_tok1 = (s4_tar ? "" : "no ");
+        err_tok2 = (s4_cur ? "no " : "");
         err_tok3 = err_tok4 = "";
       } else {
         // Here we pull the class symbol, install "inherits" from R proper, and
@@ -113,7 +114,7 @@ SEXP ALIKEC_alike_internal(
         SETCAR(t, klass);
         if(!asLogical(eval(s, R_BaseEnv))) {
           err = 1;
-          err_base = "expected to inherit from class \"%s\" (package: %s), but does not";
+          err_base = "inheritance from S4 class \"%s\" (package: %s)";
           err_tok1 = CHAR(asChar(klass));
           err_tok2 = CHAR(asChar(klass_attrib));
           err_tok3 = err_tok4 = "";
@@ -160,11 +161,11 @@ SEXP ALIKEC_alike_internal(
         err = 1;
         if(*is_df) {
           err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "expected %%s column%s, but got %%s",
+            ALIKEC_MAX_CHAR, "%%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
-          err_base = "expected length %s, but got %s%s%s";
+          err_base = "length %s (is %s)";
         }
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
@@ -180,7 +181,7 @@ SEXP ALIKEC_alike_internal(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "expected %s row%s, but got %s%s%s";
+        err_base = "%s row%s (has %s)";
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
@@ -261,13 +262,12 @@ SEXP ALIKEC_alike_internal(
             CSR_len_as_chr(ind_stk[i] + 1), "", ""
         );}
         err_final = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "Mismatch at %s %s: %s%s", err_col_type, err_interim,
-          err_msg, ""
+          ALIKEC_MAX_CHAR, "%sat %s %s: %s%s", prepend, err_col_type,
+          err_interim, err_msg
         );
       } else {
-        if(err_msg) err_msg[0] = toupper(err_msg[0]);
         err_final = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "%s%s%s%s", (const char *) err_msg, "", "", ""
+          ALIKEC_MAX_CHAR, "%s%s%s%s", prepend, (const char *) err_msg, "", ""
         );
       }
       SEXP res;
@@ -322,8 +322,9 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_alike_internal(target, current, 0, sqrt(DOUBLE_EPS), 0);
-}
+  return ALIKEC_alike_internal(
+    target, current, 0, sqrt(DOUBLE_EPS), 0, "Expected "
+);}
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
@@ -342,9 +343,8 @@ SEXP ALIKEC_alike (
   if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1)
     error("Argument `int_tolerance` must be a one length numeric vector");
 
-  return
-    ALIKEC_alike_internal(
-      target, current, asInteger(int_mode), asReal(int_tolerance),
-      asInteger(attr_mode)
-    );
+  return ALIKEC_alike_internal(
+    target, current, asInteger(int_mode), asReal(int_tolerance),
+    asInteger(attr_mode), "Expected "
+  );
 }

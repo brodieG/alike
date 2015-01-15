@@ -42,7 +42,7 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
   }
   return CSR_smprintf4(
     ALIKEC_MAX_CHAR,
-    "expected type \"%s\", but got \"%s\"", what, type2char(cur_type), "", ""
+    "type \"%s\" (is \"%s\")", what, type2char(cur_type), "", ""
   );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance) {

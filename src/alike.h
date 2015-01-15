@@ -6,7 +6,10 @@
 
 SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode);
 SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
-
+SEXP ALIKEC_alike_internal(
+  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
+  const char * prepend
+);
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
