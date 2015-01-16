@@ -88,9 +88,9 @@ SEXP ALIKEC_alike_internal(
     if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
       if(s4_tar + s4_cur == 1) {
         err = 1;
-        err_base = "%sS4 type class";
-        err_tok1 = (s4_tar ? "" : "no ");
-        err_tok2 = (s4_cur ? "no " : "");
+        err_base = "%sbe S4";
+        err_tok1 = (s4_tar ? "" : "not ");
+        err_tok2 = "";
         err_tok3 = err_tok4 = "";
       } else {
         // Here we pull the class symbol, install "inherits" from R proper, and
@@ -114,7 +114,7 @@ SEXP ALIKEC_alike_internal(
         SETCAR(t, klass);
         if(!asLogical(eval(s, R_BaseEnv))) {
           err = 1;
-          err_base = "inheritance from S4 class \"%s\" (package: %s)";
+          err_base = "inherit from S4 class \"%s\" (package: %s)";
           err_tok1 = CHAR(asChar(klass));
           err_tok2 = CHAR(asChar(klass_attrib));
           err_tok3 = err_tok4 = "";
@@ -161,11 +161,11 @@ SEXP ALIKEC_alike_internal(
         err = 1;
         if(*is_df) {
           err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "%%s column%s (has %%s)",
+            ALIKEC_MAX_CHAR, "have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
-          err_base = "length %s (is %s)";
+          err_base = "be length %s (is %s)";
         }
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
@@ -181,7 +181,7 @@ SEXP ALIKEC_alike_internal(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "%s row%s (has %s)";
+        err_base = "have %s row%s (has %s)";
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
@@ -262,8 +262,8 @@ SEXP ALIKEC_alike_internal(
             CSR_len_as_chr(ind_stk[i] + 1), "", ""
         );}
         err_final = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "%sat %s %s: %s%s", prepend, err_col_type,
-          err_interim, err_msg
+          ALIKEC_MAX_CHAR, "%s%s at %s %s", prepend,
+          err_msg, err_col_type, err_interim
         );
       } else {
         err_final = CSR_smprintf4(
@@ -323,7 +323,7 @@ calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
   return ALIKEC_alike_internal(
-    target, current, 0, sqrt(DOUBLE_EPS), 0, "Expected "
+    target, current, 0, sqrt(DOUBLE_EPS), 0, "should "
 );}
 /* Normal version, a little slower but more flexible */
 
@@ -345,6 +345,6 @@ SEXP ALIKEC_alike (
 
   return ALIKEC_alike_internal(
     target, current, asInteger(int_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "Expected "
+    asInteger(attr_mode), "should "
   );
 }
