@@ -151,6 +151,34 @@ as well as the evaluation environment, but we've add 600ns in evaluation time.
 
 ## Comparisons
 
+### Environments
+
+Probably should have contents compared by name, not just sequentially?
+
+### Attribute Comparison
+
+Exceptions to typical treatment:
+
+* class
+* names/row.names
+* dimnames
+* dim
+
+Examples in favor of `identical`:
+
+* levels
+* tsp: start, end, frequency seem akin to dimensions (special treatment for zeroes?)
+
+Examples against
+
+* many of the attributes in the result of `lm`
+* zoo
+    * index, seems like it just tracks order
+    * when have date indices, does alikeness require the same date ranges, or only the same type of index and number of values?
+    * what about zoo.reg? frequency seems like it is closer to a dimension variable
+    * index is probably closest to row.names, but unfortunately it can be just about anything
+* proto objects, urgh
+
 ### Most Meaningful Elements
 
 1. Check class
