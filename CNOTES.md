@@ -20,6 +20,14 @@ SEXP ScalarString(SEXP):
   param: should be CHARSXP, i.e. `ScalarString(mkChar(x))`
   return: STRSXP
 
+SEXP PRINTNAME(SEXP)
+  param: should be a pairlist tag (e.g `TAG(X)`), presumably a symbol
+  return: CHARSXP
+  can potentially convert to STRSXP with: `ScalarString(PRINTNAME(TAG(x)))`
+
+From TAG to R object:
+  ScalarString(PRINTNAME(TAG(x)))
+
 From Hadley:
 
 There are a few helper functions that turn length one R vectors into C scalars:
@@ -35,6 +43,8 @@ And helpers to go in the opposite direction:
     ScalarInteger(x): int -> INTSXP
     ScalarReal(x): double -> REALSXP
     mkString(x): const char* -> STRSXP
+
+
 
 ## Understanding How to Read C Types
 

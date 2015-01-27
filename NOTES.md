@@ -153,7 +153,7 @@ as well as the evaluation environment, but we've add 600ns in evaluation time.
 
 ### Environments
 
-Probably should have contents compared by name, not just sequentially?
+Probably should have contents compared by name, not just sequentially?  How do we treat hashed environments vs non hashed?
 
 ### Attribute Comparison
 
