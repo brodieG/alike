@@ -23,7 +23,6 @@ SEXP ALIKEC_mode(SEXP obj) {
 // - Testing Function ----------------------------------------------------------
 
 SEXP ALIKEC_test(SEXP obj1) {
-  Rprintf("boom %s\n", type2char(TYPEOF(allocVector(VECSXP, 1))));
-  return R_NilValue;
+  return R_lsInternal(obj1, TRUE);
 }
 

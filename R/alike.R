@@ -230,6 +230,7 @@ dim_compare <- function(
 
 #' Used for testing C code
 #'
+#' @export
 #' @keywords internal
 
 alike_test <- function(obj1) .Call(ALIKEC_test, obj1)
