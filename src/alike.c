@@ -178,6 +178,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
   struct ALIKEC_res res0 = ALIKEC_alike_obj(
     target, current, int_mode, int_tolerance, attr_mode, suppress_warnings
   );
+
   if(!res0.success) {
     return (struct ALIKEC_res) {0, res0.message, 0};
   }
@@ -198,7 +199,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), int_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
-      if(!res1.success) return(res1);
+      if(!res1.success) break;
     }
   } else if (tar_type == ENVSXP) {
     SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
@@ -250,6 +251,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
       );
       if(!res1.success) break;
     }
+  } else {
+    return res0;
   }
   res1.df = res0.df;  // Indicate whether parent object was a data frame
   return res1;
@@ -267,13 +270,14 @@ SEXP ALIKEC_alike_internal(
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
   SEXP index = PROTECT(list1(R_NilValue));
+
   struct ALIKEC_res res;
 
   if(TYPEOF(target) == NILSXP && TYPEOF(current) != NILSXP) {
     // Handle NULL special case at top level
 
     err_base = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be NULL is %s", type2char(TYPEOF(current)), "", "", ""
+      ALIKEC_MAX_CHAR, "be type \"NULL\" (is \"%s\")", type2char(TYPEOF(current)), "", "", ""
     );
   } else {
     // Recursively check object
@@ -282,8 +286,10 @@ SEXP ALIKEC_alike_internal(
       target, current, index, int_mode, int_tolerance, attr_mode,
       suppress_warnings
     );
-    UNPROTECT(1);
-    if(res.success) return(ScalarLogical(1));
+    if(res.success) {
+      UNPROTECT(1);
+      return(ScalarLogical(1));
+    }
     err_base = res.message;
   }
   // - Contruct Error ----------------------------------------------------------
@@ -307,17 +313,18 @@ SEXP ALIKEC_alike_internal(
     SEXP ind_sub_val;
     size_t err_size = 0, levels = 0, ind_size_max = 0, ind_size;
 
-    for(ind_sub = index; ind_sub != R_NilValue; ind_sub = CDR(ind_sub), levels++) {
+    for(ind_sub = CDR(index); ind_sub != R_NilValue; ind_sub = CDR(ind_sub), levels++) {
       ind_sub_val = CAR(ind_sub);
       switch(TYPEOF(ind_sub_val)) {
         case INTSXP:
           ind_size = CSR_len_chr_len(asInteger(ind_sub_val));
           break;
-        case STRSXP:
-          ind_size = CSR_strmlen(CHAR(asChar(ind_sub)), ALIKEC_MAX_CHAR) + 2;
+        case CHARSXP:
+          ind_size = CSR_strmlen(CHAR(ind_sub_val), ALIKEC_MAX_CHAR) + 2;
           break;
-        default:
-          error("Logic Error: unexpected index type; contact maintainer.");
+        default: {
+          error("Logic Error: unexpected index type 1 \"%s\"; contact maintainer.", type2char(TYPEOF(ind_sub_val)));
+        }
       }
       if(ind_size > ind_size_max) ind_size_max = ind_size;
       err_size += ind_size;
@@ -328,19 +335,19 @@ SEXP ALIKEC_alike_internal(
 
     size_t i;
 
-    for(ind_sub = index, i = 0; i < levels; ind_sub = CDR(ind_sub), i++) {
+    for(ind_sub = CDR(index), i = 0; i < levels; ind_sub = CDR(ind_sub), i++) {
       ind_sub_val = CAR(ind_sub);
       const char * index_tpl = "[[%s]]";
       switch(TYPEOF(ind_sub_val)) {
         case INTSXP:
           err_chr_index_val = (const char *) CSR_len_as_chr(asInteger(ind_sub_val) + 1);
           break;
-        case STRSXP:
-          err_chr_index_val = CHAR(asChar(ind_sub_val));
+        case CHARSXP:
+          err_chr_index_val = CHAR(ind_sub_val);
           index_tpl = "[[\"%s\"]]";
           break;
         default:
-          error("Logic Error: unexpected index type; contact maintainer.");
+          error("Logic Error: unexpected index type 2; contact maintainer.");
       }
       // leave off last index as treated differently if it is a DF column vs not
       // that will be dealt in the next step

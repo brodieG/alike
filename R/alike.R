@@ -120,9 +120,10 @@
 #' alike(obj.tpl, obj.cur.2)
 
 alike <- function(
-  target, current, int.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L
+  target, current, int.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
+  suppress.warnings=FALSE
 )
-  .Call(ALIKEC_alike, target, current, int.mode, int.tol, attr.mode)
+  .Call(ALIKEC_alike, target, current, int.mode, int.tol, attr.mode, suppress.warnings)
 
 #' @export
 

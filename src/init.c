@@ -3,7 +3,7 @@
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike", (DL_FUNC) &ALIKEC_alike, 5},
+  {"alike", (DL_FUNC) &ALIKEC_alike, 6},
   {"alike_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
