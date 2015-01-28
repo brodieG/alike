@@ -4,11 +4,11 @@
 
 // - Main Funs -----------------------------------------------------------------
 
-SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode);
+SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode, SEXP suppress_warnings);
 SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
 SEXP ALIKEC_alike_internal(
   SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
-  const char * prepend
+  const char * prepend, int suppress_warnings
 );
 SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
 SEXP ALIKEC_typeof_fast(SEXP object);
@@ -38,6 +38,7 @@ char * (*CSR_smprintf4)(
   size_t, const char *, const char *, const char *, const char *, const char *
 );
 char * (*CSR_len_as_chr)(R_xlen_t);
+size_t (*CSR_strmlen)(const char *, size_t);
 size_t (*CSR_len_chr_len)(R_xlen_t);
 
 // - Init and pre-install Symbols ----------------------------------------------
