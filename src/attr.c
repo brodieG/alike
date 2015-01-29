@@ -50,7 +50,7 @@ const char * ALIKEC_compare_class(
         char * err_ind = CSR_len_as_chr((R_xlen_t)(cur_class_i + 1));
         err_msg =  CSR_smprintf4(
           ALIKEC_MAX_CHAR,
-          "have class \"%s\" at class vector index [[%s]] (has \"%s\", check `class(.)[[%s]]`)",
+          "have class \"%s\" at class vector index [[%s]] (is \"%s\", check `class(.)[[%s]]`)",
           tar_class, err_ind, cur_class, err_ind
         );
       } else {
@@ -364,7 +364,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
     );
     if(strlen(dimnames_name_comp)) {
       return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, dimnames_name_comp, "have \"dimnames\" _names_", "", "", ""
+        ALIKEC_MAX_CHAR, dimnames_name_comp, "\"dimnames\" _names_", "", "", ""
       );
   } }
   // look at dimnames themselves
@@ -388,7 +388,7 @@ const char * ALIKEC_compare_dimnames(SEXP prim, SEXP sec) {
           }
         } else {
           err_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have \"dimnames\" at dimension %s",
+            ALIKEC_MAX_CHAR, "\"dimnames\" at dimension %s",
             CSR_len_as_chr(attr_i + (R_xlen_t) 1), "", "", ""
         );}
         return CSR_smprintf4(
