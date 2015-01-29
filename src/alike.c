@@ -215,6 +215,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
           ALIKEC_MAX_CHAR, "contain variable `%s`",
           CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
         );
+        UNPROTECT(2);
         break;
       }
       SETCDR(index, list1(STRING_ELT(tar_names, i)));
@@ -222,8 +223,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
         findVarInFrame(target, var_name), var_cur_val, CDR(index), int_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
+      UNPROTECT(1);
       if(!res1.success) break;
     }
+    UNPROTECT(1);
   } else if (tar_type == LISTSXP) {
     SEXP tar_sub, cur_sub;
     R_xlen_t i = 0;
