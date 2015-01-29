@@ -101,7 +101,35 @@ unitizer_sect("Data Frames", {
   alike(mtcars, mtcars[1:10,])
   alike(mtcars[-5], mtcars)
 })
+unitizer_sect("Environments / Pairlists", {
+  env0 <- new.env()
+  env1 <- list2env(list(a=character(), b=list(), c=NULL))
+  env2 <- list2env(list(a="hello", b=iris, c=matrix(1:3)))
+  env3 <- list2env(list(a="hello", b=iris))
+  env4 <- list2env(list(a="hello", b=iris, c=logical(1L), d=logical(1L)))
+  env5 <- list2env(list(b=iris, a="hello", c=matrix(1:3)))
 
+  alike(env0, env2)  # zero length, matches anything
+  alike(env1, env2)  # TRUE
+  alike(env1, env3)  # length mismatch
+  alike(env1, env4)  # length mismatch
+  alike(env1, env5)  # order change, should still match
+
+  plst1 <- pairlist(a=character(), b=list(), c=NULL)
+  plst2 <- pairlist(a="hello", b=iris, c=matrix(1:3))
+  plst3 <- pairlist(a="hello", b=iris)
+  plst4 <- pairlist(a="hello", b=iris, c=logical(1L), d=logical(1L))
+  plst5 <- pairlist(a=character(), b=list(), integer())
+  plst6 <- pairlist(a=character(), b=list(), boogey=1:3)
+  plst7 <- pairlist(a=character(), boogey=1:3, b=list())
+
+  alike(plst1, plst2)  # TRUE
+  alike(plst1, plst3)  # length mismatch
+  alike(plst1, plst4)  # length mismatch
+  alike(plst1, plst5)  # fail, missing name
+  alike(plst5, plst6)  # TRUE, no name matches anything
+  alike(plst5, plst7)  # FALSE, order matters in pair lists
+})
 unitizer_sect("Errors", {
   alike(1, 1, int.mode="hello")
   alike(1, 1, int.mode=3)
