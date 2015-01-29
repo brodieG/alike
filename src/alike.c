@@ -240,13 +240,14 @@ struct ALIKEC_res ALIKEC_alike_rec(
       SEXP tar_tag_chr = PRINTNAME(tar_tag);
       if(tar_tag != R_NilValue && tar_tag != TAG(cur_sub)) {
         res1.message = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "contain element `%s`", CHAR(asChar(tar_tag_chr)),
-          "", "", ""
+          ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
+          CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
         );
+        SETCDR(index, R_NilValue);
         res1.success = 0;
         break;
       }
-      if(tar_tag != R_NilValue) SETCDR(index, list1(ScalarString(tar_tag_chr)));
+      if(tar_tag != R_NilValue) SETCDR(index, list1(asChar(tar_tag_chr)));
       else SETCDR(index, list1(ScalarInteger(i)));
       res1 = ALIKEC_alike_rec(
         CAR(tar_sub), CAR(cur_sub), CDR(index), int_mode,
