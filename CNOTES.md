@@ -25,6 +25,10 @@ SEXP PRINTNAME(SEXP)
   return: CHARSXP
   can potentially convert to STRSXP with: `ScalarString(PRINTNAME(TAG(x)))`
 
+SEXP asChar(x):
+  param: STRSXP
+  return: CHARSXP, first element in x
+
 From TAG to R object:
   ScalarString(PRINTNAME(TAG(x)))
 
@@ -44,7 +48,14 @@ And helpers to go in the opposite direction:
     ScalarReal(x): double -> REALSXP
     mkString(x): const char* -> STRSXP
 
+## NA values
 
+From arith.h:
+
+    #define NA_LOGICAL  R_NaInt
+    #define NA_INTEGER  R_NaInt
+    /* #define NA_FACTOR  R_NaInt  unused */
+    #define NA_REAL   R_NaReal
 
 ## Understanding How to Read C Types
 

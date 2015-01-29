@@ -149,11 +149,38 @@ And add a `substitute`:
 At this point we've replicated a promise of sorts, by capturing the expression,
 as well as the evaluation environment, but we've add 600ns in evaluation time.
 
+## Recursion
+
+Need to track indices, use a list?  Prototype
+
+    index = CONS(x, R_NilValue)
+    alike_rec(tar, cur, index.pl)
+    ...
+    curr.ind = SEXP
+    if(err) {
+      res = {1, mkString("Error Message")}
+    }
+    else if(recurse) {
+      SETCDR(index.pl, CONS(curr.ind))
+      return(alike_rec(rec(tar.child, cur.child, CDR(index.pl))))
+    }
+    else
+    return {0, R_NilValue}
+
+
+
+
 ## Comparisons
+
+### NULL
+
+Matches NULL at top level, anything when nested?  Should it match any pairlist at top level since zero length pair list is basically NULL?  Hmm...
 
 ### Environments
 
-Probably should have contents compared by name, not just sequentially?  How do we treat hashed environments vs non hashed?
+Probably should have contents compared by name, not just sequentially?  How do we treat hashed environments vs non hashed?  Looks like we just use built in functions to do this.
+
+Should we test if environments `identical` before we dive into a full comparison?  Almost certainly yes.
 
 ### Attribute Comparison
 
@@ -178,6 +205,7 @@ Examples against
     * what about zoo.reg? frequency seems like it is closer to a dimension variable
     * index is probably closest to row.names, but unfortunately it can be just about anything
 * proto objects, urgh
+* environments as attributes (e.g. .Environment for formula objects)
 
 ### Most Meaningful Elements
 
