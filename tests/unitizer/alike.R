@@ -129,6 +129,15 @@ unitizer_sect("Environments / Pairlists", {
   alike(plst1, plst5)  # fail, missing name
   alike(plst5, plst6)  # TRUE, no name matches anything
   alike(plst5, plst7)  # FALSE, order matters in pair lists
+
+  # Nesting
+
+  env7 <- list2env(list(a=character(), b=plst1))
+  env8 <- list2env(list(a=letters[1:3], b=plst2))
+  env9 <- list2env(list(a=letters[1:3], b=plst5))
+
+  alike(env7, env8)   # pass
+  alike(env7, env9)   # fail
 })
 unitizer_sect("Errors", {
   alike(1, 1, int.mode="hello")
