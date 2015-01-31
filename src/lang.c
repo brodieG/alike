@@ -1,9 +1,17 @@
 #include "alike.h"
+#include "pfhash.h"
 
-// - Implement a Hash Table ----------------------------------------------------
+// Moves pointer on language object to skip any `(` calls since those are
+// already accounted for in parsing and as such don't add anything
 
 
-
+SEXP ALIKEC_skip_paren(SEXP lang) {
+  if(TYPEOF(lang) != LANGSXP) return(lang);
+  while(
+    CAR(lang) == ALIKEC_SYM_paren_open && CDR(CDR(lang)) == R_NilValue
+  ) lang = CADR(lang);
+  return lang;
+}
 
 // - Anonymize Formula ---------------------------------------------------------
 
@@ -41,6 +49,9 @@ const char * ALIKEC_call_abs_rec(
     tar_sub = CDR(target), cur_sub = CDR(current); tar_sub != R_NilValue;
     tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub)
   ) {
+    tar_sub = ALIKEC_skip_paren(tar_sub);
+    cur_sub = ALIKEC_skip_paren(cur_sub);
+
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
     SEXPTYPE tsc_type = TYPEOF(tar_sub_car), csc_type = TYPEOF(cur_sub_car);
     if((tsc_type == SYMSXP || csc_type == SYMSXP) && tsc_type != csc_type) {
