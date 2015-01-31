@@ -123,7 +123,7 @@ static void locate (pfHashTable *tbl, char *key,
 //   we use this one.
 
 static char *dupstr (char *str) {
-    char *newstr = malloc (strlen (str) + 1);
+    char *newstr = R_alloc (strlen (str) + 1, sizeof(char));
     if (newstr != NULL)
         strcpy (newstr, str);
     return newstr;
@@ -143,7 +143,7 @@ pfHashTable *pfHashCreate (uint32_t (*fn)(char *)) {
     // Allocate the hash table, including entries
     //   for lists of nodes.
 
-    pfHashTable *tbl = malloc (sizeof (pfHashTable)
+    pfHashTable *tbl = R_alloc (1, sizeof (pfHashTable)
         + numEntries * sizeof (pfHashNode*));
     if (tbl == NULL)
         return NULL;
@@ -161,6 +161,8 @@ pfHashTable *pfHashCreate (uint32_t (*fn)(char *)) {
 // Destroys a hash table, freeing all data.
 
 void pfHashDestroy (pfHashTable *tbl) {
+    error("hash table destroy disabled as it should be handled by R");
+
     // Get size first.
 
     uint32_t numEntries = tbl->fn (NULL);
@@ -200,7 +202,7 @@ int pfHashSet (pfHashTable *tbl, char *key, char *data) {
         return 0;
     }
 
-    node = malloc (sizeof (pfHashNode));
+    node = R_alloc (1, sizeof (pfHashNode));
     if (node == NULL)
         return -1;
 
@@ -235,9 +237,11 @@ int pfHashDel (pfHashTable *tbl, char *key) {
     else
         tbl->lookup[entry] = node->next;
 
-    free (node->key);
-    free (node->data);
-    free (node);
+    // Relying on R to clear this up at tend of fun call
+
+    // free (node->key);
+    // free (node->data);
+    // free (node);
 
     return 0;
 }
