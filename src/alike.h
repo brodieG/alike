@@ -1,6 +1,11 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <ctype.h>
+// - Constants -----------------------------------------------------------------
+
+#ifndef ALIKEC_MAX_CHAR
+# define ALIKEC_MAX_CHAR 10000
+#endif
 
 // - Main Funs -----------------------------------------------------------------
 
@@ -45,9 +50,6 @@ size_t (*CSR_len_chr_len)(R_xlen_t);
 
 SEXP ALIKEC_SYM_inherits;
 SEXP ALIKEC_SYM_package;
+SEXP ALIKEC_SYM_tilde;
+SEXP ALIKEC_SYM_paren_open;
 
-// - Constants -----------------------------------------------------------------
-
-#ifndef ALIKEC_MAX_CHAR
-# define ALIKEC_MAX_CHAR 10000
-#endif

@@ -15,13 +15,15 @@ struct ALIKEC_res ALIKEC_alike_obj(
 ) {
   int tmp = 0;
   int * is_df = &tmp;
-  SEXPTYPE tar_type;
+  SEXPTYPE tar_type, cur_type;
 
   int err = 0;
   const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_attr;
+    * err_type, * err_attr, * err_lang;
+  err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
+  cur_type = TYPEOF(current);
   int s4_cur, s4_tar;
   s4_tar = ((IS_S4_OBJECT)(target) != 0);
   s4_cur = ((IS_S4_OBJECT)(current) != 0);
@@ -30,8 +32,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err = 1;
       err_base = "%sbe S4";
       err_tok1 = (s4_tar ? "" : "not ");
-      err_tok2 = "";
-      err_tok3 = err_tok4 = "";
     } else {
       // Here we pull the class symbol, install "inherits" from R proper, and
       // evaluate it in the base environment to avoid conflicts with other
@@ -57,12 +57,11 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_base = "inherit from S4 class \"%s\" (package: %s)";
         err_tok1 = CHAR(asChar(klass));
         err_tok2 = CHAR(asChar(klass_attrib));
-        err_tok3 = err_tok4 = "";
       }
       UNPROTECT(1);
     }
   } else if(target != R_NilValue) {  // Nil objects match anything when nested (should also be true for envs?)
-  // - Attributes ------------------------------------------------------------
+    // - Attributes ------------------------------------------------------------
     int tmp = -1;
     int * err_lvl =& tmp;
 
@@ -75,9 +74,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
     ) {
       err = 1;
       err_base = err_attr;
-      err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
     }
-  // - Type ------------------------------------------------------------------
+    // - Type ------------------------------------------------------------------
 
     if(
       !err &&
@@ -88,10 +86,22 @@ struct ALIKEC_res ALIKEC_alike_obj(
     ) {
       err = 1;
       err_base = err_type;
-      err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
     }
+    // - Special Language Objects ----------------------------------------------
 
-  // - Length ----------------------------------------------------------------
+    // Note length is not checked explicilty for language objects due to parens
+    // complicating the comparison
+
+    if(
+      !err && tar_type == LANGSXP && cur_type == LANGSXP && strlen(
+        err_lang = ALIKEC_lang_alike_internal(
+          target, current
+      ) )
+    ) {
+      err = 1;
+      err_base = err_lang;
+    }
+    // - Length ----------------------------------------------------------------
 
     SEXP tar_first_el, cur_first_el;
     R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
@@ -111,7 +121,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
       }
       err_tok1 = CSR_len_as_chr(tar_len);
       err_tok2 = CSR_len_as_chr(cur_len);
-      err_tok3 = err_tok4 = "";
     } else if (
       *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
       TYPEOF(current) == VECSXP && XLENGTH(current) &&

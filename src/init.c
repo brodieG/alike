@@ -20,12 +20,11 @@ R_CallMethodDef callMethods[] = {
 
 void R_init_alike(DllInfo *info)
 {
- /* Register the .C and .Call routines.
-    No .Fortran() or .External() routines,
-    so pass those arrays as NULL.
-  */
   ALIKEC_SYM_package = install("package");
   ALIKEC_SYM_inherits = install("inherits");
+  ALIKEC_SYM_paren_open = install("(");
+  ALIKEC_SYM_tilde = install("~");
+
   CSR_smprintf4 = (
     char *(*)(
       size_t, const char *, const char *, const char *,  const char *,  const char *
