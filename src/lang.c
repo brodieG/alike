@@ -22,24 +22,32 @@ based on the order in which they appear in the call
 Here we use an environment to try to take advantage of the hash search to
 identify whether a symbol already showed up or not. TBD how much faster this is
 than just doing a full lookup on lists.
-
 */
 
-char * ALIKEC_symb_abstract(SEXP symb, pfHashTable hash, size_t varnum) {
-  char * symb_chr = CHAR(PRINTNAME(symb));
-  char * symb_abs = pfHashFind(hash, symb_chr, TRUE);
+/* Look up symbol in hash table, if already present, return the anonymized
+version of the symbol.  If not, add to the hash table
+
+symb the symbol to lookup
+hash the hash table
+varnum used to generate the anonymized variable name
+*/
+
+char * ALIKEC_symb_abstract(SEXP symb, pfHashTable * hash, size_t * varnum) {
+  const char * symb_chr = CHAR(PRINTNAME(symb));
+  char * symb_abs = pfHashFind(hash, (char *) symb_chr);  // really shouldn't have to do this, but can't be bothered re-defining the hash library
   if(symb_abs == NULL) {
     symb_abs = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "a%s", CSR_len_as_chr(varnum), "", "", ""
+      ALIKEC_MAX_CHAR, "a%s", CSR_len_as_chr(*varnum), "", "", ""
     );
-    pfHashSet(hash, symb_chr, symb_abs);
+    pfHashSet(hash, (char *) symb_chr, symb_abs);
+    (*varnum)++;
   }
   return symb_abs;
 }
 
 const char * ALIKEC_call_abs_rec(
-  SEXP target, SEXP current, SEXP tar_hash_env, SEXP cur_hash_env,
-  size_t * varnum, int abstract_consts
+  SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
+  size_t * tar_varnum, size_t * cur_varnum, int formula
 ) {
   if(CAR(target) != CAR(current)) {  // Actual fun call must match exactly
     return "language mismatch";
@@ -58,26 +66,24 @@ const char * ALIKEC_call_abs_rec(
       return "language mismach";
     }
     if(tsc_type == SYMSXP) {
-      SEXP tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash_env, *varnum);
-      SEXP cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash_env, *varnum);
-
-      if(tar_abs != cur_abs) return "language mismatch";
-      if(tar_abs == R_UnboundValue) (*varnum)++;
+      char * tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash, tar_varnum);
+      char * cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash, cur_varnum);
+      if(!strcmp(tar_abs, cur_abs)) return "language mismatch";
     } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
       return "language mismatch";
     } else if (tsc_type == LANGSXP) {
       return ALIKEC_call_abs_rec(
-        tar_sub_car, cur_sub_car, tar_hash_env, cur_hash_env, varnum,
-        abstract_consts
+        tar_sub_car, cur_sub_car, tar_hash, cur_hash, tar_varnum,
+        cur_varnum, formula
       );
-    } else if (!abstract_consts && !R_compute_identical(target, current, 16)) {
+    } else if (formula && !R_compute_identical(target, current, 16)) {
       // Maybe this shouldn't be "identical", but too much of a pain in the butt
+      // to do an all.equals type comparison
 
       return "language mismatch";
     }
-
-
   }
+  return "";
 }
 
 SEXP ALIKEC_call_abstract(SEXP target, SEXP current, int abstract_consts) {
@@ -85,15 +91,22 @@ SEXP ALIKEC_call_abstract(SEXP target, SEXP current, int abstract_consts) {
     error("Arguments must be LANGSXP");
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
-  size_t tmp = 0;
-  size_t * varnum = &tmp;
+  size_t tartmp = 0, curtmp=0;
+  size_t * tar_varnum = &tartmp;
+  size_t * cur_varnum = &curtmp;
+  int formula = 0;
 
+  // If it is a formula, cos
 
-  pfHashDestroy(tar_hash);
-  pfHashDestroy(cur_hash);
+  SEXP class = getAttrib(target, R_ClassSymbol);
+  if(
+    class != R_NilValue && TYPEOF(class) == STRSXP &&
+    !strcmp("formula", CHAR(asChar(STRING_ELT(class, XLENGTH(class) - 1)))) &&
+    CAR(target) == ALIKEC_SYM_tilde
+  ) {
+    formula = 1;
+  }
   return R_NilValue;
-
-
 }
 /*
 Determine whether objects should be compared as calls or as formulas; the main
