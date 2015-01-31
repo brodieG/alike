@@ -172,6 +172,10 @@ Need to track indices, use a list?  Prototype
 
 ## Comparisons
 
+### Language
+
+How do we handle paren calls?  Ideally we would just ignore them, but they change length of call too...
+
 ### NULL
 
 Matches NULL at top level, anything when nested?  Should it match any pairlist at top level since zero length pair list is basically NULL?  Hmm...
