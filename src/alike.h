@@ -32,6 +32,7 @@
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev);
+  SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
 
   // - Utility Funs --------------------------------------------------------------
 

@@ -45,12 +45,12 @@ char * ALIKEC_symb_abstract(SEXP symb, pfHashTable * hash, size_t * varnum) {
   return symb_abs;
 }
 
-const char * ALIKEC_call_abs_rec(
+const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
   size_t * tar_varnum, size_t * cur_varnum, int formula
 ) {
   if(CAR(target) != CAR(current)) {  // Actual fun call must match exactly
-    return "language mismatch";
+    return "language mismatch 1";
   }
   SEXP tar_sub, cur_sub;
   for(
@@ -63,16 +63,16 @@ const char * ALIKEC_call_abs_rec(
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
     SEXPTYPE tsc_type = TYPEOF(tar_sub_car), csc_type = TYPEOF(cur_sub_car);
     if((tsc_type == SYMSXP || csc_type == SYMSXP) && tsc_type != csc_type) {
-      return "language mismach";
+      return "language mismach 2";
     }
     if(tsc_type == SYMSXP) {
       char * tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash, tar_varnum);
       char * cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash, cur_varnum);
-      if(!strcmp(tar_abs, cur_abs)) return "language mismatch";
+      if(!strcmp(tar_abs, cur_abs)) return "language mismatch 3";
     } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-      return "language mismatch";
+      return "language mismatch 4";
     } else if (tsc_type == LANGSXP) {
-      return ALIKEC_call_abs_rec(
+      return ALIKEC_lang_alike_rec(
         tar_sub_car, cur_sub_car, tar_hash, cur_hash, tar_varnum,
         cur_varnum, formula
       );
@@ -80,13 +80,18 @@ const char * ALIKEC_call_abs_rec(
       // Maybe this shouldn't be "identical", but too much of a pain in the butt
       // to do an all.equals type comparison
 
-      return "language mismatch";
+      return "language mismatch 5";
     }
   }
   return "";
 }
+/*
+Determine whether objects should be compared as calls or as formulas; the main
+difference in treatment is that calls are match-called if possible, and also
+that for calls constants need not be the same
+*/
 
-SEXP ALIKEC_call_abstract(SEXP target, SEXP current, int abstract_consts) {
+const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP)
     error("Arguments must be LANGSXP");
   pfHashTable * tar_hash = pfHashCreate(NULL);
@@ -96,7 +101,7 @@ SEXP ALIKEC_call_abstract(SEXP target, SEXP current, int abstract_consts) {
   size_t * cur_varnum = &curtmp;
   int formula = 0;
 
-  // If it is a formula, cos
+  // Determine if it is a formular or not
 
   SEXP class = getAttrib(target, R_ClassSymbol);
   if(
@@ -106,14 +111,13 @@ SEXP ALIKEC_call_abstract(SEXP target, SEXP current, int abstract_consts) {
   ) {
     formula = 1;
   }
-  return R_NilValue;
+  return ALIKEC_lang_alike_rec(
+    target, current, tar_hash, cur_hash, tar_varnum, cur_varnum, formula
+  );
 }
-/*
-Determine whether objects should be compared as calls or as formulas; the main
-difference in treatment is that calls are match-called if possible, and also
-that for calls constants need not be the same
-*/
 
-SEXP ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
-  return R_NilValue;
+SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current) {
+  const char * res = ALIKEC_lang_alike_internal(target, current);
+  if(strlen(res)) return mkString(res);
+  return ScalarLogical(1);
 }

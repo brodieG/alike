@@ -23,9 +23,6 @@ SEXP ALIKEC_mode(SEXP obj) {
 // - Testing Function ----------------------------------------------------------
 
 SEXP ALIKEC_test(SEXP obj1) {
-  Rprintf("%s", type2char(TYPEOF(obj1)));
-  PrintValue(INTERNAL(obj1));
-
   return R_NilValue;
 }
 

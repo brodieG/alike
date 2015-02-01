@@ -229,12 +229,15 @@ dim_compare <- function(
 )
   .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
 
+lang_alike <- function(target, current)
+  .Call(ALIKEC_lang_alike, target, current)
+
 #' Used for testing C code
 #'
 #' @export
 #' @keywords internal
 
-alike_test <- function(obj1) .Call(ALIKEC_test, obj1)
+alike_test <- function(obj1=parent.frame()) .Call(ALIKEC_test, obj1)
 
 #' Pre-calculated Precision Level
 #'
