@@ -229,6 +229,8 @@ dim_compare <- function(
 )
   .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
 
+#' @export
+
 lang_alike <- function(target, current)
   .Call(ALIKEC_lang_alike, target, current)
 
