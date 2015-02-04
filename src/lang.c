@@ -69,11 +69,15 @@ int ALIKEC_lang_alike_rec(
     } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
       return 0;
     } else if (tsc_type == LANGSXP) {
-      return ALIKEC_lang_alike_rec(
-        tar_sub_car, cur_sub_car, tar_hash, cur_hash, tar_varnum,
-        cur_varnum, formula
-      );
-    } else if (formula && !R_compute_identical(target, current, 16)) {
+      if(
+        ! ALIKEC_lang_alike_rec(
+          tar_sub_car, cur_sub_car, tar_hash, cur_hash, tar_varnum,
+          cur_varnum, formula
+        )
+      ) {
+        return 0;
+      }
+    } else if (formula && !R_compute_identical(tar_sub_car, cur_sub_car, 16)) {
       // Maybe this shouldn't be "identical", but too much of a pain in the butt
       // to do an all.equals type comparison
 
