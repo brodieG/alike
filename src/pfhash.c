@@ -176,9 +176,9 @@ void pfHashDestroy (pfHashTable *tbl) {
         pfHashNode *node = tbl->lookup[i];
         while (node != NULL) {
             pfHashNode *next = node->next;
-            free (node->key);
-            free (node->data);
-            free (node);
+            // free (node->key);
+            // free (node->data);
+            // free (node);
             node = next;
         }
     }
@@ -197,7 +197,7 @@ int pfHashSet (pfHashTable *tbl, char *key, char *data) {
         char *newdata = dupstr (data);
         if (newdata == NULL)
             return -1;
-        free (node->data);
+        // free (node->data);
         node->data = newdata;
         return 0;
     }
@@ -209,9 +209,9 @@ int pfHashSet (pfHashTable *tbl, char *key, char *data) {
     node->key = dupstr (key);
     node->data = dupstr (data);
     if ((node->key == NULL) || (node->data == NULL)) {
-        free (node->key);
-        free (node->data);
-        free (node);
+        // free (node->key);
+        // free (node->data);
+        // free (node);
         return -1;
     }
 
