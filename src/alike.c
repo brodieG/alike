@@ -92,15 +92,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
     // Note length is not checked explicilty for language objects due to parens
     // complicating the comparison
 
-    if(
-      !err && tar_type == LANGSXP && cur_type == LANGSXP && strlen(
-        err_lang = ALIKEC_lang_alike_internal(
-          target, current
-      ) )
-    ) {
-      err = 1;
-      err_base = err_lang;
-    }
+    if(!err && tar_type == LANGSXP && cur_type == LANGSXP){
+      err_lang = ALIKEC_lang_alike_internal(target, current);
+      if(strlen(err_lang)) {
+        err = 1;
+        err_base = err_lang;
+    } }
     // - Length ----------------------------------------------------------------
 
     SEXP tar_first_el, cur_first_el;
@@ -152,6 +149,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case S4SXP:
       case ENVSXP:
       case LISTSXP:
+      case LANGSXP:
         break;
       default:
         warning(
