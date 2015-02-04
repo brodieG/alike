@@ -263,3 +263,54 @@ unitizer_sect("All attributes, strict", {
     attr.mode=2
   )
 } )
+unitizer_sect("Calls", {
+  c0 <- quote(fun(a, b, a, 25))
+  c1 <- quote(fun(x, y, x, "hello"))
+  c2 <- quote(fun(x, y, z, "hello"))
+  c3 <- quote(FUN(x, y, x, 1.01))
+  c4 <- quote(fun(x, y, x, z))
+  c5 <- quote(fun(a + b + a, FUN(z, a + 1)))
+  c6 <- quote(fun(x + y + x, FUN(w, x + 2)))
+  c7 <- quote(fun(x + y + x, FUN(w, y + 2)))
+  c8 <- quote(fun(x + y + x, FUN(w, x - 2)))
+  c9 <- quote(fun(x + y + x, FUN(w, x + "hello")))
+
+  alike:::lang_alike(c0, c1)  # TRUE
+  alike:::lang_alike(c0, c2)  # no, inconsistent
+  alike:::lang_alike(c0, c3)  # no, wrong fun name
+  alike:::lang_alike(c0, c4)  # extra symbol
+  alike:::lang_alike(c5, c6)  # TRUE
+  alike:::lang_alike(c5, c7)  # inconsistent
+  alike:::lang_alike(c5, c8)  # wrong call `-`
+  alike:::lang_alike(c5, c9)  # TRUE
+
+  # Attributes on sub-components should not affect anything
+  # actually, these tests need to be with alike since lang_alike doesn't check
+  # attributes
+
+  # c0.1 <- c0.2 <- c0.3 <- c0
+  # attr(c0.1, "blah") <- "hello"
+  # attr(c0.2, "blah") <- 1:3
+  # attr(c0.3[[1L]], "blah") <- "hello"
+
+  # alike:::lang_alike(c0, c0.1)     # TRUE
+  # alike:::lang_alike(c0.1, c0)     # Missing attribute
+  # alike:::lang_alike(c0.1, c0.2)   # Attribute mismatch
+  # alike:::lang_alike(c0.3, c0)     # TRUE, sub-attr shouldn't cause problem
+
+  f0 <- y ~ x + 1
+  f1 <- a ~ b + 1
+  f2 <- a ~ b + 2
+  f3 <- y ~ x + log(x) + z - 1
+  f4 <- a ~ b + log(b) + c - 1
+  f5 <- a ~ b + log(c) + b - 1
+  f6 <- a ~ b + ln(b) + c - 1
+  f7 <- a ~ b + log(b) + c + 1
+
+  alike:::lang_alike(f0, f1)        # TRUE
+  alike:::lang_alike(f0, f2)        # FALSE
+  alike:::lang_alike(f3, f4)        # TRUE
+  alike:::lang_alike(f3, f5)        # FALSE
+  alike:::lang_alike(f3, f6)        # FALSE
+  alike:::lang_alike(f3, f7)        # FALSE
+})
