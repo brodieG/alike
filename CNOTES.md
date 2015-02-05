@@ -1,3 +1,43 @@
+## Garbage Collection
+
+### What Should Be PROTECTed
+
+`SEXP` that you create must be protected
+
+### How Does Protection Work
+
+**Note**: a lot of what follows is somewhat untested
+
+Protection is purely a function of the protection stack; the following two are equivalent (assuming GC cant happen between the two statements in the second point):
+
+* `x = PROTECT(ScalarLogical(1));`
+* `x = ScalarLogical(1); PROTECT()`
+
+A corollary of the above is that it is often useful to use spurious `PROTECT` calls to maintain stack balance in forked logic:
+
+    if(i > 5) w = PROTECT(ScalarLogical(1)); ...
+    else PROTECT(); ...
+    ...
+    UNPROTECT(1);  // Otherwise would have to unprotect 0 or 1 depending on logic above
+
+### When Is Protection Not Necessary?
+
+Only SEXPs that are not pointed to by protected SEXPs need to be protected, for example in:
+
+    x = PROTECT(list2(ScalarLogical(1), ScalarLogical(2)));
+    y = CAR(x);
+    z = CADR(x);
+
+We don't need to `PROTECT` `y` or `z` as they are already protected as members of `x`.
+
+Also, assuming `z` is protected already:
+
+    SETCDR(z, list1(scalarLogical(1)));
+
+Does not require any protection even though we are creating two new `SEXP`s because `z` is already protected and `z` will point to its CDR, obviously.
+
+SEXPs that are created outside of the `.Call` call don't need to be protected (kind of, our attempt to create pre-composed calls in initialization script failed miserably, but single objects work fine).
+
 ## Output / Inspection
 
 void Rprintf(const char *, ...);
