@@ -43,9 +43,10 @@ const char * ALIKEC_func_alike_internal(SEXP target, SEXP current) {
           CHAR(PRINTNAME(tar_tag)), "", "", ""
         );
       }
+      last_match = tar_tag;
     } else {
+      int tag_match = 0;
       if(dots && dots_last) {  // True if dots or if last arg was dots
-        int tag_match = 0;
         for(
           SEXP cur_next = cur_form; cur_next != R_NilValue;
           cur_next = CDR(cur_next)
@@ -57,19 +58,20 @@ const char * ALIKEC_func_alike_internal(SEXP target, SEXP current) {
             break;
           }
         }
-        if(!tag_match) {
-          const char * arg_type = "as first argument";
-          if(last_match != R_NilValue) {
-            arg_type = (const char *) CSR_smprintf4(
-              ALIKEC_MAX_CHAR, "after argument `%s`",
-              CHAR(PRINTNAME(last_match)), "", "", ""
-            );
-          }
-          return CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have argument `%s` %s", CHAR(PRINTNAME(tar_tag)),
-            arg_type, "", ""
+      }
+      if(!tag_match) {
+        const char * arg_type = "as first argument";
+        if(last_match != R_NilValue) {
+          arg_type = (const char *) CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "after argument `%s`",
+            CHAR(PRINTNAME(last_match)), "", "", ""
           );
-    } } }
+        }
+        return CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have argument `%s` %s", CHAR(PRINTNAME(tar_tag)),
+          arg_type, "", ""
+        );
+    } }
     if(dots_reset) dots_last = 0;  // Need to know loop right after tar_form is dots
   }
   return "";
