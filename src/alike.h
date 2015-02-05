@@ -1,6 +1,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <ctype.h>
+
 // - Constants -----------------------------------------------------------------
 
 #ifndef _ALIKEC_H
@@ -35,7 +36,7 @@
   const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
 
-  SEXP ALIKEC_func_alike_ext(SEXP target, SEXP current);
+  SEXP ALIKEC_closure_alike_ext(SEXP target, SEXP current);
 
   // - Utility Funs --------------------------------------------------------------
 
