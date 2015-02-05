@@ -314,3 +314,33 @@ unitizer_sect("Calls", {
   alike:::lang_alike(f3, f6)        # FALSE
   alike:::lang_alike(f3, f7)        # FALSE
 })
+unitizer_sect("Closures", {
+  alike:::closure_alike(print, print.data.frame)  # TRUE, methods should always match generics
+  alike:::closure_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
+  alike:::closure_alike(summary, summary.lm)
+  alike:::closure_alike(summary.lm, summary)
+
+  fn0 <- function(x, y) NULL
+  fn1 <- function(x, y, z) NULL
+  fn2 <- function(y, x) NULL
+  fn3 <- function(x=1, y=2) NULL
+  fn4 <- function(x, ...) NULL
+  fn5 <- function(x) NULL
+  fn6 <- function(x, y, z, ...) NULL
+  fn7 <- function(x, ..., y) NULL
+  fn8 <- function(x, a, ..., g, y) NULL
+  fn9 <- function(x, a, ..., g, y, w) NULL
+
+  alike:::closure_alike(fn0, fn1)  # FALSE
+  alike:::closure_alike(fn1, fn0)  # FALSE
+  alike:::closure_alike(fn4, fn1)  # TRUE
+  alike:::closure_alike(fn0, fn2)  # FALSE
+  alike:::closure_alike(fn0, fn3)  # TRUE
+  alike:::closure_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
+  alike:::closure_alike(fn4, fn5)  # FALSE dots in target must exit in current
+  alike:::closure_alike(fn4, fn6)  # TRUE
+  alike:::closure_alike(fn4, fn7)  # TRUE
+  alike:::closure_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
+  alike:::closure_alike(fn7, fn8)  # TRUE
+  alike:::closure_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
+})
