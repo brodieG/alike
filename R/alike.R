@@ -236,8 +236,8 @@ lang_alike <- function(target, current)
 
 #' @export
 
-func_alike <- function(target, current)
-  .Call(ALIKEC_func_alike, target, current)
+closure_alike <- function(target, current)
+  .Call(ALIKEC_closure_alike, target, current)
 
 #' Used for testing C code
 #'

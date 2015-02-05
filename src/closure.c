@@ -22,7 +22,7 @@ fun(a, b, e, f, ..., g, c, e)
 
 */
 
-const char * ALIKEC_func_alike_internal(SEXP target, SEXP current) {
+const char * ALIKEC_closure_alike_internal(SEXP target, SEXP current) {
   if(TYPEOF(target) != CLOSXP || TYPEOF(current) != CLOSXP)
     error("Arguments must be closures.");
 
@@ -76,8 +76,8 @@ const char * ALIKEC_func_alike_internal(SEXP target, SEXP current) {
   }
   return "";
 }
-SEXP ALIKEC_func_alike_ext(SEXP target, SEXP current) {
-  const char * res = ALIKEC_func_alike_internal(target, current);
+SEXP ALIKEC_closure_alike_ext(SEXP target, SEXP current) {
+  const char * res = ALIKEC_closure_alike_internal(target, current);
   if(strlen(res)) return mkString(res);
   return(ScalarLogical(1));
 }

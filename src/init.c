@@ -16,7 +16,7 @@ R_CallMethodDef callMethods[] = {
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 3},
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 2},
-  {"func_alike", (DL_FUNC) &ALIKEC_func_alike_ext, 2},
+  {"closure_alike", (DL_FUNC) &ALIKEC_closure_alike_ext, 2},
   {NULL, NULL, 0}
 };
 
