@@ -239,7 +239,7 @@ lang_alike <- function(target, current)
 #' @export
 #' @keywords internal
 
-alike_test <- function(obj1=parent.frame()) .Call(ALIKEC_test, obj1)
+alike_test <- function(obj1, obj2, obj3=1) .Call(ALIKEC_test, obj1, obj2, obj3)
 
 #' Pre-calculated Precision Level
 #'

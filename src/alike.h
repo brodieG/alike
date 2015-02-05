@@ -38,7 +38,7 @@
   // - Utility Funs --------------------------------------------------------------
 
   SEXP ALIKEC_mode(SEXP obj);
-  SEXP ALIKEC_test(SEXP obj1);
+  SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3);
 
   // - Imported Funs -------------------------------------------------------------
 
