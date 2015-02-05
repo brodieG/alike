@@ -35,6 +35,8 @@
   const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
 
+  SEXP ALIKEC_func_alike_ext(SEXP target, SEXP current);
+
   // - Utility Funs --------------------------------------------------------------
 
   SEXP ALIKEC_mode(SEXP obj);

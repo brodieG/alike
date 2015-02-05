@@ -234,6 +234,11 @@ dim_compare <- function(
 lang_alike <- function(target, current)
   .Call(ALIKEC_lang_alike, target, current)
 
+#' @export
+
+func_alike <- function(target, current)
+  .Call(ALIKEC_func_alike, target, current)
+
 #' Used for testing C code
 #'
 #' @export
