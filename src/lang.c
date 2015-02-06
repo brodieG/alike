@@ -52,7 +52,8 @@ int ALIKEC_lang_alike_rec(
   if(CAR(target) != CAR(current)) return 0;  // Actual fun call must match exactly
   SEXP tar_sub, cur_sub;
   for(
-    tar_sub = CDR(target), cur_sub = CDR(current); tar_sub != R_NilValue;
+    tar_sub = CDR(target), cur_sub = CDR(current);
+    tar_sub != R_NilValue && cur_sub != R_NilValue;
     tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub)
   ) {
     tar_sub = ALIKEC_skip_paren(tar_sub);
@@ -84,6 +85,7 @@ int ALIKEC_lang_alike_rec(
       return 0;
     }
   }
+  if(tar_sub != R_NilValue || cur_sub != R_NilValue) return 0; // length mismatch
   return 1;
 }
 /*
