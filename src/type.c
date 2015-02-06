@@ -26,6 +26,7 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
     default:
       error("Logic Error: unexpected type comparison mode %d\n", mode);
   }
+  if(tar_type == cur_type) return "";
   if(
     cur_type == INTSXP && mode < 2 &&
     (tar_type == INTSXP || tar_type == REALSXP)
@@ -80,13 +81,14 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
 /* - typeof ----------------------------------------------------------------- */
 
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance) {
-  int obj_len = XLENGTH(object), i, items=0, finite;
   double * obj_real, diff_abs=0, val=0, flr;
   SEXPTYPE obj_type = TYPEOF(object);
 
   switch(obj_type) {
     case REALSXP:
       {
+        R_xlen_t obj_len = XLENGTH(object), i, items=0;
+        int finite;
         obj_real = REAL(object);
         for(i = 0; i < obj_len; i++) {
           if(

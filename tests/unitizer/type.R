@@ -83,3 +83,18 @@ unitizer_sect("type_alike", {
   type_alike(1:100, a, mode=1.1)           # error
   type_alike(1:100, a, mode=1:2)           # error
 } )
+unitizer_sect("functions", {
+  type_alike(sd, var)     # clo-clo
+  type_alike(`&&`, sd)    # spe-clo
+  type_alike(`&&`, sum)   # spe-blt
+  type_alike(sum, sd)     # blt-clo
+  type_alike(sum, c)      # blt-blt
+  type_alike(`&&`, `[`)   # spe-spe
+
+  type_alike(sd, var, mode=1)     # clo-clo
+  type_alike(`&&`, sd, mode=1)    # spe-clo
+  type_alike(`&&`, sum, mode=1)   # spe-blt
+  type_alike(sum, sd, mode=1)     # blt-clo
+  type_alike(sum, c, mode=1)      # blt-blt
+  type_alike(`&&`, `[`, mode=1)   # spe-spe
+} )
