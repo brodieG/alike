@@ -22,12 +22,36 @@ fun(a, b, e, f, ..., g, c, e)
 
 */
 
-const char * ALIKEC_closure_alike_internal(SEXP target, SEXP current) {
-  if(TYPEOF(target) != CLOSXP || TYPEOF(current) != CLOSXP)
-    error("Arguments must be closures.");
+const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
+  if(!isFunction(target) || !isFunction(current))
+    error("Arguments must be functions.");
+
+  SEXP tar_form, cur_form, args;
+  SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
+  PROTECT(PROTECT(PROTECT(R_NilValue))); // About to create up to three SEXPs - we're toying with fire a bit here
+
+  // Translate specials and builtins to formals, if possible
+
+  if(
+    tar_type == SPECIALSXP || tar_type == BUILTINSXP ||
+    cur_type == SPECIALSXP || cur_type == BUILTINSXP
+  ) {
+    args = list2(ALIKEC_SYM_args, R_NilValue);
+    SET_TYPEOF(args, LANGSXP);
+  }
+  if(tar_type == SPECIALSXP || tar_type == BUILTINSXP) {
+    SETCADR(args, target);
+    target = eval(args, R_BaseEnv);
+  }
+  if(cur_type == SPECIALSXP || cur_type == BUILTINSXP) {
+    SETCADR(args, current);
+    current = eval(args, R_BaseEnv);
+  }
+  // Cycle through all formals
 
   int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1;
-  SEXP last_match = R_NilValue, tar_tag, cur_tag, tar_form, cur_form;
+  SEXP last_match = R_NilValue, tar_tag, cur_tag;
+  const char * res = "";
   for(
     tar_form = FORMALS(target), cur_form = FORMALS(current);
     tar_form != R_NilValue && cur_form != R_NilValue;
@@ -40,10 +64,11 @@ const char * ALIKEC_closure_alike_internal(SEXP target, SEXP current) {
     if(!dots && tar_tag == R_DotsSymbol) dots = dots_last = 1;
     if(tar_tag == cur_tag) {
       if(CAR(tar_form) != R_MissingArg && CAR(cur_form) == R_MissingArg) {
-        return (const char *) CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have a default value for argument `%s`\n",
+        res = (const char *) CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have a default value for argument `%s`",
           CHAR(PRINTNAME(tar_tag)), "", "", ""
         );
+        break;
       }
       last_match = tar_tag;
     } else {
@@ -67,7 +92,7 @@ const char * ALIKEC_closure_alike_internal(SEXP target, SEXP current) {
   // We have a mismatch; produce error message
 
   int cur_mismatch = cur_form != R_NilValue && last_match != R_DotsSymbol;
-  if(tar_form != R_NilValue || !tag_match || cur_mismatch) {
+  if(res[0] == '\0' && (tar_form != R_NilValue || !tag_match || cur_mismatch)) {
     const char * arg_type = "as first argument";
     const char * arg_name;
     const char * arg_mod = "";
@@ -82,16 +107,17 @@ const char * ALIKEC_closure_alike_internal(SEXP target, SEXP current) {
       arg_mod = "not ";
       arg_name = CHAR(PRINTNAME(TAG(cur_form)));
     } else error("Logic Error: unexpected closure arg outcome; contact maintainer");
-    return CSR_smprintf4(
+    res = (const char *) CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%shave argument `%s` %s", arg_mod, arg_name, arg_type,
       ""
   );}
   // Success
 
-  return "";
+  UNPROTECT(3);
+  return res;
 }
-SEXP ALIKEC_closure_alike_ext(SEXP target, SEXP current) {
-  const char * res = ALIKEC_closure_alike_internal(target, current);
+SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current) {
+  const char * res = ALIKEC_fun_alike_internal(target, current);
   if(strlen(res)) return mkString(res);
   return(ScalarLogical(1));
 }

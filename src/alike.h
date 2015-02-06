@@ -36,7 +36,7 @@
   const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
 
-  SEXP ALIKEC_closure_alike_ext(SEXP target, SEXP current);
+  SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
 
   // - Utility Funs --------------------------------------------------------------
 
@@ -58,5 +58,6 @@
   SEXP ALIKEC_SYM_package;
   SEXP ALIKEC_SYM_tilde;
   SEXP ALIKEC_SYM_paren_open;
+  SEXP ALIKEC_SYM_args;
 
 #endif

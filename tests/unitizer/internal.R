@@ -343,4 +343,14 @@ unitizer_sect("Closures", {
   alike:::closure_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
   alike:::closure_alike(fn7, fn8)  # TRUE
   alike:::closure_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
+
+  # Try some builtins / specials
+
+  alike:::closure_alike(`+`, `-`)  # TRUE, builtins
+  alike:::closure_alike(substitute, function(expr, env) NULL)  # TRUE, special
+  alike:::closure_alike(function(expr, env) NULL, substitute)  # TRUE, special
+  alike:::closure_alike(substitute, on.exit)  # FALSE, specials
+  alike:::closure_alike(on.exit, substitute)  # FALSE, specials
+  alike:::closure_alike(`[`, substitute)      # FALSE, argless specials
+  alike:::closure_alike(`[`, `&&`)          # TRUE, argless specials
 })

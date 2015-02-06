@@ -16,7 +16,7 @@ R_CallMethodDef callMethods[] = {
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 3},
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 2},
-  {"closure_alike", (DL_FUNC) &ALIKEC_closure_alike_ext, 2},
+  {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
   {NULL, NULL, 0}
 };
 
@@ -26,6 +26,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_inherits = install("inherits");
   ALIKEC_SYM_paren_open = install("(");
   ALIKEC_SYM_tilde = install("~");
+  ALIKEC_SYM_args = install("args");
 
   CSR_smprintf4 = (
     char *(*)(
