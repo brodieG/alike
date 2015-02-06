@@ -10,7 +10,7 @@ non recursive check (well, except for attributes will recurse if needed in
 final implementation)
 */
 struct ALIKEC_res ALIKEC_alike_obj(
-  SEXP target, SEXP current, int int_mode, double int_tolerance,
+  SEXP target, SEXP current, int type_mode, double int_tolerance,
   int attr_mode, int suppress_warnings
 ) {
   int tmp = 0;
@@ -81,7 +81,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err &&
       strlen(
         err_type = ALIKEC_type_alike_internal(
-          target, current, int_mode, int_tolerance
+          target, current, type_mode, int_tolerance
       ) )
     ) {
       err = 1;
@@ -179,13 +179,13 @@ index element; not sure if this is meanifully slow or not
 */
 
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, SEXP index, int int_mode, double int_tolerance,
+  SEXP target, SEXP current, SEXP index, int type_mode, double int_tolerance,
   int attr_mode, int suppress_warnings
 ) {
   // normal logic, which will have checked length and attributes, etc.
 
   struct ALIKEC_res res0 = ALIKEC_alike_obj(
-    target, current, int_mode, int_tolerance, attr_mode, suppress_warnings
+    target, current, type_mode, int_tolerance, attr_mode, suppress_warnings
   );
 
   if(!res0.success) {
@@ -205,7 +205,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       if(vec_names == R_NilValue) SETCDR(index, list1(ScalarInteger(i)));
       else SETCDR(index, list1(STRING_ELT(vec_names, i)));
       res1 = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), int_mode,
+        VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), type_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
       if(!res1.success) break;
@@ -229,7 +229,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       }
       SETCDR(index, list1(STRING_ELT(tar_names, i)));
       res1 = ALIKEC_alike_rec(
-        findVarInFrame(target, var_name), var_cur_val, CDR(index), int_mode,
+        findVarInFrame(target, var_name), var_cur_val, CDR(index), type_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
       UNPROTECT(1);
@@ -259,7 +259,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       if(tar_tag != R_NilValue) SETCDR(index, list1(asChar(tar_tag_chr)));
       else SETCDR(index, list1(ScalarInteger(i)));
       res1 = ALIKEC_alike_rec(
-        CAR(tar_sub), CAR(cur_sub), CDR(index), int_mode,
+        CAR(tar_sub), CAR(cur_sub), CDR(index), type_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
       if(!res1.success) break;
@@ -274,10 +274,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
 Run alike calculation
 */
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
+  SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
   const char * prepend, int suppress_warnings
 ) {
-  if(int_mode < 0 || int_mode > 2)
+  if(type_mode < 0 || type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
   if(attr_mode < 0 || attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
@@ -296,7 +296,7 @@ SEXP ALIKEC_alike_internal(
     // Recursively check object
 
     res = ALIKEC_alike_rec(
-      target, current, index, int_mode, int_tolerance, attr_mode,
+      target, current, index, type_mode, int_tolerance, attr_mode,
       suppress_warnings
     );
     if(res.success) {
@@ -413,17 +413,17 @@ SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP int_mode, SEXP int_tolerance, SEXP attr_mode,
+  SEXP target, SEXP current, SEXP type_mode, SEXP int_tolerance, SEXP attr_mode,
   SEXP suppress_warnings
 ) {
   SEXPTYPE int_mod_type, tol_type, attr_mod_type;
   int supp_warn;
 
-  int_mod_type = ALIKEC_typeof_internal(int_mode, sqrt(DOUBLE_EPS));
+  int_mod_type = ALIKEC_typeof_internal(type_mode, sqrt(DOUBLE_EPS));
   attr_mod_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
   tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
 
-  if(int_mod_type != INTSXP || XLENGTH(int_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
+  if(int_mod_type != INTSXP || XLENGTH(type_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
     error("Argument `type.mode` must be a one length integer like vector");
   if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
     error("Argument `attr.mode` must be a one length integer like vector");
@@ -436,7 +436,7 @@ SEXP ALIKEC_alike (
     error("Argument `suppress.warnings` must be TRUE or FALSE");
 
   return ALIKEC_alike_internal(
-    target, current, asInteger(int_mode), asReal(int_tolerance),
+    target, current, asInteger(type_mode), asReal(int_tolerance),
     asInteger(attr_mode), "should ", supp_warn
   );
 }

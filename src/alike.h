@@ -11,10 +11,10 @@
 
   // - Main Funs -----------------------------------------------------------------
 
-  SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP int_mode, SEXP int_tol, SEXP attr_mode, SEXP suppress_warnings);
+  SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode, SEXP suppress_warnings);
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
   SEXP ALIKEC_alike_internal(
-    SEXP target, SEXP current, int int_mode, double int_tolerance, int attr_mode,
+    SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
     const char * prepend, int suppress_warnings
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
@@ -36,6 +36,7 @@
   const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
 
+  const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
 
   // - Utility Funs --------------------------------------------------------------
