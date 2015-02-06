@@ -143,7 +143,7 @@ pfHashTable *pfHashCreate (uint32_t (*fn)(char *)) {
     // Allocate the hash table, including entries
     //   for lists of nodes.
 
-    pfHashTable *tbl = R_alloc (1, sizeof (pfHashTable)
+    pfHashTable *tbl = (void *) R_alloc (1, sizeof (pfHashTable)
         + numEntries * sizeof (pfHashNode*));
     if (tbl == NULL)
         return NULL;
@@ -202,7 +202,7 @@ int pfHashSet (pfHashTable *tbl, char *key, char *data) {
         return 0;
     }
 
-    node = R_alloc (1, sizeof (pfHashNode));
+    node = (void *) R_alloc (1, sizeof (pfHashNode));
     if (node == NULL)
         return -1;
 
