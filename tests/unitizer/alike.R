@@ -205,7 +205,6 @@ unitizer_sect(".alike", {
   .alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
   .alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
 } )
-
 # These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks
 
