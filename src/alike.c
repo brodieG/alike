@@ -98,6 +98,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err = 1;
         err_base = err_lang;
     } }
+
+
     // - Length ----------------------------------------------------------------
 
     SEXP tar_first_el, cur_first_el;
@@ -276,7 +278,7 @@ SEXP ALIKEC_alike_internal(
   const char * prepend, int suppress_warnings
 ) {
   if(int_mode < 0 || int_mode > 2)
-    error("Argument `int.mode` must be in 0:2");
+    error("Argument `type.mode` must be in 0:2");
   if(attr_mode < 0 || attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
@@ -422,16 +424,16 @@ SEXP ALIKEC_alike (
   tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
 
   if(int_mod_type != INTSXP || XLENGTH(int_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `int_mode` must be a one length integer like vector");
+    error("Argument `type.mode` must be a one length integer like vector");
   if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `attr_mode` must be a one length integer like vector");
+    error("Argument `attr.mode` must be a one length integer like vector");
   if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1)
-    error("Argument `int_tolerance` must be a one length numeric vector");
+    error("Argument `int.tol` must be a one length numeric vector");
   if(
     TYPEOF(suppress_warnings) != LGLSXP || XLENGTH(suppress_warnings) != 1 ||
     (supp_warn = asLogical(suppress_warnings)) == NA_LOGICAL
   )
-    error("Argument `suppress_warnings` must be TRUE or FALSE");
+    error("Argument `suppress.warnings` must be TRUE or FALSE");
 
   return ALIKEC_alike_internal(
     target, current, asInteger(int_mode), asReal(int_tolerance),
