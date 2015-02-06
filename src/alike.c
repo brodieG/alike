@@ -164,6 +164,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case CLOSXP:
       case BUILTINSXP:
       case SPECIALSXP:
+      case EXPRSXP:
         break;
       default:
         warning(
@@ -195,7 +196,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
   int attr_mode, int suppress_warnings
 ) {
   // normal logic, which will have checked length and attributes, etc.
-
+  // Rprintf("In recurse \n");
+  // PrintValue(target);
   struct ALIKEC_res res0 = ALIKEC_alike_obj(
     target, current, type_mode, int_tolerance, attr_mode, suppress_warnings
   );
@@ -205,11 +207,11 @@ struct ALIKEC_res ALIKEC_alike_rec(
   }
   // Recurse
 
-  struct ALIKEC_res res1;
+  struct ALIKEC_res res1 = {1, "", 0};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 
-  if(tar_type == VECSXP) {
+  if(tar_type == VECSXP || tar_type == EXPRSXP) {
     R_xlen_t i;
     SEXP vec_names = getAttrib(target, R_NamesSymbol);
 
@@ -220,6 +222,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), type_mode,
         int_tolerance, attr_mode, suppress_warnings
       );
+      // Rprintf("Loop: %d success: %d", i, res1.success);
       if(!res1.success) break;
     }
   } else if (tar_type == ENVSXP) {
