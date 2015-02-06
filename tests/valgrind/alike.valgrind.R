@@ -4,11 +4,11 @@ gctorture(TRUE)
   alike(integer(), 1:3)    # TRUE
   alike(integer(5L), 1:3)  # FALSE
   alike(integer(3L), 1:3)  # TRUE
-  alike(integer(), 1:3, int.mode=1L)         # TRUE, b/c `:` coerces to integer
-  alike(integer(), c(1, 2, 3), int.mode=1L)  # FALSE (compare to above)
+  alike(integer(), 1:3, type.mode=1L)         # TRUE, b/c `:` coerces to integer
+  alike(integer(), c(1, 2, 3), type.mode=1L)  # FALSE (compare to above)
   alike(numeric(), c(1, 2, 3))         # TRUE
   alike(numeric(), 1L)                 # TRUE
-  alike(numeric(), 1L, int.mode=2L)    # FALSE
+  alike(numeric(), 1L, type.mode=2L)    # FALSE
   alike(numeric(), c(1.1,.053,41.8))   # TRUE
   alike(integer(3L), 1:3 + .01)
   alike(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2) # FALSE, integer like Numerics must be under this

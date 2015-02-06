@@ -83,17 +83,30 @@ Treating `NULL` differently depending on whether it is nested or not is a compro
 
 ### Type Comparison
 
-Type comparison is done as if it were done using `typeof` with the notable exception that numerics and integers are treated specially.  For example:
+#### Overview
+
+Type comparison is done as if it were done using `typeof` with the notable exception that numerics, integers, and functions are treated specially.
+
+#### Numerics / Integer
+
 ```{r}
 alike(1L, 1)     # note 1 is not integer
 is.integer(1)
 alike(1L, 1.1)   # 1.1 is not integer-like
 alike(1.1, 1L)   # but integers can match numerics
 ```
-`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  If this is not the desired behavior you can use the `int.mode` parameter to engage a stricter comparison mode.  While this feature may seem superfluous it avoids convolutions such as:
+`alike` treats integer-like numerics as integers.  Additionally, integers can match numeric templates.  While this feature may seem superfluous it avoids convolutions such as:
 ```{r, eval=FALSE}
 is.numeric(x) && all.equal(x, floor(x))
 ```
+
+#### Functions
+
+All three types of functions (closures, builtins, and specials) are treated as the same type.
+
+#### Forcing Strict comparisons
+
+You can remove this loose type comparison functionality with by changing the `type.mode` value to be stricter.  See documentation for `mode` parameter of `type_of`.
 
 ### Attribute Comparison
 

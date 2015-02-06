@@ -4,11 +4,11 @@ unitizer_sect("Atomic", {
   alike(integer(), 1:3)    # TRUE
   alike(integer(5L), 1:3)  # FALSE
   alike(integer(3L), 1:3)  # TRUE
-  alike(integer(), 1:3, int.mode=1L)         # TRUE, b/c `:` coerces to integer
-  alike(integer(), c(1, 2, 3), int.mode=1L)  # FALSE (compare to above)
+  alike(integer(), 1:3, type.mode=1L)         # TRUE, b/c `:` coerces to integer
+  alike(integer(), c(1, 2, 3), type.mode=1L)  # FALSE (compare to above)
   alike(numeric(), c(1, 2, 3))         # TRUE
   alike(numeric(), 1L)                 # TRUE
-  alike(numeric(), 1L, int.mode=2L)    # FALSE
+  alike(numeric(), 1L, type.mode=2L)    # FALSE
   alike(numeric(), c(1.1,.053,41.8))   # TRUE
   alike(integer(3L), 1:3 + .01)
   alike(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2) # FALSE, integer like Numerics must be under this
@@ -140,8 +140,8 @@ unitizer_sect("Environments / Pairlists", {
   alike(env7, env9)   # fail
 })
 unitizer_sect("Errors", {
-  alike(1, 1, int.mode="hello")
-  alike(1, 1, int.mode=3)
+  alike(1, 1, type.mode="hello")
+  alike(1, 1, type.mode=3)
   alike(1, 1, int.tol="hello")
   alike(1, 1, attr.mode=3)
 } )
@@ -190,7 +190,7 @@ unitizer_sect(".alike", {
   .alike(integer(), 1:3)    # TRUE
   .alike(integer(5L), 1:3)  # FALSE
   .alike(integer(3L), 1:3)  # TRUE
-  .alike(integer(), 1:3, int.mode=1L)         # Error, this arg isn't available
+  .alike(integer(), 1:3, type.mode=1L)         # Error, this arg isn't available
   .alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
 
   .alike(lst, lst.2)     # length mismatch

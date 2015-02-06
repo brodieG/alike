@@ -37,6 +37,8 @@ const char * ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, dou
     what = "integer-like";
   } else if (mode < 2 && tar_type == REALSXP) {
     what = "numeric";
+  } else if (mode == 0 && tar_type == CLOSXP) {
+    what = "function";
   } else {
     what = type2char(tar_type);
   }
@@ -80,26 +82,34 @@ SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
 SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance) {
   int obj_len = XLENGTH(object), i, items=0, finite;
   double * obj_real, diff_abs=0, val=0, flr;
-  SEXPTYPE obj_type;
+  SEXPTYPE obj_type = TYPEOF(object);
 
-  if((obj_type = TYPEOF(object)) == REALSXP) {
-    obj_real = REAL(object);
-
-    for(i = 0; i < obj_len; i++) {
-      if(
-        !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
-        obj_real[i] != (flr = floor(obj_real[i]))
-      ) {
-        items = items + 1;
-        diff_abs = diff_abs + fabs((obj_real[i] - flr) / obj_real[i]);
-        val = val + fabs(obj_real[i]);
-      } else if (!finite) return REALSXP;
-    }
-    if(items > 0 && val / items > tolerance && diff_abs / items > tolerance) {
-      return REALSXP;
-    } else {
-      return INTSXP;
-  } }
+  switch(obj_type) {
+    case REALSXP:
+      {
+        obj_real = REAL(object);
+        for(i = 0; i < obj_len; i++) {
+          if(
+            !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
+            obj_real[i] != (flr = floor(obj_real[i]))
+          ) {
+            items = items + 1;
+            diff_abs = diff_abs + fabs((obj_real[i] - flr) / obj_real[i]);
+            val = val + fabs(obj_real[i]);
+          } else if (!finite) return REALSXP;
+        }
+        if(items > 0 && val / items > tolerance && diff_abs / items > tolerance) {
+          return REALSXP;
+        } else {
+          return INTSXP;
+        }
+      }
+      break;
+    case CLOSXP:
+    case BUILTINSXP:
+    case SPECIALSXP:
+      return CLOSXP;
+  }
   return(obj_type);
 }
 /*
