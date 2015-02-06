@@ -19,7 +19,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
   int err = 0;
   const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_attr, * err_lang;
+    * err_type, * err_attr, * err_lang, * err_fun;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -87,56 +87,65 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err = 1;
       err_base = err_type;
     }
-    // - Special Language Objects ----------------------------------------------
+    // - Special Language Objects && Funs --------------------------------------
 
-    // Note length is not checked explicilty for language objects due to parens
-    // complicating the comparison
+    int is_lang = 0;
 
-    if(!err && tar_type == LANGSXP && cur_type == LANGSXP){
+    if(!err && (is_lang = tar_type == LANGSXP && cur_type == LANGSXP)) {
       err_lang = ALIKEC_lang_alike_internal(target, current);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
     } }
 
+    int is_fun = 0;
 
+    if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
+      err_fun = ALIKEC_fun_alike_internal(target, current);
+      if(strlen(err_fun)) {
+        err = 1;
+        err_base = err_fun;
+    } }
     // - Length ----------------------------------------------------------------
 
-    SEXP tar_first_el, cur_first_el;
-    R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
-    if(
-      (!err || (*is_df && *err_lvl > 0))  &&   // if attribute error is not class, override with col count error
-      (tar_len = xlength(target)) > 0 &&       /* zero lengths match any length */
-      tar_len != (cur_len = xlength(current))
-    ) {
-      err = 1;
-      if(*is_df) {
-        err_base = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have %%s column%s (has %%s)",
-          err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
-        );
-      } else {
-        err_base = "be length %s (is %s)";
-      }
-      err_tok1 = CSR_len_as_chr(tar_len);
-      err_tok2 = CSR_len_as_chr(cur_len);
-    } else if (
-      *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
-      TYPEOF(current) == VECSXP && XLENGTH(current) &&
-      isVectorAtomic((tar_first_el = VECTOR_ELT(target, 0))) &&
-      isVectorAtomic((cur_first_el = VECTOR_ELT(current, 0))) &&
-      (tar_first_el_len = XLENGTH(tar_first_el)) && tar_first_el_len &&
-      tar_first_el_len != (cur_first_el_len = XLENGTH(cur_first_el))
-    ) {
-      // check for row count error, note this isn't a perfect check since we
-      // check the first column only
+    // Note length is not checked explicilty for language objects and functions
+    // since parens or dots allow for different length objects to be alike
 
-      err_base = "have %s row%s (has %s)";
-      err_tok1 = CSR_len_as_chr(tar_first_el_len);
-      err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
-      err_tok3 = CSR_len_as_chr(cur_first_el_len);
-    }
-  }
+    if(!is_lang && !is_fun) {
+      SEXP tar_first_el, cur_first_el;
+      R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
+      if(
+        (!err || (*is_df && *err_lvl > 0))  &&   // if attribute error is not class, override with col count error
+        (tar_len = xlength(target)) > 0 &&       /* zero lengths match any length */
+        tar_len != (cur_len = xlength(current))
+      ) {
+        err = 1;
+        if(*is_df) {
+          err_base = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "have %%s column%s (has %%s)",
+            err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
+          );
+        } else {
+          err_base = "be length %s (is %s)";
+        }
+        err_tok1 = CSR_len_as_chr(tar_len);
+        err_tok2 = CSR_len_as_chr(cur_len);
+      } else if (
+        *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
+        TYPEOF(current) == VECSXP && XLENGTH(current) &&
+        isVectorAtomic((tar_first_el = VECTOR_ELT(target, 0))) &&
+        isVectorAtomic((cur_first_el = VECTOR_ELT(current, 0))) &&
+        (tar_first_el_len = XLENGTH(tar_first_el)) && tar_first_el_len &&
+        tar_first_el_len != (cur_first_el_len = XLENGTH(cur_first_el))
+      ) {
+        // check for row count error, note this isn't a perfect check since we
+        // check the first column only
+
+        err_base = "have %s row%s (has %s)";
+        err_tok1 = CSR_len_as_chr(tar_first_el_len);
+        err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
+        err_tok3 = CSR_len_as_chr(cur_first_el_len);
+  } } }
   // - Known Limitations -----------------------------------------------------
 
   if(!suppress_warnings) {
@@ -152,6 +161,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case ENVSXP:
       case LISTSXP:
       case LANGSXP:
+      case CLOSXP:
+      case BUILTINSXP:
+      case SPECIALSXP:
         break;
       default:
         warning(

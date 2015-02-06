@@ -183,7 +183,13 @@ unitizer_sect("Calls / Formulas", {
   alike(exp.2, exp.3)
   alike(exp.3, exp.2)
 } )
-
+# Most fun tests in internal/type, here to make sure interface working
+unitizer_sect("Functions", {
+  alike(print, print.data.frame)              # TRUE
+  alike(print.data.frame, print)              # FALSE
+  alike(`&&`, function() NULL)                # TRUE
+  alike(`&&`, function() NULL, type.mode=1)   # FALSE
+})
 # Subset of tests for "fast" version
 
 unitizer_sect(".alike", {
