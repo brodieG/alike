@@ -315,10 +315,10 @@ unitizer_sect("Calls", {
   alike:::lang_alike(f3, f7)        # FALSE
 })
 unitizer_sect("Closures", {
-  alike:::closure_alike(print, print.data.frame)  # TRUE, methods should always match generics
-  alike:::closure_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
-  alike:::closure_alike(summary, summary.lm)
-  alike:::closure_alike(summary.lm, summary)
+  alike:::fun_alike(print, print.data.frame)  # TRUE, methods should always match generics
+  alike:::fun_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
+  alike:::fun_alike(summary, summary.lm)
+  alike:::fun_alike(summary.lm, summary)
 
   fn0 <- function(x, y) NULL
   fn1 <- function(x, y, z) NULL
@@ -331,26 +331,26 @@ unitizer_sect("Closures", {
   fn8 <- function(x, a, ..., g, y) NULL
   fn9 <- function(x, a, ..., g, y, w) NULL
 
-  alike:::closure_alike(fn0, fn1)  # FALSE
-  alike:::closure_alike(fn1, fn0)  # FALSE
-  alike:::closure_alike(fn4, fn1)  # TRUE
-  alike:::closure_alike(fn0, fn2)  # FALSE
-  alike:::closure_alike(fn0, fn3)  # TRUE
-  alike:::closure_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
-  alike:::closure_alike(fn4, fn5)  # FALSE dots in target must exit in current
-  alike:::closure_alike(fn4, fn6)  # TRUE
-  alike:::closure_alike(fn4, fn7)  # TRUE
-  alike:::closure_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
-  alike:::closure_alike(fn7, fn8)  # TRUE
-  alike:::closure_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
+  alike:::fun_alike(fn0, fn1)  # FALSE
+  alike:::fun_alike(fn1, fn0)  # FALSE
+  alike:::fun_alike(fn4, fn1)  # TRUE
+  alike:::fun_alike(fn0, fn2)  # FALSE
+  alike:::fun_alike(fn0, fn3)  # TRUE
+  alike:::fun_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
+  alike:::fun_alike(fn4, fn5)  # FALSE dots in target must exit in current
+  alike:::fun_alike(fn4, fn6)  # TRUE
+  alike:::fun_alike(fn4, fn7)  # TRUE
+  alike:::fun_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
+  alike:::fun_alike(fn7, fn8)  # TRUE
+  alike:::fun_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
 
   # Try some builtins / specials
 
-  alike:::closure_alike(`+`, `-`)  # TRUE, builtins
-  alike:::closure_alike(substitute, function(expr, env) NULL)  # TRUE, special
-  alike:::closure_alike(function(expr, env) NULL, substitute)  # TRUE, special
-  alike:::closure_alike(substitute, on.exit)  # FALSE, specials
-  alike:::closure_alike(on.exit, substitute)  # FALSE, specials
-  alike:::closure_alike(`[`, substitute)      # FALSE, argless specials
-  alike:::closure_alike(`[`, `&&`)          # TRUE, argless specials
+  alike:::fun_alike(`+`, `-`)  # TRUE, builtins
+  alike:::fun_alike(substitute, function(expr, env) NULL)  # TRUE, special
+  alike:::fun_alike(function(expr, env) NULL, substitute)  # TRUE, special
+  alike:::fun_alike(substitute, on.exit)  # FALSE, specials
+  alike:::fun_alike(on.exit, substitute)  # FALSE, specials
+  alike:::fun_alike(`[`, substitute)      # FALSE, argless specials
+  alike:::fun_alike(`[`, `&&`)          # TRUE, argless specials
 })
