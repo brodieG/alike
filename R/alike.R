@@ -244,6 +244,11 @@ lang_alike <- function(target, current)
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
+#' @export
+
+dep_alike <- function(obj, lines)
+  .Call(ALIKEC_deparse, obj, lines)
+
 #' Used for testing C code
 #'
 #' @export

@@ -333,7 +333,7 @@ unitizer_sect("Closures", {
 
   alike:::fun_alike(fn0, fn1)  # FALSE
   alike:::fun_alike(fn1, fn0)  # FALSE
-  alike:::fun_alike(fn4, fn1)  # TRUE
+  alike:::fun_alike(fn4, fn1)  # FALSE, dots must be matched
   alike:::fun_alike(fn0, fn2)  # FALSE
   alike:::fun_alike(fn0, fn3)  # TRUE
   alike:::fun_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
@@ -354,3 +354,17 @@ unitizer_sect("Closures", {
   alike:::fun_alike(`[`, substitute)      # FALSE, argless specials
   alike:::fun_alike(`[`, `&&`)          # TRUE, argless specials
 })
+unitizer_sect("Deparse", {
+  l0 <- quote(
+    a + b + fun(x + funz(
+      matrix_over[25, 32]) + transform(iris, x = Sepal.Width * 3) /
+      the_donkey_ate_a_carrot %in% {
+        paste0(
+          match(letter, LETTERS),
+          c("hello there")
+  ) } ) )
+  alike:::dep_alike(l0, -1)
+  alike:::dep_alike(l0, 1)
+  alike:::dep_alike(l0, 2)
+})
+

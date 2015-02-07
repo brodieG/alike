@@ -30,7 +30,7 @@ SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
   // SEXP res;
   // R_xlen_t i, j;
 
-  PrintValue(TAG(R_NilValue));
+  // PrintValue(TAG(R_NilValue));
   // if(asInteger(obj3)) for(R_xlen_t i = 0; obj1 != R_NilValue && i < 25; i++, obj1 = CDR(obj1)) 1;
   // else xlength(obj1) < 25;
   // if(asInteger(obj3)) {
@@ -65,6 +65,36 @@ SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
   // }
   // UNPROTECT(1);
   // return res;
+  // duplicate(obj1);
   return R_NilValue;
+}
+/*
+deparse into character
+*/
+const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines) {
+  SEXP quot_call = PROTECT(list2(R_QuoteSymbol, obj));
+  SET_TYPEOF(quot_call, LANGSXP);
+
+  SEXP dep_call = PROTECT(list2(ALIKEC_SYM_deparse, quot_call));
+  SET_TYPEOF(dep_call, LANGSXP);
+
+  SEXP obj_dep = PROTECT(eval(dep_call, R_BaseEnv));
+  //PrintValue(obj_dep);
+  R_xlen_t line_max = XLENGTH(obj_dep), i;
+  if(!line_max) return "";
+  if(lines < 0) lines = line_max;
+  char * res = "";
+
+  for(i = 0; i < lines; i++) {
+    res = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s%s%s%s", res, i ? "\n" : "",
+      CHAR(STRING_ELT(obj_dep, i)),
+      i == lines - 1 && lines < line_max ? "..." : ""
+  );}
+  UNPROTECT(3);
+  return res;
+}
+SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines) {
+  return mkString(ALIKEC_deparse(obj, asInteger(lines)));
 }
 

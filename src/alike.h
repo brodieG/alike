@@ -43,6 +43,7 @@
 
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3);
+  SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
 
   // - Imported Funs -------------------------------------------------------------
 
@@ -60,5 +61,8 @@
   SEXP ALIKEC_SYM_tilde;
   SEXP ALIKEC_SYM_paren_open;
   SEXP ALIKEC_SYM_args;
+  SEXP ALIKEC_SYM_deparse;
+  SEXP ALIKEC_SYM_nlines;
+
 
 #endif

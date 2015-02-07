@@ -17,6 +17,7 @@ R_CallMethodDef callMethods[] = {
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 2},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
+  {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
   {NULL, NULL, 0}
 };
 
@@ -27,6 +28,8 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_paren_open = install("(");
   ALIKEC_SYM_tilde = install("~");
   ALIKEC_SYM_args = install("args");
+  ALIKEC_SYM_deparse = install("deparse");
+  ALIKEC_SYM_nlines = install("nlines");
 
   CSR_smprintf4 = (
     char *(*)(
