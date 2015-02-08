@@ -110,15 +110,11 @@ const char * ALIKEC_lang_alike_rec(
       );
     } else if (tsc_type == LANGSXP) {
       const char * res;
-      if(
-        (
-          res = ALIKEC_lang_alike_rec(
-            tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
-            cur_varnum, formula
-        ) )
-      ) {
-        return res;
-      }
+      res = ALIKEC_lang_alike_rec(
+        tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
+        cur_varnum, formula
+      );
+      if(res[0]) return res;
     } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
       ALIKEC_symb_mark(cur_sub);
       return (const char *) CSR_smprintf4(
