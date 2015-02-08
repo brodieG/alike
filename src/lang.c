@@ -44,12 +44,31 @@ char * ALIKEC_symb_abstract(SEXP symb, pfHashTable * hash, size_t * varnum) {
   }
   return symb_abs;
 }
+/*
+Marks current symbol in langsxp
+*/
+void ALIKEC_symb_mark(SEXP obj) {
+  SEXPTYPE obj_type = TYPEOF(obj);
+  if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
 
-int ALIKEC_lang_alike_rec(
+  const char * car_dep = ALIKEC_deparse(CAR(obj), 1);
+  SETCAR(
+    obj,
+    install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
+  );
+}
+
+const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
-  size_t * tar_varnum, size_t * cur_varnum, int formula
+  pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula
 ) {
-  if(CAR(target) != CAR(current)) return 0;  // Actual fun call must match exactly
+  if(CAR(target) != CAR(current)) {  // Actual fun call must match exactly
+    return CSR_smprintf4(
+      ALIKEC_MAX_CHAR,
+      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1),
+      ALIKEC_deparse(CAR(current), 1), "", ""
+    );
+  }
   SEXP tar_sub, cur_sub;
   for(
     tar_sub = CDR(target), cur_sub = CDR(current);
@@ -61,32 +80,65 @@ int ALIKEC_lang_alike_rec(
 
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
     SEXPTYPE tsc_type = TYPEOF(tar_sub_car), csc_type = TYPEOF(cur_sub_car);
-    if((tsc_type == SYMSXP || csc_type == SYMSXP) && tsc_type != csc_type)
-      return 0;
-    if(tsc_type == SYMSXP) {
+
+    // PrintValue(tar_sub_car);
+    // Rprintf("type tsc: %s csc: %s\n", type2char(tsc_type), type2char(csc_type));
+
+    if(tsc_type == SYMSXP && csc_type == SYMSXP) {
       char * tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash, tar_varnum);
       char * cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash, cur_varnum);
-      if(strcmp(tar_abs, cur_abs)) return 0;
-    } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-      return 0;
-    } else if (tsc_type == LANGSXP) {
-      if(
-        ! ALIKEC_lang_alike_rec(
-          tar_sub_car, cur_sub_car, tar_hash, cur_hash, tar_varnum,
-          cur_varnum, formula
-        )
-      ) {
-        return 0;
+      char * rev_symb = pfHashFind(rev_hash, tar_abs);
+      const char * csc_text = CHAR(PRINTNAME(cur_sub_car));
+      if(rev_symb == NULL) {
+        rev_symb = (char *) csc_text;
+        pfHashSet(rev_hash, cur_abs, rev_symb);
       }
+      if(strcmp(tar_abs, cur_abs)) {
+        ALIKEC_symb_mark(cur_sub);
+        return CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have symbol `%s` (is `%s`)",
+          rev_symb, csc_text, "", ""
+        );
+      };
+    } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
+      ALIKEC_symb_mark(cur_sub);
+      return CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "be \"language\" (is \"%s\") for `%s`",
+        type2char(csc_type), ALIKEC_deparse(cur_sub_car, 1), "", ""
+      );
+    } else if (tsc_type == LANGSXP) {
+      const char * res;
+      if(
+        (
+          res = ALIKEC_lang_alike_rec(
+            tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
+            cur_varnum, formula
+        ) )
+      ) {
+        return res;
+      }
+    } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
+      ALIKEC_symb_mark(cur_sub);
+      return (const char *) CSR_smprintf4(
+        ALIKEC_MAX_CHAR,
+        "be \"%s\" (is \"%s\") for token `%s`",
+        type2char(tsc_type), type2char(csc_type),
+        ALIKEC_deparse(cur_sub_car, 1), ""
+      );
     } else if (formula && !R_compute_identical(tar_sub_car, cur_sub_car, 16)) {
       // Maybe this shouldn't be "identical", but too much of a pain in the butt
       // to do an all.equals type comparison
 
-      return 0;
+      ALIKEC_symb_mark(cur_sub);
+      return "have identical constant values";  // could have constant vs. language here, right?
     }
   }
-  if(tar_sub != R_NilValue || cur_sub != R_NilValue) return 0; // length mismatch
-  return 1;
+  if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
+    return (const char *) CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be the same length (is %s)",
+      tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
+  );}
+  return "";
 }
 /*
 Determine whether objects should be compared as calls or as formulas; the main
@@ -99,6 +151,7 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
     error("Arguments must be LANGSXP");
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
+  pfHashTable * rev_hash = pfHashCreate(NULL);
   size_t tartmp = 0, curtmp=0;
   size_t * tar_varnum = &tartmp;
   size_t * cur_varnum = &curtmp;
@@ -124,7 +177,7 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
   // Construct error message
 
   const char * err_msg = "";
-  if(res) {
+  if(res[0]) {
     // Find display width
 
     SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
@@ -151,7 +204,7 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
         break;
       }
     }
-    int with_nl = has_nl || (strlen(res) + 4 + i > max_chars);
+    int with_nl = has_nl || (strlen(res) + 4 + i + 1 > max_chars);
 
     err_msg = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
