@@ -239,6 +239,10 @@ microbenchmark(
 
 `identical` will pull ahead with more complex objects, but `alike` should remain substantially faster than `all.equal`.
 
+Comparisons that succeed will generally be substantially faster than comparisons that fail as the construction of error messages is non-trivial and we have generally not worried too much about using slow operations in the failure case.
+
+The main optimization we have done so far is to translate the `alike` code to C.  We plan to profile the C code in the future to identify potential bottlenecks.
+
 ### `.alike`
 
 `.alike` does not accept any parameters outside of `target` and `current`, but as a result is slightly faster than `alike`:
