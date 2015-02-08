@@ -49,19 +49,21 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   }
   // Cycle through all formals
 
-  int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1;
+  int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1, dots_cur = 0;
+  R_xlen_t tar_args = 0;
   SEXP last_match = R_NilValue, tar_tag, cur_tag;
   const char * res = "";
   for(
     tar_form = FORMALS(target), cur_form = FORMALS(current);
     tar_form != R_NilValue && cur_form != R_NilValue;
-    tar_form = CDR(tar_form), cur_form = CDR(cur_form)
+    tar_form = CDR(tar_form), cur_form = CDR(cur_form), tar_args++
   ) {
     tar_tag = TAG(tar_form);
     cur_tag = TAG(cur_form);
     // Rprintf("checking %s vs %s\n", CHAR(PRINTNAME(tar_tag)), CHAR(PRINTNAME(cur_tag)));
     if(dots && dots_last) dots_reset = 1;
     if(!dots && tar_tag == R_DotsSymbol) dots = dots_last = 1;
+    if(!dots_cur && cur_tag == R_DotsSymbol) dots_cur = 1;
     if(tar_tag == cur_tag) {
       if(CAR(tar_form) != R_MissingArg && CAR(cur_form) == R_MissingArg) {
         res = (const char *) CSR_smprintf4(
@@ -79,6 +81,7 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
           cur_next = CDR(cur_next)
         ) {
           SEXP cur_tag_next = TAG(cur_next);
+          if(!dots_cur && cur_tag_next == R_DotsSymbol) dots_cur = 1;
           if(cur_tag_next == tar_tag) {
             last_match = tar_tag;
             tag_match = 1;
@@ -93,24 +96,29 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
 
   int cur_mismatch = cur_form != R_NilValue && last_match != R_DotsSymbol;
   if(res[0] == '\0' && (tar_form != R_NilValue || !tag_match || cur_mismatch)) {
-    const char * arg_type = "as first argument";
-    const char * arg_name;
-    const char * arg_mod = "";
-    if(last_match != R_NilValue) {
-      arg_type = (const char *) CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "after argument `%s`",
-        CHAR(PRINTNAME(last_match)), "", "", ""
-    );}
-    if(tar_form != R_NilValue || !tag_match){
-      arg_name = CHAR(PRINTNAME(TAG(tar_form)));
-    } else if(cur_mismatch) {
-      arg_mod = "not ";
-      arg_name = CHAR(PRINTNAME(TAG(cur_form)));
-    } else error("Logic Error: unexpected closure arg outcome; contact maintainer");
-    res = (const char *) CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%shave argument `%s` %s", arg_mod, arg_name, arg_type,
-      ""
-  );}
+    if(dots && !dots_cur) {
+      res = "have a `...` argument";
+    } else if (!tar_args && tar_form == R_NilValue) {
+      res = "not have any arguments";
+    } else {
+      const char * arg_type = "as first argument";
+      const char * arg_name;
+      const char * arg_mod = "";
+      if(last_match != R_NilValue) {
+        arg_type = (const char *) CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "after argument `%s`",
+          CHAR(PRINTNAME(last_match)), "", "", ""
+      );}
+      if(tar_form != R_NilValue || !tag_match){
+        arg_name = CHAR(PRINTNAME(TAG(tar_form)));
+      } else if(cur_mismatch) {
+        arg_mod = "not ";
+        arg_name = CHAR(PRINTNAME(TAG(cur_form)));
+      } else error("Logic Error: unexpected closure arg outcome; contact maintainer");
+      res = (const char *) CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "%shave argument `%s` %s", arg_mod, arg_name, arg_type,
+        ""
+  );} }
   // Success
 
   UNPROTECT(3);
