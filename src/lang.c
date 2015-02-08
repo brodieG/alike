@@ -15,17 +15,8 @@ SEXP ALIKEC_skip_paren(SEXP lang) {
 
 // - Anonymize Formula ---------------------------------------------------------
 
-/*
-Creates a copy of the call mapping objects to a deterministic set of names
-based on the order in which they appear in the call
-
-Here we use an environment to try to take advantage of the hash search to
-identify whether a symbol already showed up or not. TBD how much faster this is
-than just doing a full lookup on lists.
-*/
-
 /* Look up symbol in hash table, if already present, return the anonymized
-version of the symbol.  If not, add to the hash table
+version of the symbol.  If not, add to the hash table.
 
 symb the symbol to lookup
 hash the hash table
@@ -57,6 +48,15 @@ void ALIKEC_symb_mark(SEXP obj) {
     install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
   );
 }
+/*
+Creates a copy of the call mapping objects to a deterministic set of names
+based on the order in which they appear in the call
+
+Here we use an environment to try to take advantage of the hash search to
+identify whether a symbol already showed up or not. This is probably faster
+if langauge object has 25 or more elements, so may eventually want to add
+logic that choses path based on how many elements.
+*/
 
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
@@ -89,7 +89,7 @@ const char * ALIKEC_lang_alike_rec(
     if(tsc_type == SYMSXP && csc_type == SYMSXP) {
       char * tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash, tar_varnum);
       char * cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash, cur_varnum);
-      char * rev_symb = pfHashFind(rev_hash, tar_abs);
+      char * rev_symb = pfHashFind(rev_hash, tar_abs);  // reverse hash to get what symbol should be in case of error
       const char * csc_text = CHAR(PRINTNAME(cur_sub_car));
       if(rev_symb == NULL) {
         rev_symb = (char *) csc_text;
