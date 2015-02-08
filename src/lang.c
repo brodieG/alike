@@ -63,11 +63,13 @@ const char * ALIKEC_lang_alike_rec(
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula
 ) {
   if(CAR(target) != CAR(current)) {  // Actual fun call must match exactly
-    return CSR_smprintf4(
+    char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1),
       ALIKEC_deparse(CAR(current), 1), "", ""
     );
+    ALIKEC_symb_mark(current);
+    return (const char *) res;
   }
   SEXP tar_sub, cur_sub;
   for(
