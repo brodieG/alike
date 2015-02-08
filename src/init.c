@@ -30,6 +30,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_args = install("args");
   ALIKEC_SYM_deparse = install("deparse");
   ALIKEC_SYM_nlines = install("nlines");
+  ALIKEC_SYM_getOption = install("getOption");
 
   CSR_smprintf4 = (
     char *(*)(

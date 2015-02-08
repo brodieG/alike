@@ -114,16 +114,50 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
   ) {
     formula = 1;
   }
-  int res = ALIKEC_lang_alike_rec(
-    target, current, tar_hash, cur_hash, tar_varnum, cur_varnum, formula
+  // Check if alike
+
+  SEXP curr_cpy = PROTECT(duplicate(current));
+  const char * res = ALIKEC_lang_alike_rec(
+    target, curr_cpy, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
+    formula
   );
+  // Construct error message
+
   const char * err_msg = "";
-  if(!res) {
-    if(formula)
-      err_msg = "have matching formulas (see docs for what constitutes matching formulas)";
-    else
-      err_msg = "have matching calls (see docs for what constitute matching calls)";
+  if(res) {
+    // Find display width
+
+    SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
+    SET_TYPEOF(width_call, LANGSXP);
+    SEXP disp_width = PROTECT(eval(width_call, R_BaseEnv));
+    int max_chars = 200;
+    if(TYPEOF(disp_width) == INTSXP && XLENGTH(disp_width) == 1) {
+      int width_opt = asInteger(disp_width);
+      if(width_opt != NA_INTEGER && width_opt > 0) max_chars = width_opt;
+    }
+    UNPROTECT(2);
+    /*
+    Based on width, determine how to display result, with these rules:
+    - if deparse contains newline, then start on new line
+    - if deparse plus rest of err message greater than max_char, then start on
+      new line
+    */
+    const char * err_dep = ALIKEC_deparse(curr_cpy, -1);
+    int i, has_nl = 0;
+    for(i = 0; i < max_chars; i++) { // calc dep length
+      if(!err_dep[i]) break;
+      if(err_dep[i] == '\n') {
+        has_nl = 1;
+        break;
+      }
+    }
+    int with_nl = has_nl || (strlen(res) + 4 + i > max_chars);
+
+    err_msg = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
+    );
   }
+  UNPROTECT(1);
   return err_msg;
 }
 

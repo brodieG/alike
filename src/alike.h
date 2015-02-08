@@ -44,6 +44,7 @@
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3);
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
+  const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
 
   // - Imported Funs -------------------------------------------------------------
 
@@ -63,6 +64,6 @@
   SEXP ALIKEC_SYM_args;
   SEXP ALIKEC_SYM_deparse;
   SEXP ALIKEC_SYM_nlines;
-
+  SEXP ALIKEC_SYM_getOption;
 
 #endif
