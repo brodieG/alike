@@ -167,8 +167,23 @@ Need to track indices, use a list?  Prototype
     else
     return {0, R_NilValue}
 
+## Duplication
 
+Duplication is somewhat expensive, with:
 
+    y <- quote(x + fun(1, 2, fun2(a, b)) / 3 + news(23))
+    microbenchmark(alike_test(y, 1))
+    Unit: microseconds
+                 expr   min     lq median    uq    max neval
+     alike_test(y, 1) 1.253 1.4035 1.5475 1.754 15.181   100
+
+Reference
+
+    Unit: nanoseconds
+                 expr min    lq median   uq   max neval
+     alike_test(y, 1) 739 780.5    909 1074 89326  1000
+
+So about half a microsecond to duplicate a somewhat complex object.  Is this tolerable?
 
 ## Comparisons
 
@@ -225,3 +240,12 @@ Actually, for now we're just treating this as any other attribute and we'll see 
 ### Rf_identical
 
 not entirely sure what the "default" flag is for `identical`, seems to be 16 by the convention that all the flags that are TRUE get set to zero, but very confusing why `ignore.environment` basically is the opposite of all the others.  Otherwise it would have made sense to have the default flag be 0  NEED TO TEST CLOSURE COMPARISON!!
+
+## `alike` Arguments
+
+TBD how many arguments we want to pile up.  Here are some to discuss:
+
+1. match.call.env = .GlobalEnv
+2. lang.match = fast or slow?
+
+Actually, could combine match.fun.env to be either an environment or NULL, and if NULL don't do the match!
