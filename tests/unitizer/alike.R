@@ -190,6 +190,9 @@ unitizer_sect("Calls / Formulas", {
   alike(exp.4, exp.5) # TRUE
   alike(exp.4, exp.6) # FALSE
 } )
+unitizer_sect("Symbols" {
+  alike(quote(x), quote(y))  # here as reminder; should be treated like call?
+})
 # Most fun tests in internal/type, here to make sure interface working
 unitizer_sect("Functions", {
   alike(print, print.data.frame)              # TRUE
