@@ -113,7 +113,9 @@ const char * ALIKEC_lang_alike_rec(
     ALIKEC_symb_mark(current);
     return (const char *) res;
   }
-  // Match the calls before comparison
+  // Match the calls before comparison; small inefficiency below since we know
+  // that target and current must be the same fun; we shouldn't need to retrieve
+  // it twice as we do now
 
   if(match_env != R_NilValue) {
     target = ALIKEC_match_call(target, match_call, match_env);
@@ -145,6 +147,12 @@ const char * ALIKEC_lang_alike_rec(
       }
       if(strcmp(tar_abs, cur_abs)) {
         ALIKEC_symb_mark(cur_sub);
+        if(*tar_varnum > *cur_varnum) {
+          return CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "have a symbol different to `%s`", csc_text, "",
+            "", ""
+          );
+        }
         return CSR_smprintf4(
           ALIKEC_MAX_CHAR, "have symbol `%s` (is `%s`)",
           rev_symb, csc_text, "", ""
