@@ -36,8 +36,8 @@
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev);
-  const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current, SEXP match_env, int suppress_warnings);
-  SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env, SEXP suppress_warnings);
+  const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current, SEXP match_env);
+  SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
 
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
@@ -48,7 +48,7 @@
   SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3);
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
-  SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env, int * suppress_warnings);
+  SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
 
   // - Imported Funs -------------------------------------------------------------
 

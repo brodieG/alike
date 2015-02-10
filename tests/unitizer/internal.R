@@ -281,14 +281,23 @@ unitizer_sect("Calls", {
   c8 <- quote(fun(x + y + x, FUN(w, x - 2)))
   c9 <- quote(fun(x + y + x, FUN(w, x + "hello")))
 
-  alike:::lang_alike(c0, c1)  # TRUE
-  alike:::lang_alike(c0, c2)  # no, inconsistent
-  alike:::lang_alike(c0, c3)  # no, wrong fun name
-  alike:::lang_alike(c0, c4)  # extra symbol
-  alike:::lang_alike(c5, c6)  # TRUE
-  alike:::lang_alike(c5, c7)  # inconsistent
-  alike:::lang_alike(c5, c8)  # wrong call `-`
-  alike:::lang_alike(c5, c9)  # TRUE
+  alike:::lang_alike(c0, c1, NULL)  # TRUE
+  alike:::lang_alike(c0, c2, NULL)  # no, inconsistent
+  alike:::lang_alike(c0, c3, NULL)  # no, wrong fun name
+  alike:::lang_alike(c0, c4, NULL)  # extra symbol
+  alike:::lang_alike(c5, c6, NULL)  # TRUE
+  alike:::lang_alike(c5, c7, NULL)  # inconsistent
+  alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
+  alike:::lang_alike(c5, c9, NULL)  # TRUE
+
+  cur.frame <- sys.frame(sys.nframe());
+  fun <- function(abc, bcd, efg) NULL
+
+  ca <- quote(fun(a, b, a))
+  cb <- quote(fun(x, e=x, y))
+
+  alike:::lang_alike(ca, cb, NULL)      # shouldn't match without match.call
+  alike:::lang_alike(ca, cb, cur.frame) # TRUE, should match
 
   # Attributes on sub-components should not affect anything
   # actually, these tests need to be with alike since lang_alike doesn't check
@@ -313,12 +322,12 @@ unitizer_sect("Calls", {
   f6 <- a ~ b + ln(b) + c - 1
   f7 <- a ~ b + log(b) + c + 1
 
-  alike:::lang_alike(f0, f1)        # TRUE
-  alike:::lang_alike(f0, f2)        # FALSE
-  alike:::lang_alike(f3, f4)        # TRUE
-  alike:::lang_alike(f3, f5)        # FALSE
-  alike:::lang_alike(f3, f6)        # FALSE
-  alike:::lang_alike(f3, f7)        # FALSE
+  alike:::lang_alike(f0, f1, NULL)        # TRUE
+  alike:::lang_alike(f0, f2, NULL)        # FALSE
+  alike:::lang_alike(f3, f4, NULL)        # TRUE
+  alike:::lang_alike(f3, f5, NULL)        # FALSE
+  alike:::lang_alike(f3, f6, NULL)        # FALSE
+  alike:::lang_alike(f3, f7, NULL)        # FALSE
 })
 unitizer_sect("Closures", {
   alike:::fun_alike(print, print.data.frame)  # TRUE, methods should always match generics

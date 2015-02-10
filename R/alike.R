@@ -239,10 +239,8 @@ dim_compare <- function(
 
 #' @export
 
-lang_alike <- function(
-  target, current, match.call.env=.GlobalEnv, suppress_warnings=FALSE
-)
-  .Call(ALIKEC_lang_alike, target, current, match.call.env, suppress_warnings)
+lang_alike <- function(target, current, match.call.env=.GlobalEnv)
+  .Call(ALIKEC_lang_alike, target, current, match.call.env)
 
 #' @export
 
