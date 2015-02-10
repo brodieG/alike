@@ -236,8 +236,8 @@ dim_compare <- function(
 
 #' @export
 
-lang_alike <- function(target, current)
-  .Call(ALIKEC_lang_alike, target, current)
+lang_alike <- function(target, current, match.call.env=.GlobalEnv)
+  .Call(ALIKEC_lang_alike, target, current, match.call.env)
 
 #' @export
 
@@ -248,6 +248,11 @@ fun_alike <- function(target, current)
 
 dep_alike <- function(obj, lines)
   .Call(ALIKEC_deparse, obj, lines)
+
+#' @export
+
+match_call_alike <- function(call, env)
+  .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
 
 #' Used for testing C code
 #'

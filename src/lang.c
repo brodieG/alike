@@ -49,6 +49,40 @@ void ALIKEC_symb_mark(SEXP obj) {
   );
 }
 /*
+Try to find function in env and return function if it exists, R_NilValue
+otherwise
+
+@param call the function we will ultimately match
+@param env an environment to start the lookup
+*/
+SEXP ALIKEC_get_fun(SEXP call, SEXP env) {
+  SEXP fun = CAR(call);
+  switch(TYPEOF(fun)) {
+    case CLOSXP:
+      return fun;
+      break;
+    case SYMSXP:
+      {
+        SEXP fun_def = findFun(fun, env);  // Assuming no GC happens in next couple of steps
+        if(TYPEOF(fun_def) == CLOSXP) return fun_def;
+      }
+      break;
+  }
+  return R_NilValue;
+}
+/*
+@param match_call a preconstructed call to retrieve the function; needed because
+  can't figure out a way to create preconstructed call in init without sub-components
+  getting GCed
+*/
+SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env) {
+  SEXP fun = ALIKEC_get_fun(call, env); // Shouldn't need to protect since we're setting as part of list
+  if(fun == R_NilValue) return call;
+  SETCADR(match_call, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
+  SETCADR(CADDR(match_call), call);
+  return eval(match_call, env);
+}
+/*
 Creates a copy of the call mapping objects to a deterministic set of names
 based on the order in which they appear in the call
 
@@ -60,9 +94,11 @@ logic that choses path based on how many elements.
 
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
-  pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula
+  pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
+  SEXP match_call, SEXP match_env
 ) {
-  if(CAR(target) != CAR(current)) {  // Actual fun call must match exactly
+  SEXP tar_fun = CAR(target), cur_fun = CAR(current);
+  if(tar_fun != cur_fun) {  // Actual fun call must match exactly
     char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1),
@@ -71,6 +107,13 @@ const char * ALIKEC_lang_alike_rec(
     ALIKEC_symb_mark(current);
     return (const char *) res;
   }
+  // Match the calls before comparison
+
+  // if(match_env != R_NilValue) {
+  //   target = ALIKEC_match_call
+
+
+  // }
   SEXP tar_sub, cur_sub;
   for(
     tar_sub = CDR(target), cur_sub = CDR(current);
@@ -112,7 +155,7 @@ const char * ALIKEC_lang_alike_rec(
       const char * res;
       res = ALIKEC_lang_alike_rec(
         tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
-        cur_varnum, formula
+        cur_varnum, formula, match_call, match_env
       );
       if(res[0]) return res;
     } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
@@ -144,9 +187,25 @@ difference in treatment is that calls are match-called if possible, and also
 that for calls constants need not be the same
 */
 
-const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
+const char * ALIKEC_lang_alike_internal(
+  SEXP target, SEXP current, SEXP match_env
+) {
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP)
     error("Arguments must be LANGSXP");
+  if(TYPEOF(match_env) != ENVSXP || match_env != R_NilValue)
+    error("Argument `match.call.env` must be an environment or NULL");
+
+  SEXP match_call = R_NilValue;
+  if(TYPEOF(match_env) == ENVSXP) {
+    SEXP match_call_sub = PROTECT(
+      list3(ALIKEC_SYM_matchcall, R_NilValue, R_NilValue)
+    );
+    SET_TYPEOF(match_call_sub, LANGSXP);
+    SEXP match_call = PROTECT(list2(R_QuoteSymbol, match_call_sub));
+    SET_TYPEOF(match_call, LANGSXP);
+  } else {
+    PROTECT(PROTECT(R_NilValue));
+  }
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
   pfHashTable * rev_hash = pfHashCreate(NULL);
@@ -170,7 +229,7 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
   SEXP curr_cpy = PROTECT(duplicate(current));
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula
+    formula, match_call, match_env
   );
   // Construct error message
 
@@ -208,12 +267,12 @@ const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current) {
       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
     );
   }
-  UNPROTECT(1);
+  UNPROTECT(3);
   return err_msg;
 }
 
-SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current) {
-  const char * res = ALIKEC_lang_alike_internal(target, current);
+SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env) {
+  const char * res = ALIKEC_lang_alike_internal(target, current, match_env);
   if(strlen(res)) return mkString(res);
   return ScalarLogical(1);
 }

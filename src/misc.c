@@ -25,6 +25,7 @@ SEXP ALIKEC_mode(SEXP obj) {
 
 SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
 
+  PrintValue(ALIKEC_CALL_matchcall);
   // if(TYPEOF(obj1) != LISTSXP || TYPEOF(obj2) != LISTSXP)
   //   error("incorrect input type");
   // SEXP res;
