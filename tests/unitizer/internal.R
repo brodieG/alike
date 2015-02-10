@@ -263,6 +263,12 @@ unitizer_sect("All attributes, strict", {
     attr.mode=2
   )
 } )
+unitizer_sect("Match Calls", {
+  match_call_alike(quote(var(y=1:10, runif(10))), baseenv())
+  env0 <- new.nev();
+  new.env$var <- function(yollo, zambia)
+  match_call_alike(quote(var(y=1:10, runif(10))), new.env())
+})
 unitizer_sect("Calls", {
   c0 <- quote(fun(a, b, a, 25))
   c1 <- quote(fun(x, y, x, "hello"))

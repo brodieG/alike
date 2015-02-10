@@ -252,7 +252,7 @@ dep_alike <- function(obj, lines)
 #' @export
 
 match_call_alike <- function(call, env)
-  .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
+  .Call(ALIKEC_match_call, call, env)
 
 #' Used for testing C code
 #'

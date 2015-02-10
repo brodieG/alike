@@ -36,7 +36,7 @@ Also, assuming `z` is protected already:
 
 Does not require any protection even though we are creating two new `SEXP`s because `z` is already protected and `z` will point to its CDR, obviously.
 
-SEXPs that are created outside of the `.Call` call don't need to be protected (kind of, our attempt to create pre-composed calls in initialization script failed miserably, but single objects work fine).
+SEXPs that are created within the initialization script `R_init_...` don't need to be protected (had some issues earlier trying to create nested objects, but seems to work now; perhaps the requirement is that all objects that are in nested objects must themselves exist at the top level so the GC counter works properly?).
 
 ## Output / Inspection
 

@@ -75,12 +75,12 @@ SEXP ALIKEC_get_fun(SEXP call, SEXP env) {
   can't figure out a way to create preconstructed call in init without sub-components
   getting GCed
 */
-SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env) {
+SEXP ALIKEC_match_call(SEXP call, SEXP env) {
   SEXP fun = ALIKEC_get_fun(call, env); // Shouldn't need to protect since we're setting as part of list
   if(fun == R_NilValue) return call;
-  SETCADR(match_call, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
-  SETCADR(CADDR(match_call), call);
-  return eval(match_call, env);
+  SETCADR(ALIKEC_CALL_matchcall, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
+  SETCADR(CADDR(ALIKEC_CALL_matchcall), call);
+  return eval(ALIKEC_CALL_matchcall, env);
 }
 /*
 Creates a copy of the call mapping objects to a deterministic set of names

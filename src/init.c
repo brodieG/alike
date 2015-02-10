@@ -18,7 +18,7 @@ R_CallMethodDef callMethods[] = {
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 3},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
   {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
-  {"match_call", (DL_FUNC) &ALIKEC_match_call, 3},
+  {"match_call", (DL_FUNC) &ALIKEC_match_call, 2},
   {NULL, NULL, 0}
 };
 
