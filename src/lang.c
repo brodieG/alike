@@ -95,7 +95,7 @@ logic that choses path based on how many elements.
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_call, SEXP match_env
+  SEXP match_env
 ) {
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != cur_fun) {  // Actual fun call must match exactly
@@ -109,11 +109,10 @@ const char * ALIKEC_lang_alike_rec(
   }
   // Match the calls before comparison
 
-  // if(match_env != R_NilValue) {
-  //   target = ALIKEC_match_call
-
-
-  // }
+  if(match_env != R_NilValue) {
+    target = ALIKEC_match_call(target, match_env);
+    current = ALIKEC_match_call(current, match_env);
+  }
   SEXP tar_sub, cur_sub;
   for(
     tar_sub = CDR(target), cur_sub = CDR(current);
@@ -155,7 +154,7 @@ const char * ALIKEC_lang_alike_rec(
       const char * res;
       res = ALIKEC_lang_alike_rec(
         tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
-        cur_varnum, formula, match_call, match_env
+        cur_varnum, formula, match_env
       );
       if(res[0]) return res;
     } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
@@ -195,17 +194,6 @@ const char * ALIKEC_lang_alike_internal(
   if(TYPEOF(match_env) != ENVSXP || match_env != R_NilValue)
     error("Argument `match.call.env` must be an environment or NULL");
 
-  SEXP match_call = R_NilValue;
-  if(TYPEOF(match_env) == ENVSXP) {
-    SEXP match_call_sub = PROTECT(
-      list3(ALIKEC_SYM_matchcall, R_NilValue, R_NilValue)
-    );
-    SET_TYPEOF(match_call_sub, LANGSXP);
-    SEXP match_call = PROTECT(list2(R_QuoteSymbol, match_call_sub));
-    SET_TYPEOF(match_call, LANGSXP);
-  } else {
-    PROTECT(PROTECT(R_NilValue));
-  }
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
   pfHashTable * rev_hash = pfHashCreate(NULL);
@@ -229,7 +217,7 @@ const char * ALIKEC_lang_alike_internal(
   SEXP curr_cpy = PROTECT(duplicate(current));
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula, match_call, match_env
+    formula, match_env
   );
   // Construct error message
 
@@ -267,7 +255,7 @@ const char * ALIKEC_lang_alike_internal(
       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
     );
   }
-  UNPROTECT(3);
+  UNPROTECT(1);
   return err_msg;
 }
 
