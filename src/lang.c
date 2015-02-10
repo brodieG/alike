@@ -72,15 +72,31 @@ SEXP ALIKEC_get_fun(SEXP call, SEXP env) {
 }
 /*
 @param match_call a preconstructed call to retrieve the function; needed because
-  can't figure out a way to create preconstructed call in init without sub-components
-  getting GCed
+  can't figure out a way to create preconstructed call in init without
+  sub-components getting GCed
 */
-SEXP ALIKEC_match_call(SEXP call, SEXP env) {
+SEXP ALIKEC_match_call(
+  SEXP call, SEXP match_call, SEXP env, int * suppress_warnings
+) {
   SEXP fun = ALIKEC_get_fun(call, env); // Shouldn't need to protect since we're setting as part of list
   if(fun == R_NilValue) return call;
-  SETCADR(ALIKEC_CALL_matchcall, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
-  SETCADR(CADDR(ALIKEC_CALL_matchcall), call);
-  return eval(ALIKEC_CALL_matchcall, env);
+  SETCADR(match_call, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
+  SETCADR(CADDR(match_call), call);
+  int tmp = 0;
+  int * err =& tmp;
+  SEXP res;
+  if(!*suppress_warnings) {
+    res = PROTECT(R_tryEval(match_call, env, err));
+    if(* err) warning(
+      "Unable to `match.call` on:\n%s\nSet `match.call.env` to NULL to disable `match.call` or `suppress.warnings` to TRUE to disable warnings; further `match.call` warnings suppressed for duration of this call.",
+      ALIKEC_deparse(call, -1)
+    );
+    *suppress_warnings = 1;
+  } else {
+    res = PROTECT(R_tryEvalSilent(match_call, env, err));
+  }
+  UNPROTECT(1);
+  if(* err) return call; else return res;
 }
 /*
 Creates a copy of the call mapping objects to a deterministic set of names
@@ -95,7 +111,7 @@ logic that choses path based on how many elements.
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_env
+  SEXP match_call, SEXP match_env, int suppress_warnings
 ) {
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != cur_fun) {  // Actual fun call must match exactly
@@ -109,9 +125,11 @@ const char * ALIKEC_lang_alike_rec(
   }
   // Match the calls before comparison
 
+  int * supp_warn_ptr =& suppress_warnings;
+
   if(match_env != R_NilValue) {
-    target = ALIKEC_match_call(target, match_env);
-    current = ALIKEC_match_call(current, match_env);
+    target = ALIKEC_match_call(target, match_call, match_env, supp_warn_ptr);
+    current = ALIKEC_match_call(current, match_call, match_env, supp_warn_ptr);
   }
   SEXP tar_sub, cur_sub;
   for(
@@ -154,7 +172,7 @@ const char * ALIKEC_lang_alike_rec(
       const char * res;
       res = ALIKEC_lang_alike_rec(
         tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
-        cur_varnum, formula, match_env
+        cur_varnum, formula, match_call, match_env, suppress_warnings
       );
       if(res[0]) return res;
     } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
@@ -187,12 +205,14 @@ that for calls constants need not be the same
 */
 
 const char * ALIKEC_lang_alike_internal(
-  SEXP target, SEXP current, SEXP match_env
+  SEXP target, SEXP current, SEXP match_env, int suppress_warnings
 ) {
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP)
     error("Arguments must be LANGSXP");
-  if(TYPEOF(match_env) != ENVSXP || match_env != R_NilValue)
+  if(TYPEOF(match_env) != ENVSXP && match_env != R_NilValue)
     error("Argument `match.call.env` must be an environment or NULL");
+
+  // Create persistent objects for use throught recursion
 
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
@@ -200,6 +220,15 @@ const char * ALIKEC_lang_alike_internal(
   size_t tartmp = 0, curtmp=0;
   size_t * tar_varnum = &tartmp;
   size_t * cur_varnum = &curtmp;
+
+  SEXP match_call = PROTECT(  // Can't figure out how to do this on init; cost ~60ns
+    list3(
+      ALIKEC_SYM_matchcall, R_NilValue,
+      list2(R_QuoteSymbol, R_NilValue)
+  ) );
+  SET_TYPEOF(match_call, LANGSXP);
+  SET_TYPEOF(CADDR(match_call), LANGSXP);
+
   int formula = 0;
 
   // Determine if it is a formular or not
@@ -217,7 +246,7 @@ const char * ALIKEC_lang_alike_internal(
   SEXP curr_cpy = PROTECT(duplicate(current));
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula, match_env
+    formula, match_call, match_env, suppress_warnings
   );
   // Construct error message
 
@@ -255,12 +284,23 @@ const char * ALIKEC_lang_alike_internal(
       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
     );
   }
-  UNPROTECT(1);
+  UNPROTECT(2);
   return err_msg;
 }
 
-SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env) {
-  const char * res = ALIKEC_lang_alike_internal(target, current, match_env);
+SEXP ALIKEC_lang_alike_ext(
+  SEXP target, SEXP current, SEXP match_env, SEXP suppress_warnings
+) {
+  int supp_warn;
+  if(
+    TYPEOF(suppress_warnings) != LGLSXP || XLENGTH(suppress_warnings) != 1L ||
+    (supp_warn = asLogical(suppress_warnings)) == NA_LOGICAL
+  ) {
+    error("Argument `suppress_warnings` should be a one length non-NA logical");
+  }
+  const char * res = ALIKEC_lang_alike_internal(
+    target, current, match_env, supp_warn
+  );
   if(strlen(res)) return mkString(res);
   return ScalarLogical(1);
 }

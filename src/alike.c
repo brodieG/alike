@@ -11,7 +11,7 @@ final implementation)
 */
 struct ALIKEC_res ALIKEC_alike_obj(
   SEXP target, SEXP current, int type_mode, double int_tolerance,
-  int attr_mode, int suppress_warnings
+  int attr_mode, int suppress_warnings, SEXP match_env
 ) {
   int tmp = 0;
   int * is_df = &tmp;
@@ -92,7 +92,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
     int is_lang = 0;
 
     if(!err && (is_lang = tar_type == LANGSXP && cur_type == LANGSXP)) {
-      err_lang = ALIKEC_lang_alike_internal(target, current);
+      err_lang = ALIKEC_lang_alike_internal(
+        target, current, match_env, suppress_warnings
+      );
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
@@ -193,13 +195,14 @@ index element; not sure if this is meanifully slow or not
 
 struct ALIKEC_res ALIKEC_alike_rec(
   SEXP target, SEXP current, SEXP index, int type_mode, double int_tolerance,
-  int attr_mode, int suppress_warnings
+  int attr_mode, int suppress_warnings, SEXP match_env
 ) {
   // normal logic, which will have checked length and attributes, etc.
   // Rprintf("In recurse \n");
   // PrintValue(target);
   struct ALIKEC_res res0 = ALIKEC_alike_obj(
-    target, current, type_mode, int_tolerance, attr_mode, suppress_warnings
+    target, current, type_mode, int_tolerance, attr_mode, suppress_warnings,
+    match_env
   );
 
   if(!res0.success) {
@@ -220,7 +223,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       else SETCDR(index, list1(STRING_ELT(vec_names, i)));
       res1 = ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings
+        int_tolerance, attr_mode, suppress_warnings, match_env
       );
       // Rprintf("Loop: %d success: %d", i, res1.success);
       if(!res1.success) break;
@@ -245,7 +248,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       SETCDR(index, list1(STRING_ELT(tar_names, i)));
       res1 = ALIKEC_alike_rec(
         findVarInFrame(target, var_name), var_cur_val, CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings
+        int_tolerance, attr_mode, suppress_warnings, match_env
       );
       UNPROTECT(1);
       if(!res1.success) break;
@@ -275,7 +278,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       else SETCDR(index, list1(ScalarInteger(i)));
       res1 = ALIKEC_alike_rec(
         CAR(tar_sub), CAR(cur_sub), CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings
+        int_tolerance, attr_mode, suppress_warnings, match_env
       );
       if(!res1.success) break;
     }
@@ -290,7 +293,7 @@ Run alike calculation
 */
 SEXP ALIKEC_alike_internal(
   SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
-  const char * prepend, int suppress_warnings
+  const char * prepend, int suppress_warnings, SEXP match_env
 ) {
   if(type_mode < 0 || type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
@@ -312,7 +315,7 @@ SEXP ALIKEC_alike_internal(
 
     res = ALIKEC_alike_rec(
       target, current, index, type_mode, int_tolerance, attr_mode,
-      suppress_warnings
+      suppress_warnings, match_env
     );
     if(res.success) {
       UNPROTECT(1);
@@ -423,13 +426,13 @@ calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
   return ALIKEC_alike_internal(
-    target, current, 0, sqrt(DOUBLE_EPS), 0, "should ", 0
+    target, current, 0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue
 );}
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP type_mode, SEXP int_tolerance, SEXP attr_mode,
-  SEXP suppress_warnings
+  SEXP suppress_warnings, SEXP match_env
 ) {
   SEXPTYPE int_mod_type, tol_type, attr_mod_type;
   int supp_warn;
@@ -452,6 +455,6 @@ SEXP ALIKEC_alike (
 
   return ALIKEC_alike_internal(
     target, current, asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn
+    asInteger(attr_mode), "should ", supp_warn, match_env
   );
 }

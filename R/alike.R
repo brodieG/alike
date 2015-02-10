@@ -121,9 +121,12 @@
 
 alike <- function(
   target, current, type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
-  suppress.warnings=FALSE
+  suppress.warnings=FALSE, match.call.env=.GlobalEnv
 )
-  .Call(ALIKEC_alike, target, current, type.mode, int.tol, attr.mode, suppress.warnings)
+  .Call(
+    ALIKEC_alike, target, current, type.mode, int.tol, attr.mode,
+    suppress.warnings, match.call.env
+  )
 
 #' @export
 
@@ -236,8 +239,10 @@ dim_compare <- function(
 
 #' @export
 
-lang_alike <- function(target, current, match.call.env=.GlobalEnv)
-  .Call(ALIKEC_lang_alike, target, current, match.call.env)
+lang_alike <- function(
+  target, current, match.call.env=.GlobalEnv, suppress_warnings=FALSE
+)
+  .Call(ALIKEC_lang_alike, target, current, match.call.env, suppress_warnings)
 
 #' @export
 
@@ -252,7 +257,7 @@ dep_alike <- function(obj, lines)
 #' @export
 
 match_call_alike <- function(call, env)
-  .Call(ALIKEC_match_call, call, env)
+  .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
 
 #' Used for testing C code
 #'
