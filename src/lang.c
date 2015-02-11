@@ -102,10 +102,11 @@ logic that choses path based on how many elements.
 */
 
 const char * ALIKEC_lang_alike_rec(
-  SEXP target, SEXP current, pfHashTable * tar_hash, pfHashTable * cur_hash,
+  SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
   SEXP match_call, SEXP match_env
 ) {
+  SEXP current = CAR(cur_par);
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != cur_fun) {  // Actual fun call must match exactly
     char * res = CSR_smprintf4(
@@ -122,7 +123,8 @@ const char * ALIKEC_lang_alike_rec(
 
   if(match_env != R_NilValue) {
     target = ALIKEC_match_call(target, match_call, match_env);
-    current = ALIKEC_match_call(current, match_call, match_env);
+    SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
+    current = CAR(cur_par);
   }
   SEXP tar_sub, cur_sub;
   for(
@@ -169,13 +171,18 @@ const char * ALIKEC_lang_alike_rec(
       );
     } else if (tsc_type == LANGSXP) {
       const char * res;
+      // Note how we pass cur_sub and not cur_sub_car so we can modify cur_sub
       res = ALIKEC_lang_alike_rec(
-        tar_sub_car, cur_sub_car, tar_hash, cur_hash, rev_hash, tar_varnum,
+        tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash, tar_varnum,
         cur_varnum, formula, match_call, match_env
       );
-      if(res[0]) return res;
+      if(CAR(cur_sub) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nunking call since we don't want it in this case
+      if(res[0]) {
+        return res;
+      }
     } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
       ALIKEC_symb_mark(cur_sub);
+
       return (const char *) CSR_smprintf4(
         ALIKEC_MAX_CHAR,
         "be \"%s\" (is \"%s\") for token `%s`",
@@ -191,6 +198,7 @@ const char * ALIKEC_lang_alike_rec(
     }
   }
   if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
+    SETCAR(cur_par, R_NilValue);  // Unorthodox way of signaling that we don't wan to show function call
     return (const char *) CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be the same length (is %s)",
       tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
@@ -242,9 +250,9 @@ const char * ALIKEC_lang_alike_internal(
   }
   // Check if alike
 
-  SEXP curr_cpy = PROTECT(duplicate(current));
+  SEXP curr_cpy_par = PROTECT(list1(duplicate(current)));
   const char * res = ALIKEC_lang_alike_rec(
-    target, curr_cpy, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
+    target, curr_cpy_par, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
     formula, match_call, match_env
   );
   // Construct error message
@@ -268,20 +276,24 @@ const char * ALIKEC_lang_alike_internal(
     - if deparse plus rest of err message greater than max_char, then start on
       new line
     */
-    const char * err_dep = ALIKEC_deparse(curr_cpy, -1);
-    int i, has_nl = 0;
-    for(i = 0; i < max_chars; i++) { // calc dep length
-      if(!err_dep[i]) break;
-      if(err_dep[i] == '\n') {
-        has_nl = 1;
-        break;
+    int use_in = CAR(curr_cpy_par) != R_NilValue;
+    if(use_in) {
+      int  i, has_nl = 0;
+      const char * err_dep =ALIKEC_deparse(CAR(curr_cpy_par), -1);
+      for(i = 0; i < max_chars; i++) { // calc dep length
+        if(!err_dep[i]) break;
+        if(err_dep[i] == '\n') {
+          has_nl = 1;
+          break;
+        }
       }
+      int with_nl = has_nl || (strlen(res) + 4 + i + 1 > max_chars);
+      err_msg = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
+      );
+    } else {
+      err_msg = res;
     }
-    int with_nl = has_nl || (strlen(res) + 4 + i + 1 > max_chars);
-
-    err_msg = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
-    );
   }
   UNPROTECT(2);
   return err_msg;
