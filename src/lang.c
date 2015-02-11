@@ -95,10 +95,17 @@ SEXP ALIKEC_match_call(
 Creates a copy of the call mapping objects to a deterministic set of names
 based on the order in which they appear in the call
 
-Here we use an environment to try to take advantage of the hash search to
-identify whether a symbol already showed up or not. This is probably faster
-if langauge object has 25 or more elements, so may eventually want to add
-logic that choses path based on how many elements.
+Here we use a hash table to identify whether a symbol already showed up or not.
+This is probably faster if langauge object has 25 or more elements, so may
+eventually want to add logic that choses path based on how many elements.
+
+If return value is zero length string then comparison succeeded, otherwise
+return value is error message.  Note that we also return information by modifying
+the `cur_par` argument by reference.  We either mark the token the error message
+refers to by wrapping it in ``{}``, or blow it away to indicate we don't want
+the final error message to try to point out where the error occurred (this is
+typically the case when the error is not specific to a particular part of the
+call).
 */
 
 const char * ALIKEC_lang_alike_rec(
