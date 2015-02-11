@@ -307,19 +307,14 @@ unitizer_sect("Calls", {
 
   alike:::lang_alike(cc, cd)
 
-  # Attributes on sub-components should not affect anything
-  # actually, these tests need to be with alike since lang_alike doesn't check
-  # attributes
+  # NULL in target matches anything
 
-  # c0.1 <- c0.2 <- c0.3 <- c0
-  # attr(c0.1, "blah") <- "hello"
-  # attr(c0.2, "blah") <- 1:3
-  # attr(c0.3[[1L]], "blah") <- "hello"
+  ce <- quote(fun(a, b, NULL))
 
-  # alike:::lang_alike(c0, c0.1)     # TRUE
-  # alike:::lang_alike(c0.1, c0)     # Missing attribute
-  # alike:::lang_alike(c0.1, c0.2)   # Attribute mismatch
-  # alike:::lang_alike(c0.3, c0)     # TRUE, sub-attr shouldn't cause problem
+  alike:::lang_alike(cc, ce)  # FALSE
+  alike:::lang_alike(ce, cc)  # TRUE
+
+  # Formulas
 
   f0 <- y ~ x + 1
   f1 <- a ~ b + 1

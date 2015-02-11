@@ -163,6 +163,23 @@ unitizer_sect("Calls / Formulas", {
   alike(quote(fun(1, 2)), quote(fun2(1, 2)), match.call.env=sys.frame(sys.nframe()))
   alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))), match.call.env=sys.frame(sys.nframe()))
 
+  # Attributes on sub-components should not affect anything
+  # actually, these tests need to be with alike since lang_alike doesn't check
+  # attributes
+
+  c0 <- quote(fun(a, b, a, 25))
+  c0.1 <- c0.2 <- c0.3 <- c0
+  attr(c0.1, "blah") <- "hello"
+  attr(c0.2, "blah") <- 1:3
+  attr(c0.3[[1L]], "blah") <- "hello"
+
+  alike(c0, c0.1, match.call.env=NULL)     # TRUE
+  alike(c0.1, c0, match.call.env=NULL)     # Missing attribute
+  alike(c0.1, c0.2, match.call.env=NULL)   # Attribute mismatch
+  alike(c0.3, c0, match.call.env=NULL)     # TRUE, sub-attr shouldn't cause problem
+
+  # Formulas
+
   alike(x ~ y, z ~ w)
   alike(x ~ y, z ~ w + 1)
   alike(x ~ y + 2, z ~ w + 1)
