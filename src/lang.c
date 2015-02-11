@@ -133,12 +133,24 @@ const char * ALIKEC_lang_alike_rec(
     SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
     current = CAR(cur_par);
   }
-  SEXP tar_sub, cur_sub;
+  SEXP tar_sub, cur_sub, cur_sub_tag, prev_tag = R_NilValue;
   for(
     tar_sub = CDR(target), cur_sub = CDR(current);
     tar_sub != R_NilValue && cur_sub != R_NilValue;
-    tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub)
+    tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag
   ) {
+    if(TAG(tar_sub) != (cur_sub_tag = TAG(cur_sub))) {
+      char * prev_tag_msg = "as first argument";
+      if(prev_tag != R_NilValue) {
+        prev_tag_msg = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
+          "", "", ""
+      );}
+      ALIKEC_symb_mark(cur_par);
+      return CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "have argument `%s` %s", CHAR(PRINTNAME(TAG(tar_sub))),
+        prev_tag_msg, "", ""
+    );}
     tar_sub = ALIKEC_skip_paren(tar_sub);
     cur_sub = ALIKEC_skip_paren(cur_sub);
 
