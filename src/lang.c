@@ -115,7 +115,7 @@ const char * ALIKEC_lang_alike_rec(
 ) {
   SEXP current = CAR(cur_par);
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
-  if(tar_fun != cur_fun) {  // Actual fun call must match exactly
+  if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
     char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1),
@@ -168,6 +168,7 @@ const char * ALIKEC_lang_alike_rec(
     cur_sub = ALIKEC_skip_paren(cur_sub);
 
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
+    if(tar_sub_car == R_NilValue) continue; // NULL matches anything
     SEXPTYPE tsc_type = TYPEOF(tar_sub_car), csc_type = TYPEOF(cur_sub_car);
 
     // PrintValue(tar_sub_car);
