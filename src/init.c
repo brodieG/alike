@@ -3,7 +3,7 @@
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike", (DL_FUNC) &ALIKEC_alike, 6},
+  {"alike", (DL_FUNC) &ALIKEC_alike, 7},
   {"alike_fast", (DL_FUNC) &ALIKEC_alike_fast, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 2},
   {"typeof_fast", (DL_FUNC) &ALIKEC_typeof_fast, 1},
@@ -15,9 +15,10 @@ R_CallMethodDef callMethods[] = {
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 3},
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
-  {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 2},
+  {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 3},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
   {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
+  {"match_call", (DL_FUNC) &ALIKEC_match_call, 3},
   {NULL, NULL, 0}
 };
 
@@ -31,6 +32,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_deparse = install("deparse");
   ALIKEC_SYM_nlines = install("nlines");
   ALIKEC_SYM_getOption = install("getOption");
+  ALIKEC_SYM_matchcall = install("match.call");
 
   CSR_smprintf4 = (
     char *(*)(
@@ -43,3 +45,8 @@ void R_init_alike(DllInfo *info)
   R_RegisterCCallable("alike", "ALIKEC_alike_internal", (DL_FUNC) ALIKEC_alike_internal);
   CSR_len_as_chr = (char * (*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_as_chr");
 }
+
+// void R_unload_alike(DllInfo *dll)
+// {
+//     UNPROTECT(2);
+// }

@@ -25,6 +25,16 @@ SEXP ALIKEC_mode(SEXP obj) {
 
 SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
 
+  SEXP call = PROTECT(list1(install("parent.frame")));
+  SET_TYPEOF(call, LANGSXP);
+  UNPROTECT(1);
+  return(eval(call, R_GlobalEnv));
+  // SET_TYPEOF(ALIKEC_CALL_matchcall_sub, LANGSXP);
+  // SEXP ALIKEC_CALL_matchcall = PROTECT(list3(ALIKEC_SYM_matchcall, R_NilValue, ALIKEC_CALL_matchcall_sub));
+  // SET_TYPEOF(ALIKEC_CALL_matchcall, LANGSXP);
+  // UNPROTECT(2);
+
+
   // if(TYPEOF(obj1) != LISTSXP || TYPEOF(obj2) != LISTSXP)
   //   error("incorrect input type");
   // SEXP res;
@@ -98,3 +108,36 @@ SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines) {
   return mkString(ALIKEC_deparse(obj, asInteger(lines)));
 }
 
+/*
+Simplified version of R's internal findFun
+
+Doesn't do quick lookups for special symbols, or use the global cache if it is
+available.
+
+Most importantly, instead of failing if function is not found, returns
+R_UnboundValue.
+
+The code is copied almost verbatim from src/main/envir.c:findFun()
+*/
+
+SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
+  SEXP vl;
+  while (rho != R_EmptyEnv) {
+    vl = findVarInFrame3(rho, symbol, TRUE);
+    if (vl != R_UnboundValue) {
+      if (TYPEOF(vl) == PROMSXP) {
+        PROTECT(vl);
+        vl = eval(vl, rho);
+        UNPROTECT(1);
+      }
+      if (
+        TYPEOF(vl) == CLOSXP || TYPEOF(vl) == BUILTINSXP ||
+        TYPEOF(vl) == SPECIALSXP
+      )
+        return (vl);
+      if (vl == R_MissingArg) return R_UnboundValue;
+    }
+    rho = ENCLOS(rho);
+  }
+  return R_UnboundValue;
+}

@@ -11,11 +11,14 @@
 
   // - Main Funs -----------------------------------------------------------------
 
-  SEXP ALIKEC_alike (SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode, SEXP suppress_warnings);
+  SEXP ALIKEC_alike (
+    SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
+    SEXP suppress_warnings, SEXP match_env
+  );
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
   SEXP ALIKEC_alike_internal(
     SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
-    const char * prepend, int suppress_warnings
+    const char * prepend, int suppress_warnings, SEXP match_env
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
   SEXP ALIKEC_typeof_fast(SEXP object);
@@ -33,8 +36,8 @@
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev);
-  const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current);
-  SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current);
+  const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current, SEXP match_env);
+  SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
 
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
@@ -45,6 +48,8 @@
   SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3);
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
+  SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
+  SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
 
   // - Imported Funs -------------------------------------------------------------
 
@@ -65,5 +70,7 @@
   SEXP ALIKEC_SYM_deparse;
   SEXP ALIKEC_SYM_nlines;
   SEXP ALIKEC_SYM_getOption;
-
+  SEXP ALIKEC_SYM_matchcall;
+  SEXP ALIKEC_CALL_matchcall;
+  SEXP ALIKEC_CALL_matchcall_sub;
 #endif

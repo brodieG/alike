@@ -150,20 +150,18 @@ unitizer_sect("Calls / Formulas", {
   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
   alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
 
-  # # match.call stuff not implemented yet, so these won't work
-  # if(exists("fun")) rm(fun)
-  # alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))   # sub-optimal error message, but necessary to handle cases that engage match.call
-  # alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1))) # clearer what's going on here
-  # fun <- function(a, b, c) NULL
-  # alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))  # Because fun defined, uses match.call() to re-arrange args
-  # alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)))
-  # alike(quote(fun(a=1)), quote(fun(b=1)))
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), match.call.env=NULL)
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1)), match.call.env=NULL)
+  fun <- function(a, b, c) NULL
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), match.call.env=sys.frame(sys.nframe())) # TRUE, since constants including NULL match any constants
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(a=1)), quote(fun(b=1)), match.call.env=sys.frame(sys.nframe()))
 
-  alike(quote(fun(1, 2)), quote(fun(1)))
-  alike(quote(fun(1)), quote(fun(1, 2)))
+  alike(quote(fun(1, 2)), quote(fun(1)), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(1)), quote(fun(1, 2)), match.call.env=sys.frame(sys.nframe()))
 
-  alike(quote(fun(1, 2)), quote(fun2(1, 2)))
-  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))
+  alike(quote(fun(1, 2)), quote(fun2(1, 2)), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))), match.call.env=sys.frame(sys.nframe()))
 
   alike(x ~ y, z ~ w)
   alike(x ~ y, z ~ w + 1)
@@ -190,7 +188,7 @@ unitizer_sect("Calls / Formulas", {
   alike(exp.4, exp.5) # TRUE
   alike(exp.4, exp.6) # FALSE
 } )
-unitizer_sect("Symbols" {
+unitizer_sect("Symbols", {
   alike(quote(x), quote(y))  # here as reminder; should be treated like call?
 })
 # Most fun tests in internal/type, here to make sure interface working
