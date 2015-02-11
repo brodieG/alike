@@ -63,7 +63,7 @@ SEXP ALIKEC_get_fun(SEXP call, SEXP env) {
       break;
     case SYMSXP:
       {
-        SEXP fun_def = findFun(fun, env);  // Assuming no GC happens in next couple of steps
+        SEXP fun_def = ALIKEC_findFun(fun, env);  // Assuming no GC happens in next couple of steps
         if(TYPEOF(fun_def) == CLOSXP) return fun_def;
       }
       break;
@@ -79,7 +79,10 @@ SEXP ALIKEC_match_call(
   SEXP call, SEXP match_call, SEXP env
 ) {
   SEXP fun = PROTECT(ALIKEC_get_fun(call, env));
-  if(fun == R_NilValue) return call;
+  if(fun == R_NilValue) {
+    UNPROTECT(1);
+    return call;
+  }
   SETCADR(match_call, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
   UNPROTECT(1);
   SETCADR(CADDR(match_call), call);

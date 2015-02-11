@@ -49,6 +49,7 @@
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
+  SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
 
   // - Imported Funs -------------------------------------------------------------
 
