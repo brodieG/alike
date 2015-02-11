@@ -297,7 +297,15 @@ unitizer_sect("Calls", {
   cb <- quote(fun(x, e=x, y))
 
   alike:::lang_alike(ca, cb, NULL)      # shouldn't match without match.call
+  alike:::lang_alike(cb, ca, NULL)      # false, different error
   alike:::lang_alike(ca, cb, cur.frame) # TRUE, should match
+
+  # test nested match.call
+
+  cc <- quote(fun(a, b, fun(b=1)))
+  cd <- quote(fun(a, b, fun(c=1)))
+
+  alike:::lang_alike(cc, cd)
 
   # Attributes on sub-components should not affect anything
   # actually, these tests need to be with alike since lang_alike doesn't check

@@ -133,19 +133,32 @@ const char * ALIKEC_lang_alike_rec(
     SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
     current = CAR(cur_par);
   }
-  SEXP tar_sub, cur_sub, cur_sub_tag, prev_tag = R_NilValue;
+  SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
+  R_xlen_t arg_num;
   for(
-    tar_sub = CDR(target), cur_sub = CDR(current);
+    tar_sub = CDR(target), cur_sub = CDR(current), arg_num = 0;
     tar_sub != R_NilValue && cur_sub != R_NilValue;
-    tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag
+    tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag,
+    arg_num++
   ) {
-    if(TAG(tar_sub) != (cur_sub_tag = TAG(cur_sub))) {
+    // Check tags are compatible; NULL tag in target allows any tag in current
+
+    cur_sub_tag = TAG(cur_sub);
+    tar_sub_tag = TAG(tar_sub);
+
+    if(tar_sub_tag != R_NilValue && tar_sub_tag != cur_sub_tag) {
       char * prev_tag_msg = "as first argument";
-      if(prev_tag != R_NilValue) {
-        prev_tag_msg = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
-          "", "", ""
-      );}
+      if(prev_tag != R_UnboundValue) {
+        if(prev_tag == R_NilValue) {
+          prev_tag_msg = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "after argument #%s", CSR_len_as_chr(arg_num),
+            "", "", ""
+          );
+        } else {
+          prev_tag_msg = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
+            "", "", ""
+      );} }
       ALIKEC_symb_mark(cur_par);
       return CSR_smprintf4(
         ALIKEC_MAX_CHAR, "have argument `%s` %s", CHAR(PRINTNAME(TAG(tar_sub))),
