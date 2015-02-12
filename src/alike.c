@@ -82,9 +82,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(
       !err &&
       (
-        is_lang = (  // overcomplicated, only LANG - LANG and SYM-SYM can pass due to type check
-          (tar_type == LANGSXP || tar_type == SYMSXP || tar_type == NILSXP) &&
-          (cur_type == LANGSXP || cur_type == SYMSXP || cur_type == NILSXP)
+        is_lang = (
+          (tar_type == LANGSXP || tar_type == SYMSXP) &&
+          (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
       err_lang = ALIKEC_lang_alike_internal(target, current, match_env);
