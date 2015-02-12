@@ -75,18 +75,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err = 1;
       err_base = err_attr;
     }
-    // - Type ------------------------------------------------------------------
-
-    if(
-      !err &&
-      strlen(
-        err_type = ALIKEC_type_alike_internal(
-          target, current, type_mode, int_tolerance
-      ) )
-    ) {
-      err = 1;
-      err_base = err_type;
-    }
     // - Special Language Objects && Funs --------------------------------------
 
     int is_lang = 0;
@@ -112,6 +100,18 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err = 1;
         err_base = err_fun;
     } }
+    // - Type ------------------------------------------------------------------
+
+    if(
+      !err && !is_lang && // lang excluded because we can have symbol-lang comparisons that resolve to symbol symbol
+      strlen(
+        err_type = ALIKEC_type_alike_internal(
+          target, current, type_mode, int_tolerance
+      ) )
+    ) {
+      err = 1;
+      err_base = err_type;
+    }
     // - Length ----------------------------------------------------------------
 
     // Note length is not checked explicilty for language objects and functions

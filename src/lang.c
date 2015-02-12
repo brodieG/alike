@@ -125,11 +125,14 @@ const char * ALIKEC_lang_obj_compare(
         rev_symb, csc_text, "", ""
       );
     };
-  } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
+  } else if (
+    (tsc_type == LANGSXP && csc_type != LANGSXP) ||
+    (tsc_type != LANGSXP && csc_type == LANGSXP)
+  ) {
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be \"language\" (is \"%s\") for `%s`",
-      type2char(csc_type), ALIKEC_deparse(current, 1), "", ""
+      ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\") for `%s`",
+      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse(current, 1), ""
     );
   } else if (tsc_type == LANGSXP) {
     const char * res;
@@ -183,7 +186,8 @@ const char * ALIKEC_lang_alike_rec(
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
   SEXP match_call, SEXP match_env
 ) {
-  SEXP current = CAR(cur_par);
+  SEXP current = ALIKEC_skip_paren(CAR(cur_par));
+  target = ALIKEC_skip_paren(target);
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
     return ALIKEC_lang_obj_compare(
       target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,

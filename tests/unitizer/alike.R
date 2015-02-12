@@ -207,10 +207,12 @@ unitizer_sect("Calls / Formulas", {
 
   # Symbols
 
-  alike(quote(x), quote(y))  # TRUE
-  alike(NULL, quote(x))      # FALSE, overridden by type comparison
-  alike(quote(x), c0)        # FALSE
-  alike(c0, quote(x))        # FALSE
+  alike(quote(x), quote(y))    # TRUE
+  alike(NULL, quote(x))        # FALSE, overridden by type comparison
+  alike(quote(x), c0)          # FALSE
+  alike(c0, quote(x))          # FALSE
+  alike(quote((x)), quote(y))    # TRUE, parens shouldn't matter
+  alike(quote((NULL)), quote(y)) # TRUE, NULL matches anything as language object
 } )
 # Most fun tests in internal/type, here to make sure interface working
 unitizer_sect("Functions", {
