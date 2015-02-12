@@ -10,6 +10,21 @@
 
   #define ALIKEC_MAX_CHAR 10000
 
+  // - Data Structures ---------------------------------------------------------
+
+  struct ALIKEC_res {
+    int success;
+    char * message;
+    int df;
+  };
+  struct ALIKEC_settings {
+    int type_mode;
+    double int_tolerance;
+    int attr_mode;
+    const char * prepend;
+    int suppress_warnings;
+    SEXP match_env;
+  };
   // - Main Funs -----------------------------------------------------------------
 
   SEXP ALIKEC_alike (
@@ -18,8 +33,7 @@
   );
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
   SEXP ALIKEC_alike_internal(
-    SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
-    const char * prepend, int suppress_warnings, SEXP match_env
+    SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
   SEXP ALIKEC_typeof_fast(SEXP object);
@@ -78,4 +92,5 @@
   SEXP ALIKEC_SYM_matchcall;
   SEXP ALIKEC_CALL_matchcall;
   SEXP ALIKEC_CALL_matchcall_sub;
+
 #endif
