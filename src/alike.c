@@ -91,13 +91,19 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     int is_lang = 0;
 
-    if(!err && (is_lang = tar_type == LANGSXP && cur_type == LANGSXP)) {
+    if(
+      !err &&
+      (
+        is_lang = (  // overcomplicated, only LANG - LANG and SYM-SYM can pass due to type check
+          (tar_type == LANGSXP || tar_type == SYMSXP || tar_type == NILSXP) &&
+          (cur_type == LANGSXP || cur_type == SYMSXP || cur_type == NILSXP)
+      ) )
+    ) {
       err_lang = ALIKEC_lang_alike_internal(target, current, match_env);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
     } }
-
     int is_fun = 0;
 
     if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
@@ -165,6 +171,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case BUILTINSXP:
       case SPECIALSXP:
       case EXPRSXP:
+      case SYMSXP:
         break;
       default:
         warning(

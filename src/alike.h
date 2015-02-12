@@ -1,6 +1,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <ctype.h>
+#include "pfhash.h"
 
 // - Constants -----------------------------------------------------------------
 
@@ -38,7 +39,11 @@
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev);
   const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current, SEXP match_env);
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
-
+  const char * ALIKEC_lang_alike_rec(
+    SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
+    pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
+    int formula, SEXP match_call, SEXP match_env
+  );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
 

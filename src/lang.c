@@ -1,5 +1,4 @@
 #include "alike.h"
-#include "pfhash.h"
 
 // Moves pointer on language object to skip any `(` calls since those are
 // already accounted for in parsing and as such don't add anything
@@ -39,14 +38,16 @@ char * ALIKEC_symb_abstract(SEXP symb, pfHashTable * hash, size_t * varnum) {
 Marks current symbol in langsxp
 */
 void ALIKEC_symb_mark(SEXP obj) {
-  SEXPTYPE obj_type = TYPEOF(obj);
-  if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
+  if(obj != R_NilValue) {
+    SEXPTYPE obj_type = TYPEOF(obj);
+    if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
 
-  const char * car_dep = ALIKEC_deparse(CAR(obj), 1);
-  SETCAR(
-    obj,
-    install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
-  );
+    const char * car_dep = ALIKEC_deparse(CAR(obj), 1);
+    SETCAR(
+      obj,
+      install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
+    );
+  }
 }
 /*
 Try to find function in env and return function if it exists, R_NilValue
@@ -92,6 +93,75 @@ SEXP ALIKEC_match_call(
   if(* err) return call; else return res;
 }
 /*
+Handle language object comparison; return zero length string if equal
+*/
+const char * ALIKEC_lang_obj_compare(
+  SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
+  pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
+  size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env
+) {
+  if(target == R_NilValue) return ""; // NULL matches anything
+  SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
+
+  if(tsc_type == SYMSXP && csc_type == SYMSXP) {
+    char * tar_abs = ALIKEC_symb_abstract(target, tar_hash, tar_varnum);
+    char * cur_abs = ALIKEC_symb_abstract(current, cur_hash, cur_varnum);
+    char * rev_symb = pfHashFind(rev_hash, tar_abs);  // reverse hash to get what symbol should be in case of error
+    const char * csc_text = CHAR(PRINTNAME(current));
+    if(rev_symb == NULL) {
+      rev_symb = (char *) csc_text;
+      pfHashSet(rev_hash, cur_abs, rev_symb);
+    }
+    if(strcmp(tar_abs, cur_abs)) {
+      ALIKEC_symb_mark(cur_par);
+      if(*tar_varnum > *cur_varnum) {
+        return CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have a symbol different to `%s`", csc_text, "",
+          "", ""
+        );
+      }
+      return CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "have symbol `%s` (is `%s`)",
+        rev_symb, csc_text, "", ""
+      );
+    };
+  } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
+    ALIKEC_symb_mark(cur_par);
+    return CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be \"language\" (is \"%s\") for `%s`",
+      type2char(csc_type), ALIKEC_deparse(current, 1), "", ""
+    );
+  } else if (tsc_type == LANGSXP) {
+    const char * res;
+    // Note how we pass cur_par and not current so we can modify cur_par
+    res = ALIKEC_lang_alike_rec(
+      target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
+      cur_varnum, formula, match_call, match_env
+    );
+    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nunking call since we don't want it in this case
+    if(res[0]) {
+      return res;
+    }
+  } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
+    ALIKEC_symb_mark(cur_par);
+
+    return (const char *) CSR_smprintf4(
+      ALIKEC_MAX_CHAR,
+      "be \"%s\" (is \"%s\") for token `%s`",
+      type2char(tsc_type), type2char(csc_type),
+      ALIKEC_deparse(current, 1), ""
+    );
+  } else if (formula && !R_compute_identical(target, current, 16)) {
+    // Maybe this shouldn't be "identical", but too much of a pain in the butt
+    // to do an all.equals type comparison
+
+    ALIKEC_symb_mark(cur_par);
+    return "have identical constant values";  // could have constant vs. language here, right?
+  }
+  return "";
+}
+
+/*
 Creates a copy of the call mapping objects to a deterministic set of names
 based on the order in which they appear in the call
 
@@ -114,6 +184,11 @@ const char * ALIKEC_lang_alike_rec(
   SEXP match_call, SEXP match_env
 ) {
   SEXP current = CAR(cur_par);
+  if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
+    return ALIKEC_lang_obj_compare(
+      target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
+      cur_varnum, formula, match_call, match_env
+  );}
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
     char * res = CSR_smprintf4(
@@ -168,67 +243,11 @@ const char * ALIKEC_lang_alike_rec(
     cur_sub = ALIKEC_skip_paren(cur_sub);
 
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
-    if(tar_sub_car == R_NilValue) continue; // NULL matches anything
-    SEXPTYPE tsc_type = TYPEOF(tar_sub_car), csc_type = TYPEOF(cur_sub_car);
-
-    // PrintValue(tar_sub_car);
-    // Rprintf("type tsc: %s csc: %s\n", type2char(tsc_type), type2char(csc_type));
-
-    if(tsc_type == SYMSXP && csc_type == SYMSXP) {
-      char * tar_abs = ALIKEC_symb_abstract(tar_sub_car, tar_hash, tar_varnum);
-      char * cur_abs = ALIKEC_symb_abstract(cur_sub_car, cur_hash, cur_varnum);
-      char * rev_symb = pfHashFind(rev_hash, tar_abs);  // reverse hash to get what symbol should be in case of error
-      const char * csc_text = CHAR(PRINTNAME(cur_sub_car));
-      if(rev_symb == NULL) {
-        rev_symb = (char *) csc_text;
-        pfHashSet(rev_hash, cur_abs, rev_symb);
-      }
-      if(strcmp(tar_abs, cur_abs)) {
-        ALIKEC_symb_mark(cur_sub);
-        if(*tar_varnum > *cur_varnum) {
-          return CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have a symbol different to `%s`", csc_text, "",
-            "", ""
-          );
-        }
-        return CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have symbol `%s` (is `%s`)",
-          rev_symb, csc_text, "", ""
-        );
-      };
-    } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-      ALIKEC_symb_mark(cur_sub);
-      return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "be \"language\" (is \"%s\") for `%s`",
-        type2char(csc_type), ALIKEC_deparse(cur_sub_car, 1), "", ""
-      );
-    } else if (tsc_type == LANGSXP) {
-      const char * res;
-      // Note how we pass cur_sub and not cur_sub_car so we can modify cur_sub
-      res = ALIKEC_lang_alike_rec(
-        tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash, tar_varnum,
-        cur_varnum, formula, match_call, match_env
-      );
-      if(CAR(cur_sub) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nunking call since we don't want it in this case
-      if(res[0]) {
-        return res;
-      }
-    } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
-      ALIKEC_symb_mark(cur_sub);
-
-      return (const char *) CSR_smprintf4(
-        ALIKEC_MAX_CHAR,
-        "be \"%s\" (is \"%s\") for token `%s`",
-        type2char(tsc_type), type2char(csc_type),
-        ALIKEC_deparse(cur_sub_car, 1), ""
-      );
-    } else if (formula && !R_compute_identical(tar_sub_car, cur_sub_car, 16)) {
-      // Maybe this shouldn't be "identical", but too much of a pain in the butt
-      // to do an all.equals type comparison
-
-      ALIKEC_symb_mark(cur_sub);
-      return "have identical constant values";  // could have constant vs. language here, right?
-    }
+    const char * res = ALIKEC_lang_obj_compare(
+      tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
+      tar_varnum, cur_varnum, formula, match_call, match_env
+    );
+    if(res[0]) return(res);
   }
   if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
     SETCAR(cur_par, R_NilValue);  // Unorthodox way of signaling that we don't wan to show function call
@@ -247,8 +266,14 @@ that for calls constants need not be the same
 const char * ALIKEC_lang_alike_internal(
   SEXP target, SEXP current, SEXP match_env
 ) {
-  if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP)
-    error("Arguments must be LANGSXP");
+  SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
+  if(
+    !
+    (tar_type == LANGSXP || tar_type == SYMSXP || tar_type == NILSXP) &&
+    (cur_type == LANGSXP || cur_type == SYMSXP || cur_type == NILSXP)
+  )
+    error("Arguments must be LANGSXP, SYMSXP, or R_NilValue");
+
   if(TYPEOF(match_env) != ENVSXP && match_env != R_NilValue)
     error("Argument `match.call.env` must be an environment or NULL");
 

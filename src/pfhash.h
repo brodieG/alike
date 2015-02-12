@@ -3,7 +3,6 @@ copyright paxdiablo
 lifted directly from: http://powerfield-software.com/?p=615
 */
 
-#include "alike.h"
 #ifndef _PFHASH_H
 #define _PFHASH_H
 
