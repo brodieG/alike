@@ -22,13 +22,13 @@ SEXP ALIKEC_mode(SEXP obj) {
   return(mkString(class));
 }
 // - Testing Function ----------------------------------------------------------
+SEXP ALIKEC_test() {
 
-SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
+  return R_NilValue;
 
-  SEXP call = PROTECT(list1(install("parent.frame")));
-  SET_TYPEOF(call, LANGSXP);
-  UNPROTECT(1);
-  return(eval(call, R_GlobalEnv));
+  // int tmp = 0;
+  // int * x = &tmp;
+  // return R_tryEval(obj1, R_GlobalEnv, x);
   // SET_TYPEOF(ALIKEC_CALL_matchcall_sub, LANGSXP);
   // SEXP ALIKEC_CALL_matchcall = PROTECT(list3(ALIKEC_SYM_matchcall, R_NilValue, ALIKEC_CALL_matchcall_sub));
   // SET_TYPEOF(ALIKEC_CALL_matchcall, LANGSXP);
@@ -76,7 +76,7 @@ SEXP ALIKEC_test(SEXP obj1, SEXP obj2, SEXP obj3) {
   // UNPROTECT(1);
   // return res;
   // duplicate(obj1);
-  return R_NilValue;
+  // return R_NilValue;
 }
 /*
 deparse into character

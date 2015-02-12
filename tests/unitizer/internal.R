@@ -264,7 +264,7 @@ unitizer_sect("All attributes, strict", {
   )
 } )
 unitizer_sect("Match Calls", {
-  match_call_alike(quote(var(y=1:10, runif(10))), .GlobalEnv)
+  match_call_alike(quote(var(y=1:10, runif(10))), baseenv())
   env0 <- new.env()
   env0$var <- function(yollo, zambia) NULL
   match_call_alike(quote(var(y=1:10, runif(10))), env0)
@@ -290,7 +290,6 @@ unitizer_sect("Calls", {
   alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
   alike:::lang_alike(c5, c9, NULL)  # TRUE
 
-  cur.frame <- sys.frame(sys.nframe());
   fun <- function(abc, bcd, efg) NULL
 
   ca <- quote(fun(a, b, a))
@@ -298,7 +297,7 @@ unitizer_sect("Calls", {
 
   alike:::lang_alike(ca, cb, NULL)      # shouldn't match without match.call
   alike:::lang_alike(cb, ca, NULL)      # false, different error
-  alike:::lang_alike(ca, cb, cur.frame) # TRUE, should match
+  alike:::lang_alike(ca, cb)            # TRUE, should match
 
   # test nested match.call
 

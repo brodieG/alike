@@ -150,18 +150,18 @@ unitizer_sect("Calls / Formulas", {
   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
   alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
 
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), match.call.env=NULL)
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1)), match.call.env=NULL)
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), match.call.env=NULL)   # FALSE
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(b=NULL, fun2(a, b), 1)), match.call.env=NULL) # TRUE
   fun <- function(a, b, c) NULL
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), match.call.env=sys.frame(sys.nframe())) # TRUE, since constants including NULL match any constants
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)), match.call.env=sys.frame(sys.nframe()))
-  alike(quote(fun(a=1)), quote(fun(b=1)), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
+  alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
 
-  alike(quote(fun(1, 2)), quote(fun(1)), match.call.env=sys.frame(sys.nframe()))
-  alike(quote(fun(1)), quote(fun(1, 2)), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(1, 2)), quote(fun(1)))   # FALSE
+  alike(quote(fun(1)), quote(fun(1, 2)))   # FALSE
 
-  alike(quote(fun(1, 2)), quote(fun2(1, 2)), match.call.env=sys.frame(sys.nframe()))
-  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))), match.call.env=sys.frame(sys.nframe()))
+  alike(quote(fun(1, 2)), quote(fun2(1, 2)))            # FALSE, fun mismatch
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))  # FALSE, fun mismatch, nested
 
   # Attributes on sub-components should not affect anything
   # actually, these tests need to be with alike since lang_alike doesn't check
@@ -173,10 +173,10 @@ unitizer_sect("Calls / Formulas", {
   attr(c0.2, "blah") <- 1:3
   attr(c0.3[[1L]], "blah") <- "hello"
 
-  alike(c0, c0.1, match.call.env=NULL)     # TRUE
-  alike(c0.1, c0, match.call.env=NULL)     # Missing attribute
-  alike(c0.1, c0.2, match.call.env=NULL)   # Attribute mismatch
-  alike(c0.3, c0, match.call.env=NULL)     # TRUE, sub-attr shouldn't cause problem
+  alike(c0, c0.1)     # TRUE
+  alike(c0.1, c0)     # Missing attribute
+  alike(c0.1, c0.2)   # Attribute mismatch
+  alike(c0.3, c0)     # TRUE, sub-attr shouldn't cause problem
 
   # Formulas
 

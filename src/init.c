@@ -10,7 +10,7 @@ R_CallMethodDef callMethods[] = {
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"type_alike_fast", (DL_FUNC) &ALIKEC_type_alike_fast, 2},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
-  {"test", (DL_FUNC) &ALIKEC_test, 3},
+  {"test", (DL_FUNC) &ALIKEC_test, 0},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 3},

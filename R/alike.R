@@ -121,7 +121,7 @@
 
 alike <- function(
   target, current, type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
-  suppress.warnings=FALSE, match.call.env=.GlobalEnv
+  suppress.warnings=FALSE, match.call.env=parent.frame()
 )
   .Call(
     ALIKEC_alike, target, current, type.mode, int.tol, attr.mode,
@@ -239,7 +239,7 @@ dim_compare <- function(
 
 #' @export
 
-lang_alike <- function(target, current, match.call.env=.GlobalEnv)
+lang_alike <- function(target, current, match.call.env=parent.frame())
   .Call(ALIKEC_lang_alike, target, current, match.call.env)
 
 #' @export
@@ -262,7 +262,7 @@ match_call_alike <- function(call, env)
 #' @export
 #' @keywords internal
 
-alike_test <- function(obj1, obj2, obj3=1) .Call(ALIKEC_test, obj1, obj2, obj3)
+alike_test <- function() .Call("ALIKEC_test", PACKAGE="alike")
 
 #' Pre-calculated Precision Level
 #'
