@@ -33,7 +33,7 @@
   );
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
   SEXP ALIKEC_alike_internal(
-    SEXP target, SEXP current, struct ALIKEC_settings set
+    SEXP target, SEXP current, const struct ALIKEC_settings * set
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
   SEXP ALIKEC_typeof_fast(SEXP object);

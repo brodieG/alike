@@ -4,7 +4,7 @@ non recursive check (well, except for attributes will recurse if needed in
 final implementation)
 */
 struct ALIKEC_res ALIKEC_alike_obj(
-  SEXP target, SEXP current, struct ALIKEC_settings set
+  SEXP target, SEXP current, const struct ALIKEC_settings * set
 ) {
   int tmp = 0;
   int * is_df = &tmp;
@@ -62,7 +62,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err &&
       strlen(
         err_attr = ALIKEC_compare_attributes_internal(
-          target, current, set.attr_mode, is_df, err_lvl
+          target, current, set->attr_mode, is_df, err_lvl
       ) )
     ) {
       err = 1;
@@ -80,7 +80,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
-      err_lang = ALIKEC_lang_alike_internal(target, current, set.match_env);
+      err_lang = ALIKEC_lang_alike_internal(target, current, set->match_env);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
@@ -99,7 +99,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err && !is_lang && // lang excluded because we can have symbol-lang comparisons that resolve to symbol symbol
       strlen(
         err_type = ALIKEC_type_alike_internal(
-          target, current, set.type_mode, set.int_tolerance
+          target, current, set->type_mode, set->int_tolerance
       ) )
     ) {
       err = 1;
@@ -147,7 +147,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   } } }
   // - Known Limitations -----------------------------------------------------
 
-  if(!set.suppress_warnings) {
+  if(!set->suppress_warnings) {
     switch(tar_type) {
       case NILSXP:
       case LGLSXP:
@@ -192,7 +192,7 @@ index element; not sure if this is meanifully slow or not
 */
 
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, SEXP index, struct ALIKEC_settings set
+  SEXP target, SEXP current, SEXP index, const struct ALIKEC_settings * set
 ) {
   // normal logic, which will have checked length and attributes, etc.
 
@@ -290,11 +290,11 @@ Run alike calculation
 
 
 SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings set
+  SEXP target, SEXP current, const struct ALIKEC_settings * set
 ) {
-  if(set.type_mode < 0 || set.type_mode > 2)
+  if(set->type_mode < 0 || set->type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
-  if(set.attr_mode < 0 || set.attr_mode > 2)
+  if(set->attr_mode < 0 || set->attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
   SEXP index = PROTECT(list1(R_NilValue));
@@ -327,7 +327,7 @@ SEXP ALIKEC_alike_internal(
   */
   if(CDR(index) == R_NilValue) {  // No recursion occurred
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", set.prepend, err_msg, "", ""
+      ALIKEC_MAX_CHAR, "%s%s%s%s", set->prepend, err_msg, "", ""
     );
   } else {
     // Scan through all indices to calculate size of required vector
@@ -405,7 +405,7 @@ SEXP ALIKEC_alike_internal(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s at %s", set.prepend, err_msg, err_interim, ""
+      ALIKEC_MAX_CHAR, "%s%s at %s", set->prepend, err_msg, err_interim, ""
     );
   }
   UNPROTECT(1);
@@ -419,7 +419,9 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  struct ALIKEC_settings set = {0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue};
+  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
+    0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue
+  };
   return ALIKEC_alike_internal(target, current, set);
 }
 /* Normal version, a little slower but more flexible */
@@ -447,7 +449,7 @@ SEXP ALIKEC_alike (
   )
     error("Argument `suppress.warnings` must be TRUE or FALSE");
 
-  struct ALIKEC_settings set = {
+  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     asInteger(type_mode), asReal(int_tolerance),
     asInteger(attr_mode), "should ", supp_warn, match_env
   };
