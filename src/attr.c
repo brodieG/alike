@@ -412,7 +412,8 @@ with a NULL value
 */
 
 const char * ALIKEC_compare_attributes_internal_simple(
-  SEXP target, SEXP current, const char * attr_name, int attr_mode
+  SEXP target, SEXP current, const char * attr_name,
+  const struct ALIKEC_settings * set
 ) {
   R_xlen_t tae_val_len, cae_val_len;
   SEXPTYPE tae_type = TYPEOF(target), cae_type = TYPEOF(current);
@@ -439,7 +440,7 @@ const char * ALIKEC_compare_attributes_internal_simple(
     (
       tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
       tae_type == BCODESXP || tae_type == ENVSXP
-    ) && attr_mode
+    ) && set->attr_mode
   ) {
     // Because these attributes are references to other objects that
     // we cannot directly compare, and could for all intents and
@@ -453,18 +454,20 @@ const char * ALIKEC_compare_attributes_internal_simple(
   } else if (
     (tae_val_len = xlength(target)) != (cae_val_len = xlength(current))
   ) {
-    if(attr_mode || tae_val_len) {
+    if(set->attr_mode || tae_val_len) {
       return CSR_smprintf4(
         ALIKEC_MAX_CHAR, "have length %s (is %s) for attribute \"%s\"",
         CSR_len_as_chr(tae_val_len), CSR_len_as_chr(cae_val_len), attr_name, ""
     );}
-  } else if (!attr_mode && !tae_val_len) {
+  } else if (!set->attr_mode && !tae_val_len) {
     return "";
-  } else if (!R_compute_identical(target, current, 16)) {
-    return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "have identical attributes for attribute `%s` (check `attributes(attr(., \"%s\"))`)",
-      attr_name, attr_name, "", ""
-    );
+  } else {
+    const char * res = ALIKEC_alike_internal(target, current, set);
+    if(res[0]) {
+      return CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "have alike attributes for attribute `%s` (check alikeness of `attributes(attr(., \"%s\"))`)",
+        attr_name, attr_name, "", ""
+    );}
   }
   return "";
 }
@@ -501,7 +504,8 @@ Unit: microseconds
 */
 
 const char * ALIKEC_compare_attributes_internal(
-  SEXP target, SEXP current, int attr_mode, int * is_df, int * err_lvl
+  SEXP target, SEXP current, const struct ALIKEC_settings * set, int * is_df,
+  int * err_lvl
 ) {
   /*
   Array to store major errors from, in order:
@@ -528,7 +532,7 @@ const char * ALIKEC_compare_attributes_internal(
     rev = 1;
     prim_attr = cur_attr;
     sec_attr = tar_attr;
-    if(attr_mode == 2) {
+    if(set->attr_mode == 2) {
       err_major[5] = "have attributes";
     }
   } else {
@@ -566,7 +570,7 @@ const char * ALIKEC_compare_attributes_internal(
     sec_attr_counted = 1;
     // No match only matters if target has attrs or in strict mode
 
-    if(sec_attr_el == R_NilValue && (!rev || attr_mode == 2)) {
+    if(sec_attr_el == R_NilValue && (!rev || set->attr_mode == 2)) {
       if(!strlen(err_major[5])) {             // first no match
         err_major[5] = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "have attribute \"%s\"%s", tx, rev ? " missing" : "",
@@ -582,9 +586,9 @@ const char * ALIKEC_compare_attributes_internal(
     );}
     // = Baseline Check ========================================================
 
-    if(attr_mode && sec_attr_el_val != R_NilValue && !strlen(err_major[4])) {
+    if(set->attr_mode && sec_attr_el_val != R_NilValue && !strlen(err_major[4])) {
       err_major[4] = ALIKEC_compare_attributes_internal_simple(
-        prim_attr_el_val, sec_attr_el_val, tx, attr_mode
+        prim_attr_el_val, sec_attr_el_val, tx, set
       );
     // = Custom Checks =========================================================
 
@@ -624,7 +628,7 @@ const char * ALIKEC_compare_attributes_internal(
         continue;
       // - Dims ----------------------------------------------------------------
 
-      } else if (strcmp(tx, "dim") == 0 && attr_mode == 0) {
+      } else if (strcmp(tx, "dim") == 0 && set->attr_mode == 0) {
         int tmp = 0;
         int * class_mode = &tmp;
 
@@ -644,12 +648,12 @@ const char * ALIKEC_compare_attributes_internal(
 
       } else {
         err_major[4] = ALIKEC_compare_attributes_internal_simple(
-          prim_attr_el_val, sec_attr_el_val, tx, attr_mode
+          prim_attr_el_val, sec_attr_el_val, tx, set
       );}
   } }
   // If in strict mode, must have the same number of attributes
 
-  if(attr_mode == 2 && prim_attr_count != sec_attr_count) {
+  if(set->attr_mode == 2 && prim_attr_count != sec_attr_count) {
     err_major[5] = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "have %s attribute%s (has %s)", CSR_len_as_chr(prim_attr_count),
@@ -659,7 +663,7 @@ const char * ALIKEC_compare_attributes_internal(
 
   int i;
   for(i = 0; i < 6; i++) {
-    if(strlen(err_major[i]) && (!rev || (rev && attr_mode == 2))) {
+    if(strlen(err_major[i]) && (!rev || (rev && set->attr_mode == 2))) {
       *err_lvl = i;
       return err_major[i];
     }
@@ -682,8 +686,11 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
 
+  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
+    0, sqrt(DOUBLE_EPS), asInteger(attr_mode), "", 0, R_NilValue
+  };
   comp_res = ALIKEC_compare_attributes_internal(
-    target, current, asInteger(attr_mode), is_df, err_lvl
+    target, current, set, is_df, err_lvl
   );
   if(strlen(comp_res)) {
     return mkString(comp_res);

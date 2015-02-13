@@ -62,7 +62,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err &&
       strlen(
         err_attr = ALIKEC_compare_attributes_internal(
-          target, current, set->attr_mode, is_df, err_lvl
+          target, current, set, is_df, err_lvl
       ) )
     ) {
       err = 1;
@@ -212,7 +212,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
     SEXP vec_names = getAttrib(target, R_NamesSymbol);
 
     for(i = 0; i < tar_len; i++) {
-      if(vec_names == R_NilValue) SETCDR(index, list1(ScalarInteger(i)));
+      if(vec_names == R_NilValue || !CHAR(STRING_ELT(vec_names, i))[0])
+        SETCDR(index, list1(ScalarInteger(i)));
       else SETCDR(index, list1(STRING_ELT(vec_names, i)));
       res1 = ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), set
@@ -279,17 +280,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
 /*
 Run alike calculation
 */
-  // struct ALIKEC_settings {
-  //   int type_mode;
-  //   double int_tolerance;
-  //   int attr_mode;
-  //   const char * prepend;
-  //   int suppress_warnings;
-  //   SEXP match_env;
-  // };
-
-
-SEXP ALIKEC_alike_internal(
+const char * ALIKEC_alike_internal(
   SEXP target, SEXP current, const struct ALIKEC_settings * set
 ) {
   if(set->type_mode < 0 || set->type_mode > 2)
@@ -313,7 +304,7 @@ SEXP ALIKEC_alike_internal(
     res = ALIKEC_alike_rec(target, current, index, set);
     if(res.success) {
       UNPROTECT(1);
-      return(ScalarLogical(1));
+      return "";
     }
     err_base = res.message;
   }
@@ -409,7 +400,7 @@ SEXP ALIKEC_alike_internal(
     );
   }
   UNPROTECT(1);
-  return mkString(err_final);
+  return (const char *) err_final;
 }
 
 /* "fast" version doesn't allow messing with optional parameters to avoid arg
@@ -422,7 +413,7 @@ SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
   const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue
   };
-  return ALIKEC_alike_internal(target, current, set);
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
 /* Normal version, a little slower but more flexible */
 
@@ -453,5 +444,5 @@ SEXP ALIKEC_alike (
     asInteger(type_mode), asReal(int_tolerance),
     asInteger(attr_mode), "should ", supp_warn, match_env
   };
-  return ALIKEC_alike_internal(target, current, set);
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }

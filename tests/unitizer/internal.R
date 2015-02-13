@@ -210,19 +210,24 @@ unitizer_sect("All Attributes, default", {
   )
 } )
 unitizer_sect("All attributes, strict", {
-  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch
+  attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch, but passes because comparison is `alike`
   attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
-  attr_compare(                                                         # dimnames mismatch
+  attr_compare(                                                         # dimnames mismatch, but alike so passes
     matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     attr.mode=1
   )
-  attr_compare(                                                         # dimnames mismatch
+  attr_compare(                                                         # dimnames mismatch, but passes because target has NULL names
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1
   )
-  attr_compare(                                                         # dimnames error
+  attr_compare(                                                         # dimnames mismatch, but here fails because target has them but current doesnt
+    matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
+    matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
+    attr.mode=1
+  )
+  attr_compare(                                                         # actually passes because both have 2 length character name attrs, which are alike
     matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1

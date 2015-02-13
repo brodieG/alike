@@ -32,7 +32,7 @@
     SEXP suppress_warnings, SEXP match_env
   );
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
-  SEXP ALIKEC_alike_internal(
+  const char * ALIKEC_alike_internal(
     SEXP target, SEXP current, const struct ALIKEC_settings * set
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
@@ -43,15 +43,23 @@
   // - Internal Funs -------------------------------------------------------------
 
   SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
-  const char *  ALIKEC_type_alike_internal(SEXP target, SEXP current, int mode, double tolerance);
-
+  const char *  ALIKEC_type_alike_internal(
+    SEXP target, SEXP current, int mode, double tolerance
+  );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  const char * ALIKEC_compare_attributes_internal(SEXP target, SEXP current, int attr_mode, int * is_df, int * err_lvl);
+  const char * ALIKEC_compare_attributes_internal(
+    SEXP target, SEXP current, const struct ALIKEC_settings * set, int * is_df,
+    int * err_lvl
+  );
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
-  SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev);
-  const char * ALIKEC_lang_alike_internal(SEXP target, SEXP current, SEXP match_env);
+  SEXP ALIKEC_compare_dim_ext(
+    SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev
+  );
+  const char * ALIKEC_lang_alike_internal(
+    SEXP target, SEXP current, SEXP match_env
+  );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
   const char * ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
@@ -69,6 +77,7 @@
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
+  SEXP ALIKEC_string_or_true(const char * var);
 
   // - Imported Funs -------------------------------------------------------------
 

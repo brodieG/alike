@@ -141,3 +141,12 @@ SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
   }
   return R_UnboundValue;
 }
+
+/*
+Convert convention of zero length string == TRUE to SEXP
+*/
+
+SEXP ALIKEC_string_or_true(const char * var) {
+  if(var[0]) return(mkString(var));
+  return(ScalarLogical(1));
+}
