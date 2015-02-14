@@ -25,31 +25,19 @@ unitizer_sect("S3 Classes", {
   class5 <- NULL
   class6 <- list("a", "b", "c")
 
+  # Note third argument is left in for legacy reasons but doesn't actually do
+  # anything
+
   class_compare(class2, class1, 0);
   class_compare(class1, class2, 0);
   class_compare(class1, class1[1:3], 0);
   class_compare(class3, class2, 0);
   class_compare(class3, class1, 0);
-  class_compare(class5, class2, 0);
-  class_compare(class2, class5, 0);
+  class_compare(class5, class2, 0);  # this should never happen in reality, but use alike check since not char char comparison
+  class_compare(class2, class5, 0);  # idem
   class_compare(class5, class5, 0);
   class_compare(class6, class2, 0);
   class_compare(class2, class6, 0);
-
-  class_compare(class2, class1, 1);
-  class_compare(class1, class2, 1);
-  class_compare(class1, class1[1:3], 1);
-  class_compare(class3, class2, 1);
-  class_compare(class3, class1, 1);
-  class_compare(class5, class2, 1);
-  class_compare(class2, class5, 1);
-  class_compare(class5, class5, 1);
-  class_compare(class6, class2, 1);
-  class_compare(class2, class6, 1);
-
-  class_compare(class2, class1, 2);
-  class_compare(class2, class1, -1);
-  class_compare(class2, class1, NA_integer_);
 
   class7 <- c("a", "data.frame")
 
