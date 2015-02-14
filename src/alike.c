@@ -1,17 +1,23 @@
 #include "alike.h"
 
-struct ALIKEC_settings ALIKEC_set_tmp_val;
-const struct ALIKEC_settings * ALIKEC_set_def_ptr;
+/*
+Construct settings objects; these are really only used for testing sub-functions
+or for the `fast` alike function.
 
-const struct ALIKEC_settings * ALIKEC_set_def() {
-  ALIKEC_set_tmp_val.type_mode = 0;
-  ALIKEC_set_tmp_val.attr_mode = 0;
-  ALIKEC_set_tmp_val.int_tolerance = 0.0;
-  ALIKEC_set_tmp_val.match_env = R_NilValue;
-  ALIKEC_set_tmp_val.prepend = "should ";
-  ALIKEC_set_def_ptr = &ALIKEC_set_tmp_val;
+We provide only the prepend argument as an input since that is the only one that
+requires differnet treatment between fast and internal functions
+*/
+const struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
+  struct ALIKEC_settings * ALIKEC_set_tmp_val =
+    (struct ALIKEC_settings *) R_alloc(1, sizeof(struct ALIKEC_settings));
 
-  return ALIKEC_set_def_ptr;
+  ALIKEC_set_tmp_val->type_mode = 0;
+  ALIKEC_set_tmp_val->attr_mode = 0;
+  ALIKEC_set_tmp_val->int_tolerance = 0.0;
+  ALIKEC_set_tmp_val->match_env = R_NilValue;
+  ALIKEC_set_tmp_val->prepend = prepend;
+
+  return (const struct ALIKEC_settings *) ALIKEC_set_tmp_val;
 }
 /*
 non recursive check (well, except for attributes will recurse if needed in
@@ -424,9 +430,7 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
-    0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue
-  };
+  const struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
 /* Normal version, a little slower but more flexible */

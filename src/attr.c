@@ -101,7 +101,9 @@ SEXP ALIKEC_compare_class_ext(SEXP target, SEXP current) {
   SEXP res = PROTECT(allocVector(VECSXP, 2));
   int tmp = 0;
   int * is_df =& tmp;
-  const char * err_msg = ALIKEC_compare_class(target, current, is_df, ALIKEC_set_def());
+  const char * err_msg = ALIKEC_compare_class(
+    target, current, is_df, ALIKEC_set_def("")
+  );
   SET_VECTOR_ELT(res, 0, mkString(err_msg));
   SET_VECTOR_ELT(res, 1, ScalarInteger(*is_df));
   UNPROTECT(1);
@@ -226,7 +228,7 @@ SEXP ALIKEC_compare_dim_ext(
   int * class_err =& tmp;
   SEXP err_msg = mkString(
     ALIKEC_compare_dims(
-      target, current, tar_obj, cur_obj, class_err, ALIKEC_set_def()
+      target, current, tar_obj, cur_obj, class_err, ALIKEC_set_def("")
   ) );
   SEXP res = PROTECT(allocVector(VECSXP, 2));
   SET_VECTOR_ELT(res, 0, err_msg);
@@ -296,7 +298,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(
 
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
   return mkString(
-    ALIKEC_compare_special_char_attrs_internal(target, current, ALIKEC_set_def())
+    ALIKEC_compare_special_char_attrs_internal(
+      target, current, ALIKEC_set_def("")
+    )
   );
 }
 /*-----------------------------------------------------------------------------\
@@ -418,7 +422,7 @@ const char * ALIKEC_compare_dimnames(
   return "";
 }
 SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec) {
-  return(mkString(ALIKEC_compare_dimnames(prim, sec, ALIKEC_set_def())));
+  return(mkString(ALIKEC_compare_dimnames(prim, sec, ALIKEC_set_def(""))));
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/

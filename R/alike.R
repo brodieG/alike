@@ -228,8 +228,8 @@ attr_compare <- function(target, current, attr.mode=0L)
 name_compare <- function(target, current)
   .Call(ALIKEC_compare_names, target, current)
 
-class_compare <- function(target, current, rev)
-  .Call(ALIKEC_compare_class, target, current, rev)
+class_compare <- function(target, current, rev=0)  # `rev` is unused; here for legacy
+  .Call(ALIKEC_compare_class, target, current)
 
 dimname_compare <- function(target, current)
   .Call(ALIKEC_compare_dimnames, target, current)

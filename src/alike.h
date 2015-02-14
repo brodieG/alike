@@ -24,7 +24,6 @@
   // - Constants ---------------------------------------------------------------
 
   #define ALIKEC_MAX_CHAR 10000
-  extern const struct ALIKEC_settings * ALIKEC_set_def_ptr;
 
   // - Main Funs ---------------------------------------------------------------
 
