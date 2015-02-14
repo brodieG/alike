@@ -223,6 +223,8 @@ type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
 attr_compare <- function(target, current, attr.mode=0L)
   .Call(ALIKEC_compare_attributes, target, current, attr.mode)
 
+#' @export
+
 name_compare <- function(target, current)
   .Call(ALIKEC_compare_names, target, current)
 

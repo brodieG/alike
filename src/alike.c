@@ -1,4 +1,18 @@
 #include "alike.h"
+
+struct ALIKEC_settings ALIKEC_set_tmp_val;
+const struct ALIKEC_settings * ALIKEC_set_def_ptr;
+
+const struct ALIKEC_settings * ALIKEC_set_def() {
+  ALIKEC_set_tmp_val.type_mode = 0;
+  ALIKEC_set_tmp_val.attr_mode = 0;
+  ALIKEC_set_tmp_val.int_tolerance = 0.0;
+  ALIKEC_set_tmp_val.match_env = R_NilValue;
+  ALIKEC_set_tmp_val.prepend = "should ";
+  ALIKEC_set_def_ptr = &ALIKEC_set_tmp_val;
+
+  return ALIKEC_set_def_ptr;
+}
 /*
 non recursive check (well, except for attributes will recurse if needed in
 final implementation)

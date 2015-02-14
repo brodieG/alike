@@ -3,12 +3,8 @@
 #include <ctype.h>
 #include "pfhash.h"
 
-// - Constants -----------------------------------------------------------------
-
 #ifndef _ALIKEC_H
 #define _ALIKEC_H
-
-  #define ALIKEC_MAX_CHAR 10000
 
   // - Data Structures ---------------------------------------------------------
 
@@ -25,7 +21,12 @@
     int suppress_warnings;
     SEXP match_env;
   };
-  // - Main Funs -----------------------------------------------------------------
+  // - Constants ---------------------------------------------------------------
+
+  #define ALIKEC_MAX_CHAR 10000
+  extern const struct ALIKEC_settings * ALIKEC_set_def_ptr;
+
+  // - Main Funs ---------------------------------------------------------------
 
   SEXP ALIKEC_alike (
     SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
@@ -52,11 +53,9 @@
     SEXP target, SEXP current, const struct ALIKEC_settings * set, int * is_df,
     int * err_lvl
   );
-  SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec, SEXP rev);
+  SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
-  SEXP ALIKEC_compare_dim_ext(
-    SEXP prim, SEXP sec, SEXP target, SEXP current, SEXP rev
-  );
+  SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current);
   const char * ALIKEC_lang_alike_internal(
     SEXP target, SEXP current, SEXP match_env
   );
@@ -71,6 +70,7 @@
 
   // - Utility Funs --------------------------------------------------------------
 
+  const struct ALIKEC_settings * ALIKEC_set_def();
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test();
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
