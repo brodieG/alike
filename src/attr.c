@@ -318,7 +318,7 @@ const char * ALIKEC_compare_dimnames(
     ((prim_len = XLENGTH(prim)) && prim_len != (sec_len = XLENGTH(sec))) ||
     (
       prim_names != R_NilValue &&
-      ALIKEC_are_special_char_attrs_internal(prim_names, sec_names)
+      !ALIKEC_are_special_char_attrs_internal(prim_names, sec_names)
     )
   )
     return ALIKEC_alike_attr(prim, sec, "dimnames", set);
