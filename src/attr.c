@@ -324,8 +324,13 @@ const char * ALIKEC_compare_dimnames(
       prim_names != R_NilValue &&
       !ALIKEC_are_special_char_attrs_internal(prim_names, sec_names)
     )
-  )
-    return ALIKEC_alike_attr(prim, sec, "dimnames", set);
+  ) {
+    const char * res = ALIKEC_alike_internal(prim, sec, set);
+    if(!res[0])
+      error("Logic Error: unable to create error message 330; contact maintainer");
+    return
+      CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for \"dimnames\"", res, "", "", "");
+  }
 
   /* The following likely doesn't need to be done for every dimnames so there
   probably is some optimization to be had here, should look into it if it
