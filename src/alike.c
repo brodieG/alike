@@ -7,7 +7,7 @@ or for the `fast` alike function.
 We provide only the prepend argument as an input since that is the only one that
 requires differnet treatment between fast and internal functions
 */
-const struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
+struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   struct ALIKEC_settings * ALIKEC_set_tmp_val =
     (struct ALIKEC_settings *) R_alloc(1, sizeof(struct ALIKEC_settings));
 
@@ -17,14 +17,14 @@ const struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   ALIKEC_set_tmp_val->match_env = R_NilValue;
   ALIKEC_set_tmp_val->prepend = prepend;
 
-  return (const struct ALIKEC_settings *) ALIKEC_set_tmp_val;
+  return ALIKEC_set_tmp_val;
 }
 /*
 non recursive check (well, except for attributes will recurse if needed in
 final implementation)
 */
 struct ALIKEC_res ALIKEC_alike_obj(
-  SEXP target, SEXP current, const struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   int tmp = 0;
   int * is_df = &tmp;
@@ -212,7 +212,7 @@ index element; not sure if this is meanifully slow or not
 */
 
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, SEXP index, const struct ALIKEC_settings * set
+  SEXP target, SEXP current, SEXP index, struct ALIKEC_settings * set
 ) {
   // normal logic, which will have checked length and attributes, etc.
 
@@ -301,7 +301,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
 Run alike calculation
 */
 const char * ALIKEC_alike_internal(
-  SEXP target, SEXP current, const struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   if(set->type_mode < 0 || set->type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
@@ -458,7 +458,7 @@ SEXP ALIKEC_alike (
   )
     error("Argument `suppress.warnings` must be TRUE or FALSE");
 
-  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
+  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     asInteger(type_mode), asReal(int_tolerance),
     asInteger(attr_mode), "should ", supp_warn, match_env
   };

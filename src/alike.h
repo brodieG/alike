@@ -33,7 +33,7 @@
   );
   SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
-    SEXP target, SEXP current, const struct ALIKEC_settings * set
+    SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
   SEXP ALIKEC_typeof_fast(SEXP object);
@@ -49,7 +49,7 @@
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
   const char * ALIKEC_compare_attributes_internal(
-    SEXP target, SEXP current, const struct ALIKEC_settings * set, int * is_df,
+    SEXP target, SEXP current, struct ALIKEC_settings * set, int * is_df,
     int * err_lvl
   );
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
@@ -69,7 +69,7 @@
 
   // - Utility Funs --------------------------------------------------------------
 
-  const struct ALIKEC_settings * ALIKEC_set_def();
+  struct ALIKEC_settings * ALIKEC_set_def();
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test();
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);

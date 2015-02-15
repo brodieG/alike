@@ -8,7 +8,7 @@ different error message
 
 const char * ALIKEC_alike_attr(
   SEXP target, SEXP current, const char * attr_name,
-  const struct ALIKEC_settings * set
+  struct ALIKEC_settings * set
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
@@ -24,7 +24,7 @@ merge this into the above function
 */
 const char * ALIKEC_alike_attr_attr(
   SEXP target, SEXP current, const char * attr_name,
-  const struct ALIKEC_settings * set
+  struct ALIKEC_settings * set
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
@@ -46,7 +46,7 @@ implicit class defined by ALIKEC_mode.
 Will set tar_is_df to 1 if prim is data frame
 */
 const char * ALIKEC_compare_class(
-  SEXP target, SEXP current, int * tar_is_df, const struct ALIKEC_settings * set
+  SEXP target, SEXP current, int * tar_is_df, struct ALIKEC_settings * set
 ) {
   if(TYPEOF(current) != STRSXP || TYPEOF(target) != STRSXP)
     return ALIKEC_alike_attr(target, current, "class", set);
@@ -120,7 +120,7 @@ tar_obj and cur_obj are the objects the dimensions are the attributes off.
 */
 const char * ALIKEC_compare_dims(
   SEXP target, SEXP current, SEXP tar_obj, SEXP cur_obj, int * class_err,
-  const struct ALIKEC_settings * set
+  struct ALIKEC_settings * set
 ) {
   // Invalid dims
 
@@ -261,7 +261,7 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
     ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
 }
 const char * ALIKEC_compare_special_char_attrs_internal(
-  SEXP target, SEXP current, const struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0])
@@ -309,7 +309,7 @@ SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
 Compare dimnames
 */
 const char * ALIKEC_compare_dimnames(
-  SEXP prim, SEXP sec, const struct ALIKEC_settings * set
+  SEXP prim, SEXP sec, struct ALIKEC_settings * set
 ) {
   if(sec == R_NilValue) return "have a \"dimnames\" attribute";
 
@@ -443,7 +443,7 @@ with a NULL value
 
 const char * ALIKEC_compare_attributes_internal_simple(
   SEXP target, SEXP current, const char * attr_name,
-  const struct ALIKEC_settings * set
+  struct ALIKEC_settings * set
 ) {
   R_xlen_t tae_val_len, cae_val_len;
   SEXPTYPE tae_type = TYPEOF(target), cae_type = TYPEOF(current);
@@ -530,7 +530,7 @@ Unit: microseconds
 */
 
 const char * ALIKEC_compare_attributes_internal(
-  SEXP target, SEXP current, const struct ALIKEC_settings * set, int * is_df,
+  SEXP target, SEXP current, struct ALIKEC_settings * set, int * is_df,
   int * err_lvl
 ) {
   /*
@@ -755,7 +755,7 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
 
-  const struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
+  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     0, sqrt(DOUBLE_EPS), asInteger(attr_mode), "", 0, R_NilValue
   };
   comp_res = ALIKEC_compare_attributes_internal(
