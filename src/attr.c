@@ -325,7 +325,10 @@ const char * ALIKEC_compare_dimnames(
       !ALIKEC_are_special_char_attrs_internal(prim_names, sec_names)
     )
   ) {
-    return ALIKEC_alike_internal(prim, sec, set);
+    const char * res = ALIKEC_alike_internal(prim, sec, set);
+    if(!res[0]) return "";
+    return
+      CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for \"dimnames\"", res, "", "", "");
   }
 
   /* The following likely doesn't need to be done for every dimnames so there
