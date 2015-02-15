@@ -314,6 +314,8 @@ const char * ALIKEC_alike_internal(
   if(set->attr_mode < 0 || set->attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
+  char * err_prepend = CSR_strmcpy(set->prepend, ALIKEC_MAX_CHAR);
+  set->prepend = "";  // Prepend only applies to outer most loop
   SEXP index = PROTECT(list1(R_NilValue));
 
   struct ALIKEC_res res;
@@ -344,7 +346,7 @@ const char * ALIKEC_alike_internal(
   */
   if(CDR(index) == R_NilValue) {  // No recursion occurred
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", set->prepend, err_msg, "", ""
+      ALIKEC_MAX_CHAR, "%s%s%s%s", err_prepend, err_msg, "", ""
     );
   } else {
     // Scan through all indices to calculate size of required vector
@@ -422,7 +424,7 @@ const char * ALIKEC_alike_internal(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s at %s", set->prepend, err_msg, err_interim, ""
+      ALIKEC_MAX_CHAR, "%s%s at %s", err_prepend, err_msg, err_interim, ""
     );
   }
   UNPROTECT(1);
@@ -436,7 +438,7 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  const struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
 /* Normal version, a little slower but more flexible */
