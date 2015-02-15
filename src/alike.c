@@ -30,9 +30,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
   int * is_df = &tmp;
   SEXPTYPE tar_type, cur_type;
 
-  int err = 0;
-  const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_attr, * err_lang, * err_fun;
+  int err = 0, err_attr = 0;
+  const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
+    * err_type, * err_attr_chr, * err_lang, * err_fun;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -75,18 +75,23 @@ struct ALIKEC_res ALIKEC_alike_obj(
     }
   } else if(target != R_NilValue) {  // Nil objects match anything when nested (should also be true for envs?)
     // - Attributes ------------------------------------------------------------
+    /*
+    Attributes must be run first to figure out whether we are dealing with a
+    data frame or some such, but other than that error priority is lowest so
+    any attribute error will get over-written by subsequent errors
+    */
     int tmp = -1;
     int * err_lvl =& tmp;
 
-    if (
+    if(
       !err &&
       strlen(
-        err_attr = ALIKEC_compare_attributes_internal(
+        err_attr_chr = ALIKEC_compare_attributes_internal(
           target, current, set, is_df, err_lvl
       ) )
     ) {
-      err = 1;
-      err_base = err_attr;
+      err_attr = 1;
+      err_base = err_attr_chr;
     }
     // - Special Language Objects && Funs --------------------------------------
 
@@ -164,7 +169,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
-  } } }
+    } }
+  }
   // - Known Limitations -----------------------------------------------------
 
   if(!set->suppress_warnings) {
@@ -195,7 +201,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   }
   struct ALIKEC_res res;
   res.df = *is_df;
-  if(err) {
+  if(err || err_attr) {
     res.success = 0;
     res.message = CSR_smprintf4(
       ALIKEC_MAX_CHAR, err_base, err_tok1, err_tok2, err_tok3, err_tok4
