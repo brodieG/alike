@@ -86,6 +86,7 @@
   char * (*CSR_len_as_chr)(R_xlen_t);
   size_t (*CSR_strmlen)(const char *, size_t);
   size_t (*CSR_len_chr_len)(R_xlen_t);
+  char * (*CSR_strmcpy)(const char * str, size_t maxlen);
 
   // - Init and pre-install Symbols ----------------------------------------------
 

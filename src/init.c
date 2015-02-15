@@ -44,6 +44,7 @@ void R_init_alike(DllInfo *info)
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
   R_RegisterCCallable("alike", "ALIKEC_alike_internal", (DL_FUNC) ALIKEC_alike_internal);
   CSR_len_as_chr = (char * (*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_as_chr");
+  CSR_strmcpy = (char * (*)(const char * str, size_t maxlen)) R_GetCCallable("cstringr", "CSR_strmcpy");
 }
 
 // void R_unload_alike(DllInfo *dll)
