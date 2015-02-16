@@ -28,7 +28,33 @@ SEXP ALIKEC_class(SEXP obj, SEXP class) {
   if(class == R_NilValue) return(ALIKEC_mode(obj));
   return class;
 }
+// - Abstraction ---------------------------------------------------------------
+/*
+sets the select `tsp` values to zero
+*/
+SEXP ALIKEC_abstract_ts(SEXP x, SEXP what) {
+  if(TYPEOF(what) != INTSXP)
+    error("Logic Error: expected integer `what`, contact maintainer");
+  SEXP x_cp = PROTECT(duplicate(x));
+  SEXP attrs = ATTRIB(x_cp), attrs_cpy;
+  for(attrs_cpy = attrs; attrs_cpy != R_NilValue; attrs_cpy = CDR(attrs_cpy))
+    if(TAG(attrs_cpy) == R_TspSymbol) break;
+  if(attrs_cpy == R_NilValue)
+    error("Logic Error: object does not appear to have a `tsp` attribute");
+  SEXP tsp = CAR(attrs_cpy);
+  if(TYPEOF(tsp) != REALSXP || XLENGTH(tsp) != 3)
+    error("Logic Error: unexpected time series attribute format");
 
+  double * tsp_dbl = REAL(tsp);
+  for(R_xlen_t i = 0; i < XLENGTH(what); i++) {
+    int ind_abs = INTEGER(what)[i];
+    if(ind_abs < 0 || ind_abs > 2)
+      error("Logic Error: unexpected index to abstract %d", ind_abs);
+    tsp_dbl[ind_abs] = 0.0;
+  }
+  UNPROTECT(1);
+  return x_cp;
+}
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test() {
 

@@ -20,6 +20,7 @@ R_CallMethodDef callMethods[] = {
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
   {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
   {"match_call", (DL_FUNC) &ALIKEC_match_call, 3},
+  {"abstract_ts", (DL_FUNC) &ALIKEC_abstract_ts, 2},
   {NULL, NULL, 0}
 };
 

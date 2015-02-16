@@ -104,6 +104,25 @@ unitizer_sect("Data Frames", {
   alike(mtcars, mtcars[1:10,])
   alike(mtcars[-5], mtcars)
 })
+unitizer_sect("Time Series", {
+  ts.1 <- ts(runif(24), 1970, frequency=12)
+  ts.2 <- ts(runif(24), 1970, frequency=4)
+  ts.3 <- ts.4 <- ts.1
+  attr(ts.3, "tsp")[[2L]] <- 0
+  attr(ts.4, "tsp")[[3L]] <- 0
+
+  alike(ts.1, ts.2)
+  alike(ts.3, ts.1)
+  alike(ts.1, ts.3)
+  alike(ts.3, ts.2)
+
+  ts.5 <- ts(matrix(runif(24 * 3), ncol=3), 1970, frequency=12)
+  ts.6 <- ts(matrix(runif(12 * 3), ncol=3), 1970, frequency=12)
+
+  alike(ts.5, ts.6)
+  alike(ts.5, matrix(runif(24 * 3), ncol=3))
+
+})
 unitizer_sect("Environments / Pairlists", {
   env0 <- new.env()
   env1 <- list2env(list(a=character(), b=list(), c=NULL))
