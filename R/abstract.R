@@ -23,7 +23,9 @@ abstract.data.frame <- function(x, ...) x[0, ]
 #' @export
 
 abstract.default <- function(x, ...) {
-  if(length(attr(x, "class")) || !is.atomic(x) || !identical(class(x), mode(x))) return(x)
+  if(!is.null(attr(x, "class")) && isTRUE(typeof(x) == "list"))
+    return(abstract.list(x, ...))
+  else if(!is.atomic(x)) return(x)
   length(x) <- 0L
   x
 }
@@ -31,10 +33,18 @@ abstract.default <- function(x, ...) {
 #' @export
 
 abstract.list <- function(x, ...) {
-  for(i in length(x)) {
-    x[[i]] <- abstract(con[[i]])
+  for(i in seq_along(x)) {
+    x[[i]] <- abstract(x[[i]])
   }
+  # attrs.x <- attributes(x)
+  # if(!(identical(names(attrs.x), "names") && identical(attrs.x$names, "names")))
+  #   attributes(x) <- abstract(attrs.x)
   x
+}
+#' @export
+
+abstract.lm <- function(x, ...) {
+  abstract.list(x)
 }
 
 #' Abstracts Time Series Parameters
