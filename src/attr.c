@@ -124,14 +124,17 @@ const char * ALIKEC_compare_dims(
 ) {
   // Invalid dims
 
-  if(TYPEOF(target) != INTSXP || TYPEOF(current) != INTSXP)
+  if(
+    (TYPEOF(target) != INTSXP && target != R_NilValue) ||
+    (TYPEOF(current) != INTSXP && current != R_NilValue)
+  )
     return ALIKEC_alike_attr(target, current, "dim", set);
 
   // Dims -> implicit class
 
-  R_xlen_t target_len = XLENGTH(target), target_len_cap;
+  R_xlen_t target_len = xlength(target), target_len_cap;
   target_len_cap = target_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : target_len;
-  R_xlen_t current_len = XLENGTH(current), current_len_cap;
+  R_xlen_t current_len = xlength(current), current_len_cap;
   current_len_cap = current_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : current_len;
 
   const char * class_err_string = "";
