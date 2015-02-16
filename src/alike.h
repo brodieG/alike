@@ -23,10 +23,12 @@
     const char * prepend;
     int suppress_warnings;
     SEXP match_env;
+    int in_env;
   };
   // - Constants ---------------------------------------------------------------
 
   #define ALIKEC_MAX_CHAR 10000
+  #define ALIKEC_MAX_ENVS 65536
 
   // - Main Funs ---------------------------------------------------------------
 
@@ -83,6 +85,8 @@
   SEXP ALIKEC_string_or_true(const char * var);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
+  int ALIKEC_env_track(SEXP env, int stack_size_init);
+  SEXP ALIKEC_env_track_ext(SEXP env, SEXP stack_size_init);
 
   // - Imported Funs -------------------------------------------------------------
 
