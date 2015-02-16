@@ -128,7 +128,6 @@ unitizer_sect("Dims", {
 
   # Errors
 
-  dim_compare(dim6, dim9, rev=1L)  # fail
   dim_compare(dim9, dim6)  # fail
   dim_compare(dim10, dim1) # fail
 })
