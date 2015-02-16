@@ -12,21 +12,23 @@
 #' alike(iris.tpl, iris[1:10, ])
 #' alike(iris.tpl, transform(iris, Species=as.characterSpecies))
 
-truncate.data.frame <- function(con, ...) con[0, ]
+abstract <- function(x, ...) UseMethod("abstract")
+
+abstract.data.frame <- function(x, ...) con[0, ]
 
 #' @export
 
-truncate.default <- function(con, ...) {
-  if(length(attr(con, "class")) || !is.atomic(con) || !identical(class(con), mode(con))) return(con)
-  length(con) <- 0L
-  con
+abstract.default <- function(x, ...) {
+  if(length(attr(x, "class")) || !is.atomic(x) || !identical(class(x), mode(x))) return(x)
+  length(x) <- 0L
+  x
 }
 
 #' @export
 
-truncate.list <- function(con, ...) {
-  for(i in length(con)) {
-    con[[i]] <- truncate(con[[i]])
+abstract.list <- function(x, ...) {
+  for(i in length(x)) {
+    x[[i]] <- abstract(con[[i]])
   }
   con
 }
