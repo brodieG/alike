@@ -439,6 +439,20 @@ const char * ALIKEC_compare_tsp(SEXP prim, SEXP sec) {
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
+
+const char * ALIKEC_compare_levels(
+  SEXP target, SEXP current, struct ALIKEC_settings * set
+) {
+  if(TYPEOF(target) == STRSXP && TYPEOF(current) == STRSXP) {
+    if(XLENGTH(target))
+      if(!R_compute_identical(target, current, 16))
+        return "have identical values for attribute \"levels\"";
+    return "";
+  }
+  return ALIKEC_alike_attr(target, current, "levels", set);
+}
+/*-----------------------------------------------------------------------------\
+\-----------------------------------------------------------------------------*/
 /*
 normal attribute comparison; must be identical with some exceptions for
 reference attributes.
@@ -707,8 +721,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       // - levels --------------------------------------------------------------
 
       } else if (strcmp(tx, "levels") == 0) {
-        if(!R_compute_identical(tar_attr_el_val, cur_attr_el_val, 16))
-          err_major[4] = "have identical values for attribute \"levels\"";
+        err_major[4] =
+          ALIKEC_compare_levels(tar_attr_el_val, cur_attr_el_val, set);
 
       // - tsp -----------------------------------------------------------------
 
