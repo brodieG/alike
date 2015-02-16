@@ -82,6 +82,7 @@
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(const char * var);
+  SEXP ALIKEC_class(SEXP obj, SEXP class);
 
   // - Imported Funs -------------------------------------------------------------
 

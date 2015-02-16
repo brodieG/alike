@@ -21,6 +21,14 @@ SEXP ALIKEC_mode(SEXP obj) {
   }
   return(mkString(class));
 }
+/*
+returns specified class, or implicit class if none
+*/
+SEXP ALIKEC_class(SEXP obj, SEXP class) {
+  if(class == R_NilValue) return(ALIKEC_mode(obj));
+  return class;
+}
+
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test() {
 

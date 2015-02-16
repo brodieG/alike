@@ -637,11 +637,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         (cur_attr_el == R_NilValue ? "" : "not "), tx, "", ""
       );
     }
-    if(tar_attr_el == R_NilValue) continue;
-
     cur_attr_el_val = cur_attr_el != R_NilValue ? CAR(cur_attr_el) : R_NilValue;
-    tar_attr_el_val = CAR(tar_attr_el);
-
+    tar_attr_el_val = tar_attr_el != R_NilValue ? CAR(tar_attr_el) : R_NilValue;
 
     // = Baseline Check ========================================================
 
@@ -662,16 +659,14 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       class error*/
 
       if(!strcmp(tx, "class")) {
-        SEXP cur_attr_el_val_tmp;
-        if(cur_attr_el_val == R_NilValue) { // Implicit classes
-          cur_attr_el_val_tmp = PROTECT(ALIKEC_mode(rev ? target : current));
-        } else {
-          cur_attr_el_val_tmp = PROTECT(cur_attr_el_val);
-        }
+        SEXP cur_attr_el_val_tmp =
+          PROTECT(ALIKEC_class(rev ? target : current, cur_attr_el_val));
+        SEXP tar_attr_el_val_tmp =
+          PROTECT(ALIKEC_class(!rev ? target : current, tar_attr_el_val));
         const char * class_comp = ALIKEC_compare_class(
-          tar_attr_el_val, cur_attr_el_val_tmp, is_df, set
+          tar_attr_el_val_tmp, cur_attr_el_val_tmp, is_df, set
         );
-        UNPROTECT(1);
+        UNPROTECT(2);
         if(strlen(class_comp)) {
           err_major[0] = class_comp;
           break;
