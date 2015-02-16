@@ -26,12 +26,12 @@ final implementation)
 struct ALIKEC_res ALIKEC_alike_obj(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
-  int tmp = 0, is_df = 0, err_lvl = 6;
+  int is_df = 0, err_lvl = 6;
   SEXPTYPE tar_type, cur_type;
 
   int err = 0, err_attr = 0;
   const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_attr_chr, * err_lang, * err_fun;
+    * err_type, * err_lang, * err_fun;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -222,11 +222,11 @@ struct ALIKEC_res ALIKEC_alike_rec(
   struct ALIKEC_res res0 = ALIKEC_alike_obj(target, current, set);
 
   if(!res0.success) {
-    return (struct ALIKEC_res) {0, res0.message, 0};
+    return (struct ALIKEC_res) {0, res0.message, res0.df};
   }
   // Recurse
 
-  struct ALIKEC_res res1 = {1, "", 0};
+  struct ALIKEC_res res1 = {1, "", res0.df};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 

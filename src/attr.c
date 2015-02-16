@@ -747,12 +747,12 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   );}
   // Now determine which error to throw, if any
 
+  res_attr.df = *is_df;
   int i;
   for(i = 0; i < 6; i++) {
     if(strlen(err_major[i]) && (!rev || (rev && set->attr_mode == 2))) {
       res_attr.success = 0;
       res_attr.message = err_major[i];
-      res_attr.df = *is_df;
       res_attr.lvl = i;
       return res_attr;
   } }
