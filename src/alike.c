@@ -1,25 +1,37 @@
 #include "alike.h"
 
-struct ALIKEC_res {
-  int success;
-  char * message;
-  int df;
-};
+/*
+Construct settings objects; these are really only used for testing sub-functions
+or for the `fast` alike function.
+
+We provide only the prepend argument as an input since that is the only one that
+requires differnet treatment between fast and internal functions
+*/
+struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
+  struct ALIKEC_settings * ALIKEC_set_tmp_val =
+    (struct ALIKEC_settings *) R_alloc(1, sizeof(struct ALIKEC_settings));
+
+  ALIKEC_set_tmp_val->type_mode = 0;
+  ALIKEC_set_tmp_val->attr_mode = 0;
+  ALIKEC_set_tmp_val->int_tolerance = 0.0;
+  ALIKEC_set_tmp_val->match_env = R_NilValue;
+  ALIKEC_set_tmp_val->prepend = prepend;
+
+  return ALIKEC_set_tmp_val;
+}
 /*
 non recursive check (well, except for attributes will recurse if needed in
 final implementation)
 */
 struct ALIKEC_res ALIKEC_alike_obj(
-  SEXP target, SEXP current, int type_mode, double int_tolerance,
-  int attr_mode, int suppress_warnings, SEXP match_env
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
-  int tmp = 0;
-  int * is_df = &tmp;
+  int is_df = 0, err_lvl = 6;
   SEXPTYPE tar_type, cur_type;
 
-  int err = 0;
-  const char * err_base, * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_attr, * err_lang, * err_fun;
+  int err = 0, err_attr = 0;
+  const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
+    * err_type, * err_lang, * err_fun;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -62,18 +74,21 @@ struct ALIKEC_res ALIKEC_alike_obj(
     }
   } else if(target != R_NilValue) {  // Nil objects match anything when nested (should also be true for envs?)
     // - Attributes ------------------------------------------------------------
-    int tmp = -1;
-    int * err_lvl =& tmp;
-
-    if (
-      !err &&
-      strlen(
-        err_attr = ALIKEC_compare_attributes_internal(
-          target, current, attr_mode, is_df, err_lvl
-      ) )
-    ) {
-      err = 1;
-      err_base = err_attr;
+    /*
+    Attributes must be run first to figure out whether we are dealing with a
+    data frame or some such, but other than that error priority is lowest unless
+    it is a class error any attribute error will get over-written by subsequent
+    errors (except class errors)
+    */
+    struct ALIKEC_res_attr res_attr = ALIKEC_compare_attributes_internal(
+      target, current, set
+    );
+    is_df = res_attr.df;
+    err_lvl = res_attr.lvl;
+    if(!res_attr.success) {
+      if(res_attr.lvl == 0) err = 1;   // If top level error (class), make sure not overriden by others
+      else err_attr = 1;
+      err_base = res_attr.message;
     }
     // - Special Language Objects && Funs --------------------------------------
 
@@ -87,7 +102,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
-      err_lang = ALIKEC_lang_alike_internal(target, current, match_env);
+      err_lang = ALIKEC_lang_alike_internal(target, current, set->match_env);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
@@ -106,7 +121,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err && !is_lang && // lang excluded because we can have symbol-lang comparisons that resolve to symbol symbol
       strlen(
         err_type = ALIKEC_type_alike_internal(
-          target, current, type_mode, int_tolerance
+          target, current, set->type_mode, set->int_tolerance
       ) )
     ) {
       err = 1;
@@ -121,12 +136,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       if(
-        (!err || (*is_df && *err_lvl > 0))  &&   // if attribute error is not class, override with col count error
+        (!err || (is_df && err_lvl > 0))  &&   // if attribute error is not class, override with col count error
         (tar_len = xlength(target)) > 0 &&       /* zero lengths match any length */
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
-        if(*is_df) {
+        if(is_df) {
           err_base = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
@@ -137,7 +152,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
       } else if (
-        *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
+        is_df && err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
         TYPEOF(current) == VECSXP && XLENGTH(current) &&
         isVectorAtomic((tar_first_el = VECTOR_ELT(target, 0))) &&
         isVectorAtomic((cur_first_el = VECTOR_ELT(current, 0))) &&
@@ -151,10 +166,11 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
-  } } }
+    } }
+  }
   // - Known Limitations -----------------------------------------------------
 
-  if(!suppress_warnings) {
+  if(!set->suppress_warnings) {
     switch(tar_type) {
       case NILSXP:
       case LGLSXP:
@@ -181,8 +197,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
     }
   }
   struct ALIKEC_res res;
-  res.df = *is_df;
-  if(err) {
+  res.df = is_df;
+  if(err || err_attr) {
     res.success = 0;
     res.message = CSR_smprintf4(
       ALIKEC_MAX_CHAR, err_base, err_tok1, err_tok2, err_tok3, err_tok4
@@ -199,23 +215,18 @@ index element; not sure if this is meanifully slow or not
 */
 
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, SEXP index, int type_mode, double int_tolerance,
-  int attr_mode, int suppress_warnings, SEXP match_env
+  SEXP target, SEXP current, SEXP index, struct ALIKEC_settings * set
 ) {
   // normal logic, which will have checked length and attributes, etc.
-  // Rprintf("In recurse \n");
-  // PrintValue(target);
-  struct ALIKEC_res res0 = ALIKEC_alike_obj(
-    target, current, type_mode, int_tolerance, attr_mode, suppress_warnings,
-    match_env
-  );
+
+  struct ALIKEC_res res0 = ALIKEC_alike_obj(target, current, set);
 
   if(!res0.success) {
-    return (struct ALIKEC_res) {0, res0.message, 0};
+    return (struct ALIKEC_res) {0, res0.message, res0.df};
   }
   // Recurse
 
-  struct ALIKEC_res res1 = {1, "", 0};
+  struct ALIKEC_res res1 = {1, "", res0.df};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 
@@ -224,11 +235,11 @@ struct ALIKEC_res ALIKEC_alike_rec(
     SEXP vec_names = getAttrib(target, R_NamesSymbol);
 
     for(i = 0; i < tar_len; i++) {
-      if(vec_names == R_NilValue) SETCDR(index, list1(ScalarInteger(i)));
+      if(vec_names == R_NilValue || !CHAR(STRING_ELT(vec_names, i))[0])
+        SETCDR(index, list1(ScalarInteger(i)));
       else SETCDR(index, list1(STRING_ELT(vec_names, i)));
       res1 = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings, match_env
+        VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), set
       );
       // Rprintf("Loop: %d success: %d", i, res1.success);
       if(!res1.success) break;
@@ -252,8 +263,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       }
       SETCDR(index, list1(STRING_ELT(tar_names, i)));
       res1 = ALIKEC_alike_rec(
-        findVarInFrame(target, var_name), var_cur_val, CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings, match_env
+        findVarInFrame(target, var_name), var_cur_val, CDR(index), set
       );
       UNPROTECT(1);
       if(!res1.success) break;
@@ -281,10 +291,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       }
       if(tar_tag != R_NilValue) SETCDR(index, list1(asChar(tar_tag_chr)));
       else SETCDR(index, list1(ScalarInteger(i)));
-      res1 = ALIKEC_alike_rec(
-        CAR(tar_sub), CAR(cur_sub), CDR(index), type_mode,
-        int_tolerance, attr_mode, suppress_warnings, match_env
-      );
+      res1 = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), CDR(index), set);
       if(!res1.success) break;
     }
   } else {
@@ -296,15 +303,16 @@ struct ALIKEC_res ALIKEC_alike_rec(
 /*
 Run alike calculation
 */
-SEXP ALIKEC_alike_internal(
-  SEXP target, SEXP current, int type_mode, double int_tolerance, int attr_mode,
-  const char * prepend, int suppress_warnings, SEXP match_env
+const char * ALIKEC_alike_internal(
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
-  if(type_mode < 0 || type_mode > 2)
+  if(set->type_mode < 0 || set->type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
-  if(attr_mode < 0 || attr_mode > 2)
+  if(set->attr_mode < 0 || set->attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
+  char * err_prepend = CSR_strmcpy(set->prepend, ALIKEC_MAX_CHAR);
+  set->prepend = "";  // Prepend only applies to outer most loop
   SEXP index = PROTECT(list1(R_NilValue));
 
   struct ALIKEC_res res;
@@ -318,13 +326,10 @@ SEXP ALIKEC_alike_internal(
   } else {
     // Recursively check object
 
-    res = ALIKEC_alike_rec(
-      target, current, index, type_mode, int_tolerance, attr_mode,
-      suppress_warnings, match_env
-    );
+    res = ALIKEC_alike_rec(target, current, index, set);
     if(res.success) {
       UNPROTECT(1);
-      return(ScalarLogical(1));
+      return "";
     }
     err_base = res.message;
   }
@@ -338,7 +343,7 @@ SEXP ALIKEC_alike_internal(
   */
   if(CDR(index) == R_NilValue) {  // No recursion occurred
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", prepend, err_msg, "", ""
+      ALIKEC_MAX_CHAR, "%s%s%s%s", err_prepend, err_msg, "", ""
     );
   } else {
     // Scan through all indices to calculate size of required vector
@@ -416,11 +421,11 @@ SEXP ALIKEC_alike_internal(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s at %s", prepend, err_msg, err_interim, ""
+      ALIKEC_MAX_CHAR, "%s%s at %s", err_prepend, err_msg, err_interim, ""
     );
   }
   UNPROTECT(1);
-  return mkString(err_final);
+  return (const char *) err_final;
 }
 
 /* "fast" version doesn't allow messing with optional parameters to avoid arg
@@ -430,9 +435,9 @@ already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
 SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
-  return ALIKEC_alike_internal(
-    target, current, 0, sqrt(DOUBLE_EPS), 0, "should ", 0, R_NilValue
-);}
+  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
+}
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (
@@ -458,8 +463,9 @@ SEXP ALIKEC_alike (
   )
     error("Argument `suppress.warnings` must be TRUE or FALSE");
 
-  return ALIKEC_alike_internal(
-    target, current, asInteger(type_mode), asReal(int_tolerance),
+  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
+    asInteger(type_mode), asReal(int_tolerance),
     asInteger(attr_mode), "should ", supp_warn, match_env
-  );
+  };
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }

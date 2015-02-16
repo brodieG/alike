@@ -1,8 +1,24 @@
+alike 0.3.0
+===========
+
+**NOTE**: this change list is preliminary.
+
+* Added support for additional recursive objects: environments, pairlists, and
+  expressions are now recursed through, with `alike` applied recursively to each
+  elemment therein; this mirrors the previous treatment for lists (the VECSXP
+  type)
+* Improved comparison of language objects (calls, symbols, formulas, and
+  functions); see docs for explanations of what makes language objects alike
+* Attributes are now recursively compared with `alike` as well instead of
+  identical
+
+
 alike 0.2.5
 ===========
 
 * Doc updates
-* removed C library files to allow installs on platforms with different compilers
+* removed C library files to allow installs on platforms with different
+  compilers
 
 alike 0.2.4
 ===========

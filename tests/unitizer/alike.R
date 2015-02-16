@@ -15,6 +15,9 @@ unitizer_sect("Atomic", {
   alike(integer(3L), 1:3 + .Machine$double.eps ^ .5)     # TRUE
   alike(integer(4L), letters[1:4])
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
+
+  alike(c(a=1, b=2), 3)         # Length mismatch
+  alike(c(a=1, b=2), c(1, 2))   # Names
 } )
 unitizer_sect("lists", {
   lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))

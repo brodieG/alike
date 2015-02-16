@@ -48,7 +48,12 @@ Using PACKAGE argument to .Call seems to slow things down a fair bit, though
 this is with fully registered functions.
 
 Rcpp seems to be generally 2-3x slower than inline, and not just in terms of
-overhead (tested on simple loop sum).
+overhead (tested on simple loop sum).  Though this may be faster with RcppSugar.
+Most of Rcpp overhead seems to be related to the wrapper that converts the
+Rcpp value back to an R value.  Perhaps this wrapper can be avoided?  Also,
+looks like RCPP doesn't register entry points as objects, so that could make
+things a smidge faster as well (instead, relies on PACKAGE argument).  This is
+just looking at the default "rcpp_hello_world" example.
 
 typeof:
 

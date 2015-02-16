@@ -13,7 +13,7 @@ R_CallMethodDef callMethods[] = {
   {"test", (DL_FUNC) &ALIKEC_test, 0},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
-  {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 3},
+  {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 2},
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 3},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
@@ -44,6 +44,7 @@ void R_init_alike(DllInfo *info)
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
   R_RegisterCCallable("alike", "ALIKEC_alike_internal", (DL_FUNC) ALIKEC_alike_internal);
   CSR_len_as_chr = (char * (*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_as_chr");
+  CSR_strmcpy = (char * (*)(const char * str, size_t maxlen)) R_GetCCallable("cstringr", "CSR_strmcpy");
 }
 
 // void R_unload_alike(DllInfo *dll)

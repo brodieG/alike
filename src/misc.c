@@ -21,6 +21,14 @@ SEXP ALIKEC_mode(SEXP obj) {
   }
   return(mkString(class));
 }
+/*
+returns specified class, or implicit class if none
+*/
+SEXP ALIKEC_class(SEXP obj, SEXP class) {
+  if(class == R_NilValue) return(ALIKEC_mode(obj));
+  return class;
+}
+
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test() {
 
@@ -140,4 +148,13 @@ SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
     rho = ENCLOS(rho);
   }
   return R_UnboundValue;
+}
+
+/*
+Convert convention of zero length string == TRUE to SEXP
+*/
+
+SEXP ALIKEC_string_or_true(const char * var) {
+  if(var[0]) return(mkString(var));
+  return(ScalarLogical(1));
 }
