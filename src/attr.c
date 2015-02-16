@@ -450,10 +450,13 @@ const char * ALIKEC_compare_ts(
 
     for(R_xlen_t i = 0; i < 3; i++) {
       if(tar_real[i] != 0 && tar_real[i] != cur_real[i]) {
-        CSR_smprintf4(
+        return CSR_smprintf4(
           ALIKEC_MAX_CHAR, "have matching time series \"%s\" parameter", tag[i],
           "", "", ""
-  );} } }
+    );} }
+  } else {
+    return ALIKEC_alike_attr(target, current, "ts", set);
+  }
   return "";
 }
 /*
