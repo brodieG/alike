@@ -107,9 +107,8 @@ unitizer_sect("Data Frames", {
 unitizer_sect("Time Series", {
   ts.1 <- ts(runif(24), 1970, frequency=12)
   ts.2 <- ts(runif(24), 1970, frequency=4)
-  ts.3 <- ts.4 <- ts.1
-  attr(ts.3, "tsp")[[2L]] <- 0
-  attr(ts.4, "tsp")[[3L]] <- 0
+  ts.3 <- abstract(ts.1, "end")
+  ts.4 <- abstract(ts.2, "frequency")
 
   alike(ts.1, ts.2)
   alike(ts.3, ts.1)

@@ -1,14 +1,16 @@
 #' Reduces Objects to Their Basic Structure
 #'
+#' Currently somewhat experimental, with behvaior likely to change in future.
+#'
 #' This is implemented in R so will slow down validations a little bit if you
 #' use it within the \code{validate*()} expression itself.
 #'
 #' @export
-#' @param con the data frame to truncate (name is due to S3 generic being for connection)
-#' @param ... for compatibility with S3 generic
-#' @return 0 row data frame
+#' @param x the object to abstract
+#' @param ... arguments for methods
+#' @return abstracted object
 #' @examples
-#' iris.tpl <- truncate(iris)
+#' iris.tpl <- abstract(iris)
 #' alike(iris.tpl, iris[1:10, ])
 #' alike(iris.tpl, transform(iris, Species=as.characterSpecies))
 
@@ -63,5 +65,6 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
   if(!is.numeric(tsp) || length(tsp) != 3L)
     stop("Argument `x` must have a \"tsp\" attribute that is numeric(3L)")
   zero.out <- match(unique(what), what.valid) - 1L
-  .Call(ALIKEC_abstract_ts, x, zero.out)
+  x <- .Call(ALIKEC_abstract_ts, x, zero.out)
+  NextMethod()
 }
