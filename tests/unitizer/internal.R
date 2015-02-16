@@ -131,7 +131,21 @@ unitizer_sect("Dims", {
   dim_compare(dim9, dim6)  # fail
   dim_compare(dim10, dim1) # fail
 })
+unitizer_sect("Time Series", {
+  ts.1 <- ts(runif(24), 1970, frequency=12)
+  ts.2 <- ts(runif(24), 1970, frequency=4)
+  ts.3 <- ts.4 <- ts.1
+  attr(ts.3, "end") <- 0
+  attr(ts.4, "frequency") <- 0
 
+  alike:::ts_compare(attr(ts.1, "ts"), attr(ts.2, "ts"))
+  alike:::ts_compare(attr(ts.3, "ts"), attr(ts.2, "ts"))
+  alike:::ts_compare(attr(ts.4, "ts"), attr(ts.2, "ts"))
+  alike:::ts_compare(attr(ts.4, "ts"), attr(ts.1, "ts"))
+
+  alike:::ts_compare(attr(ts.4, "ts"), "hello")
+  alike:::ts_compare("hello", 1:3)
+})
 unitizer_sect("All Attributes, default", {
   attr_compare(1, 1)                                           # TRUE
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
@@ -376,4 +390,3 @@ unitizer_sect("Deparse", {
   alike:::dep_alike(l0, 1)
   alike:::dep_alike(l0, 2)
 })
-

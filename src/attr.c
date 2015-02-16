@@ -433,9 +433,34 @@ SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec) {
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
+/*
+Compare time series attribute; some day will have to actually get an error
+display that can handle floats
+*/
+const char * ALIKEC_compare_ts(
+  SEXP target, SEXP current, struct ALIKEC_settings * set
+) {
+  SEXPTYPE tar_type = TYPEOF(target);
+  if(
+    tar_type == REALSXP && TYPEOF(current) == tar_type &&
+    XLENGTH(target) == 3 && XLENGTH(current) == 3
+  ) {
+    double * tar_real = REAL(target), * cur_real = REAL(current);
+    const char * tag[3] = {"start", "end", "frequency"};
 
-const char * ALIKEC_compare_tsp(SEXP prim, SEXP sec) {
+    for(R_xlen_t i = 0; i < 3; i++) {
+      if(tar_real[i] != 0 && tar_real[i] != cur_real[i]) {
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have matching time series \"%s\" parameter", tag[i],
+          "", "", ""
+  );} } }
   return "";
+}
+/*
+external
+*/
+SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current) {
+  return mkString(ALIKEC_compare_ts(target, current, ALIKEC_set_def()));
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -728,8 +753,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
       } else if (strcmp(tx, "tsp") == 0) {
 
-        err_major[4] = ALIKEC_compare_tsp(tar_attr_el_val, cur_attr_el_val);
-
+        err_major[4] = ALIKEC_compare_ts(
+          tar_attr_el_val, cur_attr_el_val, set
+        );
       // - normal attrs --------------------------------------------------------
 
       } else {

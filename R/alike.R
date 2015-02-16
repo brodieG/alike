@@ -239,6 +239,9 @@ dim_compare <- function(
 )
   .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
 
+ts_compare <- function(target, current)
+  .Call(ALIKEC_compare_ts, target, current)
+
 #' @export
 
 lang_alike <- function(target, current, match.call.env=parent.frame())
