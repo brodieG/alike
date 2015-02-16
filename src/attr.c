@@ -533,9 +533,8 @@ Unit: microseconds
  attr_compare(mx.1, mx.2) 2.406 2.5380 2.6100 2.7150 13.482   100
 */
 
-const char * ALIKEC_compare_attributes_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set, int * is_df,
-  int * err_lvl
+struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   /*
   Array to store major errors from, in order:
@@ -547,12 +546,14 @@ const char * ALIKEC_compare_attributes_internal(
     5. missing*/
 
   const char * err_major[6] = {"", "", "", "", "", ""};
+  struct ALIKEC_res_attr res_attr = {1, "", 0, 0};
 
   // Note we don't protect these because target and curent should come in
   // protected so every SEXP under them should also be protected
 
   SEXP tar_attr, cur_attr, prim_attr, sec_attr;
-  int rev = 0;
+  int rev = 0, tmp = 0;
+  int * is_df = &tmp;
 
   tar_attr = ATTRIB(target);
   cur_attr = ATTRIB(current);
@@ -564,7 +565,7 @@ const char * ALIKEC_compare_attributes_internal(
   simplify...
   */
 
-  if(tar_attr == R_NilValue && cur_attr == R_NilValue) return "";
+  if(tar_attr == R_NilValue && cur_attr == R_NilValue) return res_attr;
   else if(tar_attr == R_NilValue) {
     rev = 1;
     prim_attr = cur_attr;
@@ -737,13 +738,15 @@ const char * ALIKEC_compare_attributes_internal(
   int i;
   for(i = 0; i < 6; i++) {
     if(strlen(err_major[i]) && (!rev || (rev && set->attr_mode == 2))) {
-      *err_lvl = i;
-      return err_major[i];
-    }
-  }
+      res_attr.success = 0;
+      res_attr.message = err_major[i];
+      res_attr.df = *is_df;
+      res_attr.lvl = i;
+      return res_attr;
+  } }
   // Passed
 
-  return "";
+  return res_attr;
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -752,9 +755,6 @@ external interface for compare attributes
 */
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
-  const char * comp_res;
-  int tmp = 0, tmp2 = -1;
-  int * is_df =& tmp, * err_lvl =& tmp2;
 
   if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
@@ -762,11 +762,10 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     0, sqrt(DOUBLE_EPS), asInteger(attr_mode), "", 0, R_NilValue
   };
-  comp_res = ALIKEC_compare_attributes_internal(
-    target, current, set, is_df, err_lvl
-  );
-  if(strlen(comp_res)) {
-    return mkString(comp_res);
+  struct ALIKEC_res_attr comp_res =
+    ALIKEC_compare_attributes_internal(target, current, set);
+  if(!comp_res.success) {
+    return mkString(comp_res.message);
   } else {
     return ScalarLogical(1);
   }

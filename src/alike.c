@@ -26,8 +26,7 @@ final implementation)
 struct ALIKEC_res ALIKEC_alike_obj(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
-  int tmp = 0;
-  int * is_df = &tmp;
+  int tmp = 0, is_df = 0, err_lvl = 6;
   SEXPTYPE tar_type, cur_type;
 
   int err = 0, err_attr = 0;
@@ -77,21 +76,19 @@ struct ALIKEC_res ALIKEC_alike_obj(
     // - Attributes ------------------------------------------------------------
     /*
     Attributes must be run first to figure out whether we are dealing with a
-    data frame or some such, but other than that error priority is lowest so
-    any attribute error will get over-written by subsequent errors
+    data frame or some such, but other than that error priority is lowest unless
+    it is a class error any attribute error will get over-written by subsequent
+    errors (except class errors)
     */
-    int tmp = -1;
-    int * err_lvl =& tmp;
-
-    if(
-      !err &&
-      strlen(
-        err_attr_chr = ALIKEC_compare_attributes_internal(
-          target, current, set, is_df, err_lvl
-      ) )
-    ) {
-      err_attr = 1;
-      err_base = err_attr_chr;
+    struct ALIKEC_res_attr res_attr = ALIKEC_compare_attributes_internal(
+      target, current, set
+    );
+    is_df = res_attr.df;
+    err_lvl = res_attr.lvl;
+    if(!res_attr.success) {
+      if(res_attr.lvl == 0) err = 1;   // If top level error (class), make sure not overriden by others
+      else err_attr = 1;
+      err_base = res_attr.message;
     }
     // - Special Language Objects && Funs --------------------------------------
 
@@ -139,12 +136,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       if(
-        (!err || (*is_df && *err_lvl > 0))  &&   // if attribute error is not class, override with col count error
+        (!err || (is_df && err_lvl > 0))  &&   // if attribute error is not class, override with col count error
         (tar_len = xlength(target)) > 0 &&       /* zero lengths match any length */
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
-        if(*is_df) {
+        if(is_df) {
           err_base = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
@@ -155,7 +152,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
       } else if (
-        *is_df && *err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
+        is_df && err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
         TYPEOF(current) == VECSXP && XLENGTH(current) &&
         isVectorAtomic((tar_first_el = VECTOR_ELT(target, 0))) &&
         isVectorAtomic((cur_first_el = VECTOR_ELT(current, 0))) &&
@@ -200,7 +197,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     }
   }
   struct ALIKEC_res res;
-  res.df = *is_df;
+  res.df = is_df;
   if(err || err_attr) {
     res.success = 0;
     res.message = CSR_smprintf4(

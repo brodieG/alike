@@ -13,6 +13,12 @@
     char * message;
     int df;
   };
+  struct ALIKEC_res_attr {
+    int success;
+    const char * message;
+    int df;
+    int lvl;
+  };
   struct ALIKEC_settings {
     int type_mode;
     double int_tolerance;
@@ -48,9 +54,8 @@
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  const char * ALIKEC_compare_attributes_internal(
-    SEXP target, SEXP current, struct ALIKEC_settings * set, int * is_df,
-    int * err_lvl
+  struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
+    SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
