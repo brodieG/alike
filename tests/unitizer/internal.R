@@ -131,7 +131,26 @@ unitizer_sect("Dims", {
   dim_compare(dim9, dim6)  # fail
   dim_compare(dim10, dim1) # fail
 })
+unitizer_sect("Time Series", {
+  ts.1 <- attr(ts(runif(24), 1970, frequency=12), "ts")
+  ts.2 <- attr(ts(runif(24), 1970, frequency=4), "ts")
+  ts.3 <- ts.4 <- ts.1
+  ts.3[[2L]] <- 0
+  ts.4[[3L]] <- 0
 
+  alike:::ts_compare(ts.1, ts.2)
+  alike:::ts_compare(ts.3, ts.2)  # zero is wildcard
+  alike:::ts_compare(ts.4, ts.2)
+  alike:::ts_compare(ts.4, ts.1)  # zero is wildcard
+  alike:::ts_compare(ts.1, ts.4)  # but not in reverse
+
+  # non-ts comparisons
+
+  alike:::ts_compare(ts.4, "hello")
+  alike:::ts_compare("hello", 1:3)
+  alike:::ts_compare(ts.1, 1:3)   # TRUE, because second param is not REAL, kicks off to standard alike comparison
+  alike:::ts_compare(ts.4, 1:4)
+})
 unitizer_sect("All Attributes, default", {
   attr_compare(1, 1)                                           # TRUE
   attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3))  # TRUE
@@ -376,4 +395,3 @@ unitizer_sect("Deparse", {
   alike:::dep_alike(l0, 1)
   alike:::dep_alike(l0, 2)
 })
-

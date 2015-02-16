@@ -6,6 +6,9 @@ lifted directly from: http://powerfield-software.com/?p=615
 #ifndef _PFHASH_H
 #define _PFHASH_H
 
+    #include <R.h>
+    #include <Rinternals.h>
+    #include <ctype.h>
     #include <stdint.h>
 
     typedef struct sPfHashNode {

@@ -1,6 +1,3 @@
-#include <R.h>
-#include <Rinternals.h>
-#include <ctype.h>
 #include "pfhash.h"
 
 #ifndef _ALIKEC_H
@@ -71,6 +68,8 @@
   );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
+  SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current);
+
 
   // - Utility Funs --------------------------------------------------------------
 
@@ -83,6 +82,7 @@
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(const char * var);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
+  SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
 
   // - Imported Funs -------------------------------------------------------------
 
