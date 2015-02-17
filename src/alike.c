@@ -16,6 +16,8 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   ALIKEC_set_tmp_val->int_tolerance = 0.0;
   ALIKEC_set_tmp_val->match_env = R_NilValue;
   ALIKEC_set_tmp_val->prepend = prepend;
+  ALIKEC_set_tmp_val->env_set = 0;
+  ALIKEC_set_tmp_val->no_rec = 0;
 
   return ALIKEC_set_tmp_val;
 }
@@ -245,30 +247,50 @@ struct ALIKEC_res ALIKEC_alike_rec(
       if(!res1.success) break;
     }
   } else if (tar_type == ENVSXP) {
-    SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
-    R_xlen_t tar_name_len = XLENGTH(tar_names), i;
-    if(tar_name_len != tar_len)
-      error("Logic Error: mismatching env lengths; contact maintainer");
-    for(i = 0; i < tar_len; i++) {
-      SEXP var_name = PROTECT(install(CHAR(STRING_ELT(tar_names, i))));
-      SEXP var_cur_val = findVarInFrame(current, var_name);
-      if(var_cur_val == R_UnboundValue) {
-        res1.success = 0;
-        res1.message = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "contain variable `%s`",
-          CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
-        );
-        UNPROTECT(2);
-        break;
-      }
-      SETCDR(index, list1(STRING_ELT(tar_names, i)));
-      res1 = ALIKEC_alike_rec(
-        findVarInFrame(target, var_name), var_cur_val, CDR(index), set
-      );
-      UNPROTECT(1);
-      if(!res1.success) break;
+    // Need to guard against possible circular reference in the environments
+    if(!set->env_set) {
+      set->env_set = ALIKEC_env_set_create(16);
     }
-    UNPROTECT(1);
+    if(!set->no_rec) set->no_rec = !ALIKEC_env_track(target, set->env_set);
+    if(set->no_rec < 0 && !set->suppress_warnings) {
+      warning("`alike` environment stack exhausted; unable to recurse any further into environments");
+      set->no_rec = 1; // so we only get warning once
+    }
+    if(set->no_rec) {
+      res1.success = 1;
+    } else {
+      SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
+      R_xlen_t tar_name_len = XLENGTH(tar_names), i;
+      if(tar_name_len != tar_len)
+        error("Logic Error: mismatching env lengths; contact maintainer");
+      for(i = 0; i < tar_len; i++) {
+        SEXP var_name = PROTECT(install(CHAR(STRING_ELT(tar_names, i))));
+        SEXP var_cur_val = findVarInFrame(current, var_name);
+        if(var_cur_val == R_UnboundValue) {
+          res1.success = 0;
+          res1.message = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "contain variable `%s`",
+            CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
+          );
+          UNPROTECT(2);
+          break;
+        }
+        SETCDR(index, list1(STRING_ELT(tar_names, i)));
+        /*
+        We cannot recurse here because environments allow for the possibility
+        of a self referential loop.  Note that even ALIKEC_alike_obj can cause
+        recursion due to use of `alike` on attributes, so if already in an
+        environment, then we must content ourselves with a non-recursive alike
+        comparison
+        */
+        res1 = ALIKEC_alike_obj(
+          findVarInFrame(target, var_name), var_cur_val, set
+        );
+        UNPROTECT(1);
+        if(!res1.success) break;
+      }
+      UNPROTECT(1);
+    }
   } else if (tar_type == LISTSXP) {
     SEXP tar_sub, cur_sub;
     R_xlen_t i = 0;
@@ -465,7 +487,7 @@ SEXP ALIKEC_alike (
 
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn, match_env
+    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0
   };
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
