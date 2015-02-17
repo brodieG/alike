@@ -262,6 +262,11 @@ dep_alike <- function(obj, lines)
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
 
+#' @export
+
+env_track <- function(env, size_init = 32)
+  .Call(ALIKEC_env_track, env, size_init)
+
 #' Used for testing C code
 #'
 #' @export
