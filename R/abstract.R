@@ -23,12 +23,29 @@ abstract.data.frame <- function(x, ...) x[0, ]
 #' @export
 
 abstract.default <- function(x, ...) {
-  if(!is.null(attr(x, "class")) && isTRUE(typeof(x) == "list"))
-    return(abstract.list(x, ...))
-  else if(!is.atomic(x)) return(x)
+  if(!is.null(class.exp <- attr(x, "class"))) {
+    attr(x, "class") <- NULL
+    x <- abstract(x, ...)  # handle implicit classes
+    class(x) <- class.exp
+  }
+  if(!is.atomic(x)) return(x)
   length(x) <- 0L
   x
 }
+#' @export
+
+abstract.array <- function(x, ...) {
+  if(!is.atomic(x)) NextMethod()
+  ndims <- length(dim(x))
+  length(x) <- 0L
+  dim(x) <- rep(0L, ndims)
+  if(!is.null(dimnames(x)))
+    dimnames(x) <- replicate(NULL, length(dimnames(x)), simplify=FALSE)
+  x
+}
+#' @export
+
+abstract.matrix <-function(x, ...) abstract.array(x, ...)
 
 #' @export
 
@@ -44,7 +61,10 @@ abstract.list <- function(x, ...) {
 #' @export
 
 abstract.lm <- function(x, ...) {
-  abstract.list(x)
+  names(attr(x$terms, "dataClasses")) <- NULL
+  names(x$model) <- NULL
+  names(attr(attr(x$model, "terms"), "dataClasses")) <- NULL
+  NextMethod()
 }
 
 #' Abstracts Time Series Parameters
