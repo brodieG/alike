@@ -395,3 +395,9 @@ unitizer_sect("Deparse", {
   alike:::dep_alike(l0, 1)
   alike:::dep_alike(l0, 2)
 })
+unitizer_sect("Env Track", {
+  el.1 <- replicate(5, new.env())
+  el.2 <- el.1[c(1, 1, 2, 3, 4, 1, 2, 3, 5, 1)]
+  alike:::env_track(el.1, 1L)  # first env a freebie, so should be 1
+  alike:::env_track(el.2, 1L)
+} )
