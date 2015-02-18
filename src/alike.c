@@ -247,7 +247,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
       // Rprintf("Loop: %d success: %d", i, res1.success);
       if(!res1.success) break;
     }
-  } else if (tar_type == ENVSXP) {
+  } else if (tar_type == ENVSXP && !set->in_attr) {
     // Need to guard against possible circular reference in the environments
     if(!set->env_set) {
       set->env_set = ALIKEC_env_set_create(16);
