@@ -627,6 +627,12 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         CSR_len_as_chr(xlength(cur_attr)), "", "", ""
   );} }
   /*
+  Mark that we're in attribute checking so we can handle recursions within
+  attributes properly
+  */
+  set->in_attr++;
+
+  /*
   Loop through all attr combinations; maybe could be made faster by
   reducing the second loop each time a match is found, though this would require
   duplication of the attributes (likely faster for items with lots of attributes,
@@ -775,6 +781,10 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       prim_attr_count != 1 ? "s" : "", CSR_len_as_chr(sec_attr_count), ""
   );}
   // Now determine which error to throw, if any
+
+  if(!set->in_attr)
+    error("Logic Error: attribute depth counter corrupted; contact maintainer");
+  set->in_attr--;
 
   res_attr.df = *is_df;
   int i;

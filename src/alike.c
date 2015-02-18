@@ -18,6 +18,7 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   ALIKEC_set_tmp_val->prepend = prepend;
   ALIKEC_set_tmp_val->env_set = 0;
   ALIKEC_set_tmp_val->no_rec = 0;
+  ALIKEC_set_tmp_val->in_attr = 0;
 
   return ALIKEC_set_tmp_val;
 }
@@ -487,7 +488,7 @@ SEXP ALIKEC_alike (
 
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0
+    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0, 0
   };
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }

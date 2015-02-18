@@ -33,6 +33,7 @@
     SEXP match_env;
     struct ALIKEC_settings_env * env_set;
     int no_rec;
+    size_t in_attr;
   };
 
   // - Constants ---------------------------------------------------------------
