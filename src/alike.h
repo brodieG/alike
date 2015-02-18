@@ -16,6 +16,14 @@
     int df;
     int lvl;
   };
+  struct ALIKEC_settings_env {
+    int stack_size;
+    int stack_ind;
+    int stack_mult;
+    int stack_size_init;
+    SEXP * env_stack;
+    int debug;
+  };
   struct ALIKEC_settings {
     int type_mode;
     double int_tolerance;
@@ -23,10 +31,14 @@
     const char * prepend;
     int suppress_warnings;
     SEXP match_env;
+    struct ALIKEC_settings_env * env_set;
+    int no_rec;
   };
+
   // - Constants ---------------------------------------------------------------
 
   #define ALIKEC_MAX_CHAR 10000
+  #define ALIKEC_MAX_ENVS 65536
 
   // - Main Funs ---------------------------------------------------------------
 
@@ -70,7 +82,6 @@
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
   SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current);
 
-
   // - Utility Funs --------------------------------------------------------------
 
   struct ALIKEC_settings * ALIKEC_set_def();
@@ -83,6 +94,9 @@
   SEXP ALIKEC_string_or_true(const char * var);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
+  int ALIKEC_env_track(SEXP env, struct ALIKEC_settings_env * set);
+  SEXP ALIKEC_env_track_test(SEXP env, SEXP stack_size_init);
+  struct ALIKEC_settings_env * ALIKEC_env_set_create(int stack_size_init);
 
   // - Imported Funs -------------------------------------------------------------
 
