@@ -23,6 +23,7 @@ abstract.data.frame <- function(x, ...) x[0, ]
 #' @export
 
 abstract.default <- function(x, ...) {
+  if(isS4(x)) return(x);
   if(!is.null(class.exp <- attr(x, "class"))) {
     attr(x, "class") <- NULL
     x <- abstract(x, ...)  # handle implicit classes
