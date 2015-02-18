@@ -50,7 +50,11 @@ abstract.default <- function(x, ...) {
     class(x) <- class.exp
   }
   if(!is.atomic(x)) return(x)
+  attrs.old <- attributes(x)
   length(x) <- 0L
+  attrs.new <- attributes(x)
+  attributes(x) <- if(!is.null(attrs.new)) modifyList(attrs.old, attrs.new)
+  else attrs.old
   x
 }
 #' @rdname abstract
@@ -119,7 +123,9 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
   tsp <- attr(x, "tsp")
   if(!is.numeric(tsp) || length(tsp) != 3L)
     stop("Argument `x` must have a \"tsp\" attribute that is numeric(3L)")
-  zero.out <- match(unique(what), what.valid) - 1L
-  x <- .Call(ALIKEC_abstract_ts, x, zero.out)
-  NextMethod()
+  attr(x, "tsp") <- NULL
+  x <- abstract.default(x, ...)
+
+  tsp[match(unique(what), what.valid)] <- 0
+  .Call(ALIKEC_abstract_ts, x, tsp)
 }

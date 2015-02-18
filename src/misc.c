@@ -32,26 +32,25 @@ SEXP ALIKEC_class(SEXP obj, SEXP class) {
 /*
 sets the select `tsp` values to zero
 */
-SEXP ALIKEC_abstract_ts(SEXP x, SEXP what) {
-  if(TYPEOF(what) != INTSXP)
-    error("Logic Error: expected integer `what`, contact maintainer");
+SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
+  if(TYPEOF(attr) != REALSXP || XLENGTH(attr) != 3)
+    error("Logic Error: incorrect format for tsp attr, contact maintainer");
   SEXP x_cp = PROTECT(duplicate(x));
-  SEXP attrs = ATTRIB(x_cp), attrs_cpy;
-  for(attrs_cpy = attrs; attrs_cpy != R_NilValue; attrs_cpy = CDR(attrs_cpy))
-    if(TAG(attrs_cpy) == R_TspSymbol) break;
-  if(attrs_cpy == R_NilValue)
-    error("Logic Error: object does not appear to have a `tsp` attribute");
-  SEXP tsp = CAR(attrs_cpy);
-  if(TYPEOF(tsp) != REALSXP || XLENGTH(tsp) != 3)
-    error("Logic Error: unexpected time series attribute format");
 
-  double * tsp_dbl = REAL(tsp);
-  for(R_xlen_t i = 0; i < XLENGTH(what); i++) {
-    int ind_abs = INTEGER(what)[i];
-    if(ind_abs < 0 || ind_abs > 2)
-      error("Logic Error: unexpected index to abstract %d", ind_abs);
-    tsp_dbl[ind_abs] = 0.0;
+  // Get to last attribute, and make sure tsp is not set
+
+  SEXP attrs = ATTRIB(x_cp), attrs_cpy, attrs_last;
+  for(attrs_cpy = attrs; attrs_cpy != R_NilValue; attrs_cpy = CDR(attrs_cpy)) {
+    attrs_last = attrs_cpy;
+    if(TAG(attrs_cpy) == R_TspSymbol) break;
   }
+  if(attrs_cpy != R_NilValue)
+    error("Logic Error: object already has a `tsp` attribute");
+
+  // Illegally append non-kosher tsp attribute
+
+  SETCDR(attrs_last, list1(attr));
+  SET_TAG(CDR(attrs_last), R_TspSymbol);
   UNPROTECT(1);
   return x_cp;
 }
