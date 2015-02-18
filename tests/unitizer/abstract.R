@@ -1,5 +1,19 @@
 library(alike)
 
+unitizer_sect("Standard Methods", {
+  abstract(1:10)
+  abstract(list(a=1:10, b=runif(10)))
+  abstract(matrix(1:9, nrow=3))
+  abstract(
+    array(1:8, c(2, 2, 2), dimnames=list(letters[1:2], LETTERS[1:2], NULL))
+  )
+  alike(abstract(iris), iris[1:10, ])
+  alike(abstract(iris), iris[1:10, 1:3])
+  alike(abstract(iris), transform(iris, Species=as.character(Species)))
+
+
+})
+
 unitizer_sect("Time Series", {
 
   y <- ts(runif(12), start=1970, freq=12)
@@ -13,4 +27,24 @@ unitizer_sect("Time Series", {
 
   abstract(y, "boom")
   alike:::abstract.ts(1:12)
+})
+unitizer_sect("lm", {
+  set.seed(1)
+  df1 <- data.frame(x = runif(10), y=runif(10), z=runif(10))
+  df2 <- data.frame(a = runif(5), b=runif(5), c=runif(5))
+  mdl <- lm(y ~ x + poly(z, 2), df1)
+
+  alike(abstract(mdl), mdl)
+
+  mdl2 <- lm(x ~ y + poly(z, 2), df1)
+
+  alike(abstract(mdl), mdl2)
+
+  mdl3 <- lm(a ~ b + log(c), df2)
+
+  alike(abstract(mdl), mdl3)
+
+  mdl4 <- lm(a ~ b, df2)
+
+  alike(abstract(mdl), mdl4)
 })

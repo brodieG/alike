@@ -1,25 +1,45 @@
-#' Reduces Objects to Their Basic Structure
+#' Turn S3 Objects Into Templates
 #'
-#' Currently somewhat experimental, with behvaior likely to change in future.
+#' Create templates for use by \code{\link{alike}}. Currently somewhat
+#' experimental; behavior may change in future.
 #'
-#' This is implemented in R so will slow down validations a little bit if you
-#' use it within the \code{validate*()} expression itself.
+#' \code{abstract} is intended to create templates for use by
+#' \code{\link{alike}}.  The result of abstraction is often a partially
+#' specified object.  This type of object may not be suited for use in typical
+#' R computations and may cause errors (or worse) if you try to use them as
+#' normal R objects.
+#'
+#' \code{\link{alike}} is an S3 generic.  Note that the default method will
+#' dispatch on implicit classes, so if you attempt to \code{abstract} an object
+#' without an explicit \code{abstract} method, it will get abstracted based on
+#' its implicit class.  If you define your own \code{abstract} method and do not
+#' wish further abstraction based on implicit classes do not use
+#' \code{\link{NextMethod}}.
+#'
+#' S4 and RC objects are returned unchanged.
 #'
 #' @export
+#' @seealso \code{\link{abstract.ts}}
 #' @param x the object to abstract
-#' @param ... arguments for methods
+#' @param ... arguments for methods that require further arguments
 #' @return abstracted object
 #' @examples
 #' iris.tpl <- abstract(iris)
 #' alike(iris.tpl, iris[1:10, ])
-#' alike(iris.tpl, transform(iris, Species=as.characterSpecies))
+#' alike(iris.tpl, transform(iris, Species=as.character(Species))
+#'
+#' abstract(1:10)
+#' abstract(matrix(1:9, nrow=3))
+#' abstract(list(1:9, runif(10)))
 
 abstract <- function(x, ...) UseMethod("abstract")
 
+#' @rdname abstract
 #' @export
 
 abstract.data.frame <- function(x, ...) x[0, ]
 
+#' @rdname abstract
 #' @export
 
 abstract.default <- function(x, ...) {
@@ -33,6 +53,7 @@ abstract.default <- function(x, ...) {
   length(x) <- 0L
   x
 }
+#' @rdname abstract
 #' @export
 
 abstract.array <- function(x, ...) {
@@ -44,21 +65,21 @@ abstract.array <- function(x, ...) {
     dimnames(x) <- replicate(NULL, length(dimnames(x)), simplify=FALSE)
   x
 }
+#' @rdname abstract
 #' @export
 
 abstract.matrix <-function(x, ...) abstract.array(x, ...)
 
+#' @rdname abstract
 #' @export
 
 abstract.list <- function(x, ...) {
   for(i in seq_along(x)) {
     x[[i]] <- abstract(x[[i]])
   }
-  # attrs.x <- attributes(x)
-  # if(!(identical(names(attrs.x), "names") && identical(attrs.x$names, "names")))
-  #   attributes(x) <- abstract(attrs.x)
   x
 }
+#' @rdname abstract
 #' @export
 
 abstract.lm <- function(x, ...) {
@@ -68,11 +89,11 @@ abstract.lm <- function(x, ...) {
   NextMethod()
 }
 
-#' Abstracts Time Series Parameters
+#' Abstract Time Series
 #'
 #' \code{\link{alike}} will treat time series parameter components with zero in
 #' them as wildcards.  This function allows you to create these wild card time
-#' series attribute since R does not allow direct creation/modification of
+#' series attributes since R does not allow direct creation/modification of
 #' \code{ts} attributes with zero values.
 #'
 #' Make sure you do not try to use the templates you create with this for
@@ -80,6 +101,7 @@ abstract.lm <- function(x, ...) {
 #' likely undefined given R expects non zero values for the \code{ts}
 #' attribute and attempts to prevent such attributes.
 #'
+#' @seealso \code{\link{abstract}}
 #' @param what which portion of the \code{ts} attribute to abstract, by default
 #'   all three are abstracted, but you can select, any one, two, or all
 #' @return a \code{ts} object with the \code{ts} parameter modified
