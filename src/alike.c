@@ -242,7 +242,10 @@ struct ALIKEC_res ALIKEC_res_ind_init(
   struct ALIKEC_res res, struct ALIKEC_settings * set
 ) {
   if(set->rec_lvl <= set->rec_lvl_last)
-    error("Logic Error: negative recursion level detected");
+    error(
+      "Logic Error: negative recursion level detected %d %d",
+      set->rec_lvl, set->rec_lvl_last
+    );
   set->rec_lvl--;
   size_t rec_off = set->rec_lvl - set->rec_lvl_last;
   res.rec_lvl = rec_off;
@@ -408,6 +411,7 @@ const char * ALIKEC_alike_internal(
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
   int top_lvl = !set->rec_lvl;
+  size_t rec_lvl_last_prev = set->rec_lvl_last;
   set->rec_lvl_last = set->rec_lvl;          // Allows us to keep track of recursion depth between calls to ALIKEC_alike_internal
 
   struct ALIKEC_res res;
@@ -423,7 +427,10 @@ const char * ALIKEC_alike_internal(
     // Recursively check object
 
     res = ALIKEC_alike_rec(target, current, set);
-    if(res.success) return "";
+    if(res.success) {
+      set->rec_lvl_last = rec_lvl_last_prev;
+      return "";
+    }
     err_base = res.message;
   }
   // - Contruct Error ----------------------------------------------------------
@@ -434,7 +441,7 @@ const char * ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(!res.rec_lvl) {  // No recursion occurred
+  if(res.rec_lvl == set->rec_lvl_last) {  // No recursion occurred
     err_final = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s%s%s%s", top_lvl ? set->prepend : "", err_msg,
       "", ""
@@ -514,6 +521,7 @@ const char * ALIKEC_alike_internal(
       err_msg, err_interim, ""
     );
   }
+  set->rec_lvl_last = rec_lvl_last_prev;
   return (const char *) err_final;
 }
 

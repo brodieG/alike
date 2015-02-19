@@ -135,6 +135,20 @@ Here we actually start profiling.  Baseline:
                       expr   min    lq median   uq    max neval
      alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
 
+Get rid of unnecessary prepend copy:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min   lq median    uq    max neval
+     alike(mtcars, mtcars) 3.973 4.16 4.3135 4.638 21.119  1000
+
+Astonishingly, getting rid of the index business didn't appear to improve things
+much at all:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq   max neval
+     alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
 
 ### Stack Manipulation
 
