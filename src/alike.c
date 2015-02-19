@@ -396,6 +396,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
   } else {
     res1 = res0;
   }
+  res1.df = res0.df;
   set->rec_lvl--;
   return res1;
 }
