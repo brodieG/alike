@@ -403,6 +403,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
 /*
 Run alike calculation, and in particular, compose error message if relevant
 */
+
 const char * ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
@@ -452,7 +453,7 @@ const char * ALIKEC_alike_internal(
 
     char * err_chr_index, * err_chr_indeces;
     const char * err_chr_index_val;
-    size_t err_size = 0, levels = 0, ind_size_max = 0, ind_size;
+    size_t err_size = 0, ind_size_max = 0, ind_size;
 
     for(size_t i = 0; i < res.rec_lvl; i++) {
       switch(res.indices[i].type) {
@@ -469,16 +470,19 @@ const char * ALIKEC_alike_internal(
       if(ind_size > ind_size_max) ind_size_max = ind_size;
       err_size += ind_size;
     }
-    err_chr_indeces = (char *) R_alloc(err_size + 4 * levels + 1, sizeof(char));
+    err_chr_indeces = (char *) R_alloc(err_size + 4 * res.rec_lvl + 1, sizeof(char));
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
     err_chr_indeces[0] = '\0';
 
     for(size_t i = 0; i < res.rec_lvl; i++) {
+
       const char * index_tpl = "[[%s]]";
       switch(res.indices[i].type) {
         case 0:
-          err_chr_index_val =
-            (const char *) CSR_len_as_chr(res.indices[i].ind.num);
+          {
+            err_chr_index_val =
+              (const char *) CSR_len_as_chr(res.indices[i].ind.num);
+          }
           break;
         case 1:
           {
@@ -486,6 +490,8 @@ const char * ALIKEC_alike_internal(
             index_tpl = "[[\"%s\"]]";
           }
           break;
+        default:
+          error("Logic Error: unexpected index type (2) %d", res.indices[i].type);
       }
       // leave off last index as treated differently if it is a DF column vs not
       // that will be dealt in the next step
@@ -496,7 +502,6 @@ const char * ALIKEC_alike_internal(
       }
     }
     char * err_interim;
-
     if(res.rec_lvl == 1) {
       if(res.df) {
         err_interim = CSR_smprintf4(
