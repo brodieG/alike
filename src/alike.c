@@ -268,12 +268,12 @@ struct ALIKEC_res ALIKEC_alike_rec(
   /*
   Recurse through various types of recursive structures.
   VERY IMPORTANT: there are several return points throughout here that don't
-  actually imply recursion; make sure to decrement rec_lvl before return if
-  that happens
+  actually imply recursion; make sure to initialize the index trackign when
+  that happens.  Note that exit points to ALIKEC_alike_rec don't require this.
 
   Side note: probably don't need to generate full error report unless we're on
   outermost `ALIKEC_alike_internal` call since we don't display the inner
-  reports anyway.
+  reports anyway, so could be a bit more efficient there.
   */
   size_t rec_lvl_old = set->rec_lvl;
   set->rec_lvl++;  //Mark recursion depth
@@ -340,7 +340,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
             ALIKEC_MAX_CHAR, "contain variable `%s`",
             CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
           );
-          res1 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
+          res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking since this is not a recursion error
           UNPROTECT(2);
           return(res1);
         }
@@ -381,7 +381,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
           CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
         );
         res1.success = 0;
-        res1 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
+        res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking
         return res1;
       }
       res1 = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), set);
