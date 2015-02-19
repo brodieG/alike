@@ -249,9 +249,10 @@ struct ALIKEC_res ALIKEC_res_ind_init(
   set->rec_lvl--;
   size_t rec_off = set->rec_lvl - set->rec_lvl_last;
   res.rec_lvl = rec_off;
-  if(rec_off)
+  if(rec_off) {
     res.indices = (struct ALIKEC_index *)
       R_alloc(rec_off, sizeof(struct ALIKEC_index));
+  }
   return res;
 }
 
@@ -287,7 +288,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
     res0 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
     return res0;
   }
-
   struct ALIKEC_res res1 = {1, "", res0.df, 0};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
@@ -441,7 +441,7 @@ const char * ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(res.rec_lvl == set->rec_lvl_last) {  // No recursion occurred
+  if(!res.rec_lvl) {  // No recursion occurred
     err_final = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s%s%s%s", top_lvl ? set->prepend : "", err_msg,
       "", ""

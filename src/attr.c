@@ -267,9 +267,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  if(res[0])
+  if(res[0]) {
     return CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for %%s", res, "", "", "");
-
+  }
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
