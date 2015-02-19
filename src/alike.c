@@ -423,10 +423,7 @@ const char * ALIKEC_alike_internal(
     // Recursively check object
 
     res = ALIKEC_alike_rec(target, current, set);
-    if(res.success) {
-      UNPROTECT(1);
-      return "";
-    }
+    if(res.success) return "";
     err_base = res.message;
   }
   // - Contruct Error ----------------------------------------------------------
@@ -517,7 +514,6 @@ const char * ALIKEC_alike_internal(
       err_msg, err_interim, ""
     );
   }
-  UNPROTECT(1);
   return (const char *) err_final;
 }
 
