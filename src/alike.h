@@ -5,10 +5,22 @@
 
   // - Data Structures ---------------------------------------------------------
 
+  union ALIKEC_index_raw {
+    R_xlen_t num;
+    const char * chr;
+  };
+  struct ALIKEC_index {
+    union ALIKEC_index_raw ind;
+    int type;               // 0 is numeric, 1 is character
+  };
   struct ALIKEC_res {
     int success;
     char * message;
     int df;
+    // track indices of error, this will be allocated with as many items as
+    // there are recursion levels.
+    struct ALIKEC_index * indices;
+    size_t rec_lvl;                 // max recursion depth
   };
   struct ALIKEC_res_attr {
     int success;
@@ -30,10 +42,12 @@
     int attr_mode;
     const char * prepend;
     int suppress_warnings;
-    SEXP match_env;
-    struct ALIKEC_settings_env * env_set;
-    int no_rec;
-    size_t in_attr;
+    SEXP match_env;                         // what environment to look for functions to match call in
+    struct ALIKEC_settings_env * env_set;   // Used to track whether we've encountered an environment before
+    int no_rec;                             // block futher recursion into environments
+    size_t in_attr;                         // whether we're recursing through attributes
+    size_t rec_lvl;                         // level of recursion
+    size_t rec_lvl_last;                    // level of recursion last time ALIKEC_alike_internal was called
   };
 
   // - Constants ---------------------------------------------------------------

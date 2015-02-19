@@ -127,6 +127,14 @@ Unit: microseconds
  .alike(lst.2, lst) 1.769 1.865  1.947 2.012  4.253  1000   # no error
  .alike(lst.3, lst) 3.226 3.372  3.440 3.535 55.883  1000   # with error
 ```
+### As of Interim v0.3.0
+
+Here we actually start profiling.  Baseline:
+
+    Unit: microseconds
+                      expr   min    lq median   uq    max neval
+     alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
+
 
 ### Stack Manipulation
 
