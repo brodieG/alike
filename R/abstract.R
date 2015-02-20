@@ -90,8 +90,14 @@ abstract.lm <- function(x, ...) {
   names(attr(x$terms, "dataClasses")) <- NULL
   names(x$model) <- NULL
   names(attr(attr(x$model, "terms"), "dataClasses")) <- NULL
+  attr(attr(x$model, "terms"), ".Environment") <- emptyenv()
+  attr(x$terms, ".Environment") <- emptyenv()
   NextMethod()
 }
+#' @rdname abstract
+#' @export
+
+abstract.environment <- function(x, ...) emptyenv()
 
 #' Abstract Time Series
 #'
