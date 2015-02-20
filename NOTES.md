@@ -127,6 +127,58 @@ Unit: microseconds
  .alike(lst.2, lst) 1.769 1.865  1.947 2.012  4.253  1000   # no error
  .alike(lst.3, lst) 3.226 3.372  3.440 3.535 55.883  1000   # with error
 ```
+### As of Interim v0.3.0
+
+Here we actually start profiling.  Baseline:
+
+    Unit: microseconds
+                      expr   min    lq median   uq    max neval
+     alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
+
+Get rid of unnecessary prepend copy:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min   lq median    uq    max neval
+     alike(mtcars, mtcars) 3.973 4.16 4.3135 4.638 21.119  1000
+
+Astonishingly, getting rid of the index business didn't appear to improve things
+much at all:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq   max neval
+     alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
+
+Actually, maybe it did.  Had a few bug fixes in between above and below, but
+don't see why it would have been slower as a result of bugs:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median     uq    max neval
+     alike(mtcars, mtcars) 3.719 3.828  3.888 3.9645 20.667  1000
+
+Upon testing a bit more, could be starting with a fresh R process (or alternatively having a bogged down one) that makes the difference?
+
+Some more improvements of swapping out `strcmp` for direct symbol comparison:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq    max neval
+     alike(mtcars, mtcars) 3.591 3.746 3.8215 3.953 30.225  1000
+
+One issue with all this, laboriously we benchmarked `strcmp` on 8 character strings, and found that 4MM comparisons, it took:
+
+    Unit: microseconds
+                    expr       min        lq     median         uq       max neval
+     alike_test(1, 2, 3) 16707.573 16806.983 16870.4480 16994.7620 21516.922   100
+     alike_test(0, 2, 3)   207.384   209.116   212.1385   221.7965   403.504   100
+
+Or about 4 ns per comparison.  In `mtcars`, based on profiling information from instruments, we found that about 7.3% of the time was spent on `strcmp` comparing names, and there are 43 names (8 cols, 35 rows) or so, so that adds up to about 6.1ns per comparison, which ties out.
+
+When comparing language objects, the hash mechanism we use that needs to allocate a bunch of names is pretty costly.  In order to fix this we would need substantial upgrades to the hashing system so that we can store stuff other than strings.  In particular, we'd want to predifine about 30 or so symbols to avoid having to allocate them at run time.  Looks like we could hash the memory addresses of the symbols (but need to figure out if good hash is portable, etc).
+
+Also, we pre-allocate the object used to deparse the error message even before error occurs.  Is there a way to only do so if an error occurs?  Might be difficult since we need both the starting pointer as well as the location of error pointer in the same pointer chain.
 
 ### Stack Manipulation
 

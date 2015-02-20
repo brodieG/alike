@@ -267,9 +267,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  if(res[0])
+  if(res[0]) {
     return CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for %%s", res, "", "", "");
-
+  }
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
@@ -281,18 +281,19 @@ const char * ALIKEC_compare_special_char_attrs_internal(
       return "have identical values for %%s";
     return "";
   } else if (tar_type == STRSXP) {
-    for(i = (R_xlen_t) 0; i < tar_len; i++) {
-      const char * cur_name_val, * tar_name_val = CHAR(STRING_ELT(target, i));
-      if(         // check dimnames names match
-        strcmp(tar_name_val, "") != 0 &&
-        strcmp(tar_name_val, cur_name_val = CHAR(STRING_ELT(current, i))) != 0
-      ) {
-        return CSR_smprintf4(
-          ALIKEC_MAX_CHAR,
-          "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
-          tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
-        );
-    } }
+    if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
+      for(i = (R_xlen_t) 0; i < tar_len; i++) {
+        const char * cur_name_val = CHAR(STRING_ELT(current, i));
+        const char * tar_name_val = CHAR(STRING_ELT(target, i));
+        if(         // check dimnames names match
+          tar_name_val[0] && strcmp(tar_name_val, cur_name_val) != 0
+        ) {
+          return CSR_smprintf4(
+            ALIKEC_MAX_CHAR,
+            "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
+            tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
+          );
+    } } }
     return "";
   }
   error("Logic Error in compare_special_char_attrs; contact maintainer");
@@ -355,14 +356,15 @@ const char * ALIKEC_compare_dimnames(
     prim_attr_cpy = prim_attr; prim_attr_cpy != R_NilValue;
     prim_attr_cpy = CDR(prim_attr_cpy)
   ) {
-    const char * prim_tag = CHAR(PRINTNAME(TAG(prim_attr_cpy)));
+    SEXP prim_tag_symb = TAG(prim_attr_cpy);
+    const char * prim_tag = CHAR(PRINTNAME(prim_tag_symb));
     int do_continue = 0;
-    if(strcmp(prim_tag, "names") == 0) continue;
+    if(prim_tag_symb == R_NamesSymbol) continue;
     for(
       sec_attr_cpy = sec_attr; sec_attr_cpy != R_NilValue;
       sec_attr_cpy = CDR(sec_attr_cpy)
     ) {
-      if(strcmp(prim_tag, CHAR(PRINTNAME(TAG(sec_attr_cpy)))) == 0) {
+      if(prim_tag_symb == TAG(sec_attr_cpy)) {
         const char * res = ALIKEC_alike_internal(
           CAR(prim_attr_cpy), CAR(sec_attr_cpy), set
         );
@@ -627,6 +629,12 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         CSR_len_as_chr(xlength(cur_attr)), "", "", ""
   );} }
   /*
+  Mark that we're in attribute checking so we can handle recursions within
+  attributes properly
+  */
+  set->in_attr++;
+
+  /*
   Loop through all attr combinations; maybe could be made faster by
   reducing the second loop each time a match is found, though this would require
   duplication of the attributes (likely faster for items with lots of attributes,
@@ -643,7 +651,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     prim_attr_el = prim_attr; prim_attr_el != R_NilValue;
     prim_attr_el = CDR(prim_attr_el)
   ) {
-    const char * tx = CHAR(PRINTNAME(TAG(prim_attr_el)));
+    SEXP prim_tag = TAG(prim_attr_el);
+    const char * tx = CHAR(PRINTNAME(prim_tag));
     prim_attr_count++;
 
     for(
@@ -651,7 +660,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       sec_attr_el = CDR(sec_attr_el)
     ) {
       if(!sec_attr_counted) sec_attr_count++;
-      if(strcmp(tx, CHAR(PRINTNAME(TAG(sec_attr_el)))) == 0) break;
+      if(prim_tag == TAG(sec_attr_el)) break;
     }
     sec_attr_counted = 1;
     if(prim_attr_el == R_NilValue) { // NULL attrs shouldn't be possible
@@ -662,13 +671,15 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
     // Undo reverse now that we've gone through double loop
 
-    SEXP tar_attr_el, tar_attr_el_val, cur_attr_el, cur_attr_el_val;
+    SEXP tar_attr_el, tar_attr_el_val, cur_attr_el, cur_attr_el_val, tar_tag;
     if(rev) {
       tar_attr_el = sec_attr_el;
       cur_attr_el = prim_attr_el;
+      tar_tag = TAG(sec_attr_el);
     } else {
       tar_attr_el = prim_attr_el;
       cur_attr_el = sec_attr_el;
+      tar_tag = prim_tag;
     }
     // No match only matters if target has attrs or in strict mode
     if(
@@ -703,7 +714,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       for every other error we have to keep going in case we eventually find a
       class error*/
 
-      if(!strcmp(tx, "class")) {
+      if(tar_tag == R_ClassSymbol) {
         SEXP cur_attr_el_val_tmp =
           PROTECT(ALIKEC_class(rev ? target : current, cur_attr_el_val));
         SEXP tar_attr_el_val_tmp =
@@ -718,7 +729,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         }
       // - Names ---------------------------------------------------------------
 
-      } else if (strcmp(tx, "names") == 0 || strcmp(tx, "row.names") == 0) {
+      } else if (tar_tag == R_NamesSymbol || tar_tag == R_RowNamesSymbol) {
         const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
           tar_attr_el_val, cur_attr_el_val, set
         );
@@ -727,7 +738,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         continue;
       // - Dims ----------------------------------------------------------------
 
-      } else if (strcmp(tx, "dim") == 0 && set->attr_mode == 0) {
+      } else if (tar_tag == R_DimSymbol && set->attr_mode == 0) {
         int tmp = 0;
         int * class_mode = &tmp;
 
@@ -741,20 +752,20 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         }
       // - dimnames ------------------------------------------------------------
 
-      } else if (strcmp(tx, "dimnames") == 0) {
+      } else if (tar_tag == R_DimNamesSymbol) {
         err_major[3] = ALIKEC_compare_dimnames(
           tar_attr_el_val, cur_attr_el_val, set
         );
 
       // - levels --------------------------------------------------------------
 
-      } else if (strcmp(tx, "levels") == 0) {
+      } else if (tar_tag == R_LevelsSymbol) {
         err_major[4] =
           ALIKEC_compare_levels(tar_attr_el_val, cur_attr_el_val, set);
 
       // - tsp -----------------------------------------------------------------
 
-      } else if (strcmp(tx, "tsp") == 0) {
+      } else if (tar_tag == R_TspSymbol) {
 
         err_major[4] = ALIKEC_compare_ts(
           tar_attr_el_val, cur_attr_el_val, set
@@ -775,6 +786,10 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       prim_attr_count != 1 ? "s" : "", CSR_len_as_chr(sec_attr_count), ""
   );}
   // Now determine which error to throw, if any
+
+  if(!set->in_attr)
+    error("Logic Error: attribute depth counter corrupted; contact maintainer");
+  set->in_attr--;
 
   res_attr.df = *is_df;
   int i;

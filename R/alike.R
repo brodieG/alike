@@ -272,7 +272,7 @@ env_track <- function(env, size_init = 32)
 #' @export
 #' @keywords internal
 
-alike_test <- function() .Call("ALIKEC_test", PACKAGE="alike")
+alike_test <- function(mode, a, b) .Call(ALIKEC_test, mode, a, b)
 
 #' Pre-calculated Precision Level
 #'

@@ -18,6 +18,9 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   ALIKEC_set_tmp_val->prepend = prepend;
   ALIKEC_set_tmp_val->env_set = 0;
   ALIKEC_set_tmp_val->no_rec = 0;
+  ALIKEC_set_tmp_val->in_attr = 0;
+  ALIKEC_set_tmp_val->rec_lvl = 0;
+  ALIKEC_set_tmp_val->rec_lvl_last = 0;
 
   return ALIKEC_set_tmp_val;
 }
@@ -208,8 +211,51 @@ struct ALIKEC_res ALIKEC_alike_obj(
   } else {
     res.success = 1;
   }
+  res.indices = 0; // initialize to null pointer
   return res;
 }
+/*
+Utility functions for updating index list for error reporting.  General logic
+is to track depth of recursion, and when an error occurs, allocate enough
+space for as many ALIKEC_index structs as there is recursion depth.
+*/
+
+void ALIKEC_res_ind_set(
+  struct ALIKEC_res res, struct ALIKEC_index ind, size_t lvl
+) {
+  // Find correct spot in previously allocated indices spaces, clearly relies on
+  // lvl being exactly correct...
+
+  struct ALIKEC_index * cur_ind = res.indices + lvl - 1;
+  *cur_ind = ind;
+}
+void ALIKEC_res_ind_chr(struct ALIKEC_res res, const char * ind, size_t lvl) {
+  union ALIKEC_index_raw ind_u = {.chr = ind};
+  ALIKEC_res_ind_set(res, (struct ALIKEC_index) {ind_u, 1}, lvl);
+}
+void ALIKEC_res_ind_num(struct ALIKEC_res res, R_xlen_t ind, size_t lvl) {
+  union ALIKEC_index_raw ind_u = {.num = ind};
+  ALIKEC_res_ind_set(res, (struct ALIKEC_index) {ind_u, 0}, lvl);
+}
+
+struct ALIKEC_res ALIKEC_res_ind_init(
+  struct ALIKEC_res res, struct ALIKEC_settings * set
+) {
+  if(set->rec_lvl <= set->rec_lvl_last)
+    error(
+      "Logic Error: negative recursion level detected %d %d",
+      set->rec_lvl, set->rec_lvl_last
+    );
+  set->rec_lvl--;
+  size_t rec_off = set->rec_lvl - set->rec_lvl_last;
+  res.rec_lvl = rec_off;
+  if(rec_off) {
+    res.indices = (struct ALIKEC_index *)
+      R_alloc(rec_off, sizeof(struct ALIKEC_index));
+  }
+  return res;
+}
+
 /*
 Handle recursive types; these include VECSXP, environments, and pair lists.
 One possible slow step here is that we keep create new CONS for each new
@@ -217,36 +263,56 @@ index element; not sure if this is meanifully slow or not
 */
 
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, SEXP index, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
+  /*
+  Recurse through various types of recursive structures.
+  VERY IMPORTANT: there are several return points throughout here that don't
+  actually imply recursion; make sure to initialize the index trackign when
+  that happens.  Note that exit points to ALIKEC_alike_rec don't require this.
+
+  Side note: probably don't need to generate full error report unless we're on
+  outermost `ALIKEC_alike_internal` call since we don't display the inner
+  reports anyway, so could be a bit more efficient there.
+  */
+  size_t rec_lvl_old = set->rec_lvl;
+  set->rec_lvl++;  //Mark recursion depth
+  if(rec_lvl_old >= set->rec_lvl)
+    error("Logic Error: recursion stack depth exceeded 264 - shouldn't happen");
+
   // normal logic, which will have checked length and attributes, etc.
 
   struct ALIKEC_res res0 = ALIKEC_alike_obj(target, current, set);
 
   if(!res0.success) {
-    return (struct ALIKEC_res) {0, res0.message, res0.df};
+    res0 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
+    return res0;
   }
-  // Recurse
-
-  struct ALIKEC_res res1 = {1, "", res0.df};
+  struct ALIKEC_res res1 = {1, "", res0.df, 0};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 
   if(tar_type == VECSXP || tar_type == EXPRSXP) {
     R_xlen_t i;
-    SEXP vec_names = getAttrib(target, R_NamesSymbol);
 
     for(i = 0; i < tar_len; i++) {
-      if(vec_names == R_NilValue || !CHAR(STRING_ELT(vec_names, i))[0])
-        SETCDR(index, list1(ScalarInteger(i)));
-      else SETCDR(index, list1(STRING_ELT(vec_names, i)));
       res1 = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), CDR(index), set
+        VECTOR_ELT(target, i), VECTOR_ELT(current, i), set
       );
-      // Rprintf("Loop: %d success: %d", i, res1.success);
-      if(!res1.success) break;
+      if(!res1.success) {
+        SEXP vec_names = getAttrib(target, R_NamesSymbol);
+        const char * ind_name;
+        if(
+          vec_names == R_NilValue ||
+          !((ind_name = CHAR(STRING_ELT(vec_names, i))))[0]
+        )
+          ALIKEC_res_ind_num(res1, i + 1, set->rec_lvl);
+        else
+          ALIKEC_res_ind_chr(res1, ind_name, set->rec_lvl);
+        break;
+      }
     }
-  } else if (tar_type == ENVSXP) {
+  } else if (tar_type == ENVSXP && !set->in_attr) {
     // Need to guard against possible circular reference in the environments
     if(!set->env_set) {
       set->env_set = ALIKEC_env_set_create(16);
@@ -261,10 +327,12 @@ struct ALIKEC_res ALIKEC_alike_rec(
     } else {
       SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
       R_xlen_t tar_name_len = XLENGTH(tar_names), i;
+
       if(tar_name_len != tar_len)
-        error("Logic Error: mismatching env lengths; contact maintainer");
+        error("Logic Error: mismatching name-env lengths; contact maintainer");
       for(i = 0; i < tar_len; i++) {
-        SEXP var_name = PROTECT(install(CHAR(STRING_ELT(tar_names, i))));
+        const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
+        SEXP var_name = PROTECT(install(var_name_chr));
         SEXP var_cur_val = findVarInFrame(current, var_name);
         if(var_cur_val == R_UnboundValue) {
           res1.success = 0;
@@ -272,22 +340,27 @@ struct ALIKEC_res ALIKEC_alike_rec(
             ALIKEC_MAX_CHAR, "contain variable `%s`",
             CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
           );
+          res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking since this is not a recursion error
           UNPROTECT(2);
-          break;
+          return(res1);
         }
-        SETCDR(index, list1(STRING_ELT(tar_names, i)));
         /*
+        UNCLEAR WHAT I MEANT BY THIS COMMENT??? SHOULD BE ABLE TO RECURSE FINE
+        PROVIDED WE CHECK FOR CIRCULARITY. CHANGING TO REC FOR NOW
         We cannot recurse here because environments allow for the possibility
         of a self referential loop.  Note that even ALIKEC_alike_obj can cause
         recursion due to use of `alike` on attributes, so if already in an
         environment, then we must content ourselves with a non-recursive alike
         comparison
         */
-        res1 = ALIKEC_alike_obj(
+        res1 = ALIKEC_alike_rec(
           findVarInFrame(target, var_name), var_cur_val, set
         );
         UNPROTECT(1);
-        if(!res1.success) break;
+        if(!res1.success) {
+          ALIKEC_res_ind_chr(res1, var_name_chr, set->rec_lvl);
+          break;
+        }
       }
       UNPROTECT(1);
     }
@@ -307,24 +380,30 @@ struct ALIKEC_res ALIKEC_alike_rec(
           ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
           CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
         );
-        SETCDR(index, R_NilValue);
         res1.success = 0;
+        res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking
+        return res1;
+      }
+      res1 = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), set);
+      if(!res1.success) {
+        if(tar_tag != R_NilValue)
+          ALIKEC_res_ind_chr(res1, CHAR(asChar(tar_tag_chr)), set->rec_lvl);
+        else
+          ALIKEC_res_ind_num(res1, i + 1, set->rec_lvl);
         break;
       }
-      if(tar_tag != R_NilValue) SETCDR(index, list1(asChar(tar_tag_chr)));
-      else SETCDR(index, list1(ScalarInteger(i)));
-      res1 = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), CDR(index), set);
-      if(!res1.success) break;
     }
   } else {
-    return res0;
+    res1 = res0;
   }
-  res1.df = res0.df;  // Indicate whether parent object was a data frame
+  res1.df = res0.df;
+  set->rec_lvl--;
   return res1;
 }
 /*
-Run alike calculation
+Run alike calculation, and in particular, compose error message if relevant
 */
+
 const char * ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
@@ -333,9 +412,9 @@ const char * ALIKEC_alike_internal(
   if(set->attr_mode < 0 || set->attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
-  char * err_prepend = CSR_strmcpy(set->prepend, ALIKEC_MAX_CHAR);
-  set->prepend = "";  // Prepend only applies to outer most loop
-  SEXP index = PROTECT(list1(R_NilValue));
+  int top_lvl = !set->rec_lvl;
+  size_t rec_lvl_last_prev = set->rec_lvl_last;
+  set->rec_lvl_last = set->rec_lvl;          // Allows us to keep track of recursion depth between calls to ALIKEC_alike_internal
 
   struct ALIKEC_res res;
 
@@ -343,14 +422,15 @@ const char * ALIKEC_alike_internal(
     // Handle NULL special case at top level
 
     err_base = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be type \"NULL\" (is \"%s\")", type2char(TYPEOF(current)), "", "", ""
+      ALIKEC_MAX_CHAR, "be type \"NULL\" (is \"%s\")",
+      type2char(TYPEOF(current)), "", "", ""
     );
   } else {
     // Recursively check object
 
-    res = ALIKEC_alike_rec(target, current, index, set);
+    res = ALIKEC_alike_rec(target, current, set);
     if(res.success) {
-      UNPROTECT(1);
+      set->rec_lvl_last = rec_lvl_last_prev;
       return "";
     }
     err_base = res.message;
@@ -363,66 +443,66 @@ const char * ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(CDR(index) == R_NilValue) {  // No recursion occurred
+  if(!res.rec_lvl) {  // No recursion occurred
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", err_prepend, err_msg, "", ""
+      ALIKEC_MAX_CHAR, "%s%s%s%s", top_lvl ? set->prepend : "", err_msg,
+      "", ""
     );
   } else {
     // Scan through all indices to calculate size of required vector
 
     char * err_chr_index, * err_chr_indeces;
     const char * err_chr_index_val;
-    SEXP ind_sub;
-    SEXP ind_sub_val;
-    size_t err_size = 0, levels = 0, ind_size_max = 0, ind_size;
+    size_t err_size = 0, ind_size_max = 0, ind_size;
 
-    for(ind_sub = CDR(index); ind_sub != R_NilValue; ind_sub = CDR(ind_sub), levels++) {
-      ind_sub_val = CAR(ind_sub);
-      switch(TYPEOF(ind_sub_val)) {
-        case INTSXP:
-          ind_size = CSR_len_chr_len(asInteger(ind_sub_val));
+    for(size_t i = 0; i < res.rec_lvl; i++) {
+      switch(res.indices[i].type) {
+        case 0:
+          ind_size = CSR_len_chr_len(res.indices[i].ind.num);
           break;
-        case CHARSXP:
-          ind_size = CSR_strmlen(CHAR(ind_sub_val), ALIKEC_MAX_CHAR) + 2;
+        case 1:
+          ind_size = CSR_strmlen(res.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
-          error("Logic Error: unexpected index type 1 \"%s\"; contact maintainer.", type2char(TYPEOF(ind_sub_val)));
+          error("Logic Error: unexpected index type %d; contact maintainer.", res.indices[i].type);
         }
       }
       if(ind_size > ind_size_max) ind_size_max = ind_size;
       err_size += ind_size;
     }
-    err_chr_indeces = (char *) R_alloc(err_size + 4 * levels + 1, sizeof(char));
+    err_chr_indeces = (char *) R_alloc(err_size + 4 * res.rec_lvl + 1, sizeof(char));
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
     err_chr_indeces[0] = '\0';
 
-    size_t i;
+    for(size_t i = 0; i < res.rec_lvl; i++) {
 
-    for(ind_sub = CDR(index), i = 0; i < levels; ind_sub = CDR(ind_sub), i++) {
-      ind_sub_val = CAR(ind_sub);
       const char * index_tpl = "[[%s]]";
-      switch(TYPEOF(ind_sub_val)) {
-        case INTSXP:
-          err_chr_index_val = (const char *) CSR_len_as_chr(asInteger(ind_sub_val) + 1);
+      switch(res.indices[i].type) {
+        case 0:
+          {
+            err_chr_index_val =
+              (const char *) CSR_len_as_chr(res.indices[i].ind.num);
+          }
           break;
-        case CHARSXP:
-          err_chr_index_val = CHAR(ind_sub_val);
-          index_tpl = "[[\"%s\"]]";
+        case 1:
+          {
+            err_chr_index_val = res.indices[i].ind.chr;
+            index_tpl = "[[\"%s\"]]";
+          }
           break;
         default:
-          error("Logic Error: unexpected index type 2; contact maintainer.");
+          error("Logic Error: unexpected index type (2) %d", res.indices[i].type);
       }
       // leave off last index as treated differently if it is a DF column vs not
       // that will be dealt in the next step
 
       sprintf(err_chr_index, index_tpl, err_chr_index_val);
-      if(i < levels - 1) {  // all these chrs should be terminated...
+      if(i < res.rec_lvl - 1) {  // all these chrs should be terminated...
         strcat(err_chr_indeces, err_chr_index);
       }
     }
     char * err_interim;
-
-    if(levels == 1) {
+    if(res.rec_lvl == 1) {
       if(res.df) {
         err_interim = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "column `%s`", err_chr_index_val, "", "", ""
@@ -443,10 +523,11 @@ const char * ALIKEC_alike_internal(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s at %s", err_prepend, err_msg, err_interim, ""
+      ALIKEC_MAX_CHAR, "%s%s at %s", top_lvl ? set->prepend : "",
+      err_msg, err_interim, ""
     );
   }
-  UNPROTECT(1);
+  set->rec_lvl_last = rec_lvl_last_prev;
   return (const char *) err_final;
 }
 
@@ -487,7 +568,7 @@ SEXP ALIKEC_alike (
 
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
     asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0
+    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0, 0, 0, 0
   };
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
