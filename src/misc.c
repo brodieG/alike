@@ -58,28 +58,22 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test(SEXP mode, SEXP as, SEXP bs) {
 
-  int elems = 2000;
-  int elem_size = 8;
-  char * x = (char *) R_alloc(elems * 2, elem_size);
-
   srand(time(NULL));
-
-  for(int i = 0; i < elems * elem_size * 2; i++) {
-    if((i + 1) % elem_size) *(x + i) = rand() % 42 + 48;
-    else *(x + i) = '\0';
-  }
-  *(x + (elems * elem_size - 1)) = 0;  //Make sure last is zero
-
   int res = 0;
-  if(asLogical(mode)) {
-    for(int i = 0; i < elems; i++) {
-      for(int j = 0; j < elems; j++) {
-        res += strcmp(x + i * elem_size, x + j * elem_size);
+  int reps = 1000;
+  int rnd = rand();
+  int mod_int = asLogical(mode);
+  for(int i_out = 0; i_out < reps; i_out++) {
+    if(mod_int) {
+      R_xlen_t len = XLENGTH(as);
+      for(R_xlen_t i = 0; i < len; i++) {
+        res += strcmp(CHAR(STRING_ELT(as, i)), CHAR(STRING_ELT(bs, i))) + rnd;
       }
+    } else {
+      res += R_compute_identical(as, bs, 16) + rnd;
     }
   }
   return ScalarInteger(res);
-
 
   // int tmp = 0;
   // int * x = &tmp;

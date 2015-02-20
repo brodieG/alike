@@ -281,18 +281,19 @@ const char * ALIKEC_compare_special_char_attrs_internal(
       return "have identical values for %%s";
     return "";
   } else if (tar_type == STRSXP) {
-    for(i = (R_xlen_t) 0; i < tar_len; i++) {
-      const char * cur_name_val = CHAR(STRING_ELT(current, i));
-      const char * tar_name_val = CHAR(STRING_ELT(target, i));
-      if(         // check dimnames names match
-        tar_name_val[0] && strcmp(tar_name_val, cur_name_val) != 0
-      ) {
-        return CSR_smprintf4(
-          ALIKEC_MAX_CHAR,
-          "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
-          tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
-        );
-    } }
+    if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
+      for(i = (R_xlen_t) 0; i < tar_len; i++) {
+        const char * cur_name_val = CHAR(STRING_ELT(current, i));
+        const char * tar_name_val = CHAR(STRING_ELT(target, i));
+        if(         // check dimnames names match
+          tar_name_val[0] && strcmp(tar_name_val, cur_name_val) != 0
+        ) {
+          return CSR_smprintf4(
+            ALIKEC_MAX_CHAR,
+            "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
+            tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
+          );
+    } } }
     return "";
   }
   error("Logic Error in compare_special_char_attrs; contact maintainer");
