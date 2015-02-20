@@ -1,5 +1,6 @@
 #include "alike.h"
 #include "pfhash.h"
+#include <time.h>
 
 // - Helper Functions ----------------------------------------------------------
 
@@ -55,9 +56,30 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
   return x_cp;
 }
 // - Testing Function ----------------------------------------------------------
-SEXP ALIKEC_test() {
+SEXP ALIKEC_test(SEXP mode, SEXP as, SEXP bs) {
 
-  return R_NilValue;
+  int elems = 2000;
+  int elem_size = 8;
+  char * x = (char *) R_alloc(elems * 2, elem_size);
+
+  srand(time(NULL));
+
+  for(int i = 0; i < elems * elem_size * 2; i++) {
+    if((i + 1) % elem_size) *(x + i) = rand() % 42 + 48;
+    else *(x + i) = '\0';
+  }
+  *(x + (elems * elem_size - 1)) = 0;  //Make sure last is zero
+
+  int res = 0;
+  if(asLogical(mode)) {
+    for(int i = 0; i < elems; i++) {
+      for(int j = 0; j < elems; j++) {
+        res += strcmp(x + i * elem_size, x + j * elem_size);
+      }
+    }
+  }
+  return ScalarInteger(res);
+
 
   // int tmp = 0;
   // int * x = &tmp;

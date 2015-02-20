@@ -101,7 +101,7 @@
 
   struct ALIKEC_settings * ALIKEC_set_def();
   SEXP ALIKEC_mode(SEXP obj);
-  SEXP ALIKEC_test();
+  SEXP ALIKEC_test(SEXP mode, SEXP a, SEXP b);
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);

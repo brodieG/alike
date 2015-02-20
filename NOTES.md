@@ -150,6 +150,32 @@ much at all:
                       expr   min    lq median    uq   max neval
      alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
 
+Actually, maybe it did.  Had a few bug fixes in between above and below, but
+don't see why it would have been slower as a result of bugs:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median     uq    max neval
+     alike(mtcars, mtcars) 3.719 3.828  3.888 3.9645 20.667  1000
+
+Upon testing a bit more, could be starting with a fresh R process (or alternatively having a bogged down one) that makes the difference?
+
+Some more improvements of swapping out `strcmp` for direct symbol comparison:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq    max neval
+     alike(mtcars, mtcars) 3.591 3.746 3.8215 3.953 30.225  1000
+
+One issue with all this, laboriously we benchmarked `strcmp` on 8 character strings, and found that 4MM comparisons, it took:
+
+    Unit: microseconds
+                    expr       min        lq     median         uq       max neval
+     alike_test(1, 2, 3) 16707.573 16806.983 16870.4480 16994.7620 21516.922   100
+     alike_test(0, 2, 3)   207.384   209.116   212.1385   221.7965   403.504   100
+
+Or about 4 ns per comparison.  In `mtcars`, based on profiling information from instruments, we found that about 7.3% of the time was spent on `strcmp` comparing names, and there are 43 names (8 cols, 35 rows) or so, so that adds up to about 6.1ns per comparison, which ties out.
+
 ### Stack Manipulation
 
 The is the baseline:
