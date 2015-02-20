@@ -176,6 +176,10 @@ One issue with all this, laboriously we benchmarked `strcmp` on 8 character stri
 
 Or about 4 ns per comparison.  In `mtcars`, based on profiling information from instruments, we found that about 7.3% of the time was spent on `strcmp` comparing names, and there are 43 names (8 cols, 35 rows) or so, so that adds up to about 6.1ns per comparison, which ties out.
 
+When comparing language objects, the hash mechanism we use that needs to allocate a bunch of names is pretty costly.  In order to fix this we would need substantial upgrades to the hashing system so that we can store stuff other than strings.  In particular, we'd want to predifine about 30 or so symbols to avoid having to allocate them at run time.  Looks like we could hash the memory addresses of the symbols (but need to figure out if good hash is portable, etc).
+
+Also, we pre-allocate the object used to deparse the error message even before error occurs.  Is there a way to only do so if an error occurs?  Might be difficult since we need both the starting pointer as well as the location of error pointer in the same pointer chain.
+
 ### Stack Manipulation
 
 The is the baseline:
