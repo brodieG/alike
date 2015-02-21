@@ -563,27 +563,40 @@ SEXP ALIKEC_alike (
   SEXP suppress_warnings, SEXP match_env
 ) {
   SEXPTYPE int_mod_type, tol_type, attr_mod_type;
-  int supp_warn;
+  int supp_warn = 0, type_int = 0, attr_int = 0;
+  double tol_dbl = 0.0;
 
-  int_mod_type = ALIKEC_typeof_internal(type_mode, sqrt(DOUBLE_EPS));
-  attr_mod_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
-  tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
+  int_mod_type = TYPEOF(type_mode);
+  attr_mod_type = TYPEOF(attr_mode);
+  tol_type = TYPEOF(int_tolerance);
 
-  if(int_mod_type != INTSXP || XLENGTH(type_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `type.mode` must be a one length integer like vector");
-  if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `attr.mode` must be a one length integer like vector");
-  if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1)
-    error("Argument `int.tol` must be a one length numeric vector");
+  if(
+    (int_mod_type != INTSXP && int_mod_type != REALSXP) ||
+    XLENGTH(type_mode) != 1 || (type_int = asInteger(type_mode)) == NA_INTEGER ||
+    type_int < 0 || type_int > 2
+  )
+    error("Argument `type.mode` must be a one length numeric between 0 and 2");
+  if(
+    (attr_mod_type != INTSXP && attr_mod_type != REALSXP) ||
+    XLENGTH(attr_mode) != 1 || (attr_int = asInteger(attr_mode)) == NA_INTEGER ||
+    attr_int < 0 || attr_int > 2
+  )
+    error("Argument `attr.mode` must be a one length numeric");
+  if(
+    (tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1 ||
+    (tol_dbl = asReal(int_tolerance)) == NA_REAL || tol_dbl < 0
+  )
+    error("Argument `int.tol` must be a positive one length numeric vector");
   if(
     TYPEOF(suppress_warnings) != LGLSXP || XLENGTH(suppress_warnings) != 1 ||
     (supp_warn = asLogical(suppress_warnings)) == NA_LOGICAL
   )
     error("Argument `suppress.warnings` must be TRUE or FALSE");
+  if(match_env != R_NilValue && TYPEOF(match_env) != ENVSXP)
+    error("Argument `match.call.env` must be NULL or an environment");
 
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
-    asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0, 0, 0, 0
+    type_int, tol_dbl, attr_int, "should ", supp_warn, match_env, 0, 0, 0, 0, 0
   };
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
