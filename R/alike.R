@@ -4,10 +4,17 @@
 #' value.  The \code{target} argument defines a template that the \code{current}
 #' argument must match.
 #'
+#' @section alikeness:
+#'
+#' Generally speaking two objects are alike if they are of the same type (as
+#' determined by \code{\link{type_alike}}) and length.  Attributes on the
+#' objects are required to be recursively \code{alike}, though the following
+#' attributes are treated specially: \code{class}, \code{dim}, \code{dimnames},
+#' \code{names}, \code{row.names}, \code{levels}, \code{tsp}.
+#'
 #' Exactly what makes two objects \code{alike} is complex, but should be
 #' intuitive.  The best way to understand "alikeness" is to review the examples.
-#' If you are interested in more details, see the vignette
-#' (\href{../doc/alike.html}{vignette("alike")}).
+#' For a thorough exposition see \href{../doc/alike.html}{the vignette}.
 #'
 #' @section \code{.alike} and \code{.alike2}:
 #'
@@ -32,59 +39,67 @@
 #' @param match.call.env when matching calls, what frame to look up functions
 #'   definitions in to run \code{match.call} on
 #'   (see \href{../doc/alike.html}{vignette})
+#' @param settings a substitue for all parameters outside of \code{target} and
+#'   \code{current} when using \code{.alike}; generate using
+#'   \code{alike_settings}
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
 #' @examples
+#' # Type comparison
+#'
 #' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
-#' alike(integer(), 1:4)  # TRUE, Zero length `target` matches any length `current`
-#' alike(1:4, integer())  # But not vice versa
 #'
 #' # Scalarness can now be checked at same time as type
 #'
-#' x <- 1
-#' x.2 <- 1:3
-#' y <- TRUE
-#' y.2 <- c(TRUE, TRUE)
-#'
-#' alike(integer(1L), x)
-#' alike(logical(1L), y)
-#' alike(integer(1L), x.2)
-#' alike(logical(1L), y.2)
+#' alike(integer(1L), 1)            # integer-like and length 1?
+#' alike(logical(1L), TRUE)         # logical and length 1?
+#' alike(integer(1L), 1:3)
+#' alike(logical(1L), c(TRUE, TRUE))
 #'
 #' # Zero length match any length of same type
 #'
 #' alike(integer(), 1:10)
+#' alike(1:10, integer())   # but not the other way around
 #'
-#' # NULL matches anything when nested in a list, but not top level
+#' # Recursive objects compared recursively
+#'
+#' alike(
+#'   list(integer(), list(character(), logical(1L))),
+#'   list(1:10, list(letters, TRUE))
+#' )
+#' alike(
+#'   list(integer(), list(character(), logical(1L))),
+#'   list(1:10, list(letters, c(TRUE, FALSE))
+#' )
+#' # `NULL` is a wild card when nested within recursive objects
 #'
 #' alike(list(NULL, NULL), list(iris, mtcars))
-#' alike(NULL, mtcars)
+#' alike(NULL, mtcars)    # but not at top level
 #'
-#' # `alike` will compare data frame columns
+#' # Since `data.frame` are lists, we can compare them recursively:
 #'
-#' df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
-#' df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
-#' df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
+#' iris.fake <- transform(iris, Species=as.character(Species))
+#' alike(iris, iris.fake)
+#' iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species, "americana"))))
+#' alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 #'
-#' alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
-#' alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
+#' # We can use partially specified objects as templates
 #'
-#' # Easily create a template to match a particular data frame structure
+#' iris.tpl <- abstract(iris)
+#' str(iris)
+#' alike(iris.tpl, iris)
+#' alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])    # any row sample of iris matches our iris template
+#' alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])              # but column order matters
 #'
-#' alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), ])     # TRUE
-#' alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), -2])   # FALSE, missing second column
+#' # Also works with matrices / arrays
 #'
-#' # factor levels must match; makes sense, otherwise it really is n9t the same
-#' # type of data (note this is a recursive comparison); for better
-#' # understanding of error examine `levels(df.tpl[[2]])` and
-#' # `levels(df.cur2[[2]])`
-#'
-#' alike(df.tpl, df.cur2)
-#'
-#' alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
-#' alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
+#' alike(matrix(integer(), 3, 3), matrix(1:9, nrow=3))         # 3 x 3 integer
+#' alike(matrix(integer(), 3, 3), matrix(runif(9), nrow=3))    # 3 x 3, but not integer!
+#' alike(matrix(integer(), 3), matrix(1:12, nrow=3))           # partial spec, any 3 row integer matrix
+#' alike(matrix(integer(), 3), matrix(1:12, nrow=4))
+#' alike(matrix(logical()), array(rep(TRUE, 8), rep(2, 3)))    # Any logical matrix (but not arrays)
 #'
 #' # In order for objects to be alike, they must share a family tree, not just
 #' # a common class

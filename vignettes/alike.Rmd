@@ -221,6 +221,19 @@ Currently they are compared purely on length and internal type.
 
 ## Performance Considerations
 
+`.alike` accepts one optional settings parameter that you can generate with \code{\link{alike_settings}}.  This is useful if you must run many
+\code{alike} computations with the same settings.  By doing the set-up once,
+you shave off about 800ns from subsequent iterations. \code{.alike2} does not
+accept any settings parameters and as such is about 200ns faster than
+\code{.alike}.
+
+While the time savings are small on absolute basis \code{.alike2} runs twice
+as fast as \code{alike} when comparing very simple objects.
+
+Timings are measured on a Intel(R) Core(TM) i7-3667U CPU @@ 2.00GHz MBA
+running OS X Mavericks and R 3.1.2.
+
+
 ### Overview
 
 `alike` is implemented in C and is relatively fast:

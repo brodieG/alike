@@ -180,6 +180,28 @@ When comparing language objects, the hash mechanism we use that needs to allocat
 
 Also, we pre-allocate the object used to deparse the error message even before error occurs.  Is there a way to only do so if an error occurs?  Might be difficult since we need both the starting pointer as well as the location of error pointer in the same pointer chain.
 
+After removing `strcmp` in the cases where the names are known to be identical:
+
+    > microbenchmark(alike(mtcars, mtcars), alike(mtcars.a, mtcars), times=1000)
+    Unit: microseconds
+                        expr   min     lq median     uq    max neval
+       alike(mtcars, mtcars) 2.966 3.1465 3.2430 3.4005  4.728  1000
+     alike(mtcars.a, mtcars) 2.931 3.1060 3.2075 3.3820 30.654  1000
+
+Finally, collapsing all the settings into one argument:
+
+    > sets <- list(0L, alike:::MachDblEpsSqrt, 0L, FALSE, sys.frame(sys.nframe()))
+    > microbenchmark(alike(mtcars, mtcars), alike_test(mtcars, mtcars, sets), alike_test(mtcars, mtcars, NULL), .alike(mtcars, mtcars), times=10000)
+    Unit: microseconds
+                                 expr   min    lq median    uq     max neval
+                alike(mtcars, mtcars) 2.934 3.161  3.319 3.486 808.905 10000
+     alike_test(mtcars, mtcars, sets) 2.157 2.313  2.394 2.534  12.154 10000
+     alike_test(mtcars, mtcars, NULL) 2.070 2.243  2.335 2.480 655.997 10000
+               .alike(mtcars, mtcars) 1.951 2.124  2.199 2.318  13.585 10000
+
+The extra argument over the original "fast" version costs ~120ns, and the argument validation another ~80ns.
+
+
 ### Stack Manipulation
 
 The is the baseline:
