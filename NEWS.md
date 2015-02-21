@@ -9,7 +9,7 @@ External Changes:
   type)
 * Improved comparison of language objects (calls, symbols, formulas, and
   functions); see docs for explanations of what makes language objects alike
-  (#10, #11, #14)
+  (#10, #11, #14, #16)
 * Attributes are now recursively compared with `alike` as well instead of
   identical
 * Added `abstract` functions to assist in the creation of objects (#9)
