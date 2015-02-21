@@ -586,13 +586,14 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   /*
   Array to store major errors from, in order:
     0. class,
-    1. names/rownames,
+    1. tsp
     2. dim
-    3. dimnames
-    4. other
-    5. missing*/
+    3. names/rownames
+    4. dimnames
+    5. other
+    6. missing*/
 
-  const char * err_major[6] = {"", "", "", "", "", ""};
+  const char * err_major[7] = {"", "", "", "", "", "", ""};
   struct ALIKEC_res_attr res_attr = {1, "", 0, 0};
 
   // Note we don't protect these because target and curent should come in
@@ -618,13 +619,13 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     prim_attr = cur_attr;
     sec_attr = tar_attr;
     if(set->attr_mode == 2) {
-      err_major[5] = "have attributes";
+      err_major[6] = "have attributes";
     }
   } else {
     prim_attr = tar_attr;
     sec_attr = cur_attr;
     if(cur_attr == R_NilValue) {
-      err_major[5] = CSR_smprintf4(
+      err_major[6] = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "not have attributes (has %s attributes)",
         CSR_len_as_chr(xlength(cur_attr)), "", "", ""
   );} }
@@ -686,9 +687,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       (
         (tar_attr_el == R_NilValue && set->attr_mode == 2) ||
         cur_attr_el == R_NilValue
-      ) && !err_major[5][0]
+      ) && !err_major[6][0]
     ) {
-      err_major[5] = CSR_smprintf4(
+      err_major[6] = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%shave attribute \"%s\"",
         (cur_attr_el == R_NilValue ? "" : "not "), tx, "", ""
       );
@@ -698,8 +699,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
     // = Baseline Check ========================================================
 
-    if(set->attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[4])) {
-      err_major[4] = ALIKEC_compare_attributes_internal_simple(
+    if(set->attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[5])) {
+      err_major[5] = ALIKEC_compare_attributes_internal_simple(
         tar_attr_el_val, cur_attr_el_val, tx, set
       );
     // = Custom Checks =========================================================
@@ -733,8 +734,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
           tar_attr_el_val, cur_attr_el_val, set
         );
-        if(strlen(name_comp))
-          err_major[1] = CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx, "", "", "");
+        if(name_comp[0])
+          err_major[3] =
+            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx, "", "", "");
         continue;
       // - Dims ----------------------------------------------------------------
 
@@ -753,34 +755,34 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       // - dimnames ------------------------------------------------------------
 
       } else if (tar_tag == R_DimNamesSymbol) {
-        err_major[3] = ALIKEC_compare_dimnames(
+        err_major[4] = ALIKEC_compare_dimnames(
           tar_attr_el_val, cur_attr_el_val, set
         );
 
       // - levels --------------------------------------------------------------
 
       } else if (tar_tag == R_LevelsSymbol) {
-        err_major[4] =
+        err_major[5] =
           ALIKEC_compare_levels(tar_attr_el_val, cur_attr_el_val, set);
 
       // - tsp -----------------------------------------------------------------
 
       } else if (tar_tag == R_TspSymbol) {
 
-        err_major[4] = ALIKEC_compare_ts(
+        err_major[1] = ALIKEC_compare_ts(
           tar_attr_el_val, cur_attr_el_val, set
         );
       // - normal attrs --------------------------------------------------------
 
       } else {
-        err_major[4] = ALIKEC_compare_attributes_internal_simple(
+        err_major[5] = ALIKEC_compare_attributes_internal_simple(
           tar_attr_el_val, cur_attr_el_val, tx, set
       );}
   } }
   // If in strict mode, must have the same number of attributes
 
   if(set->attr_mode == 2 && prim_attr_count != sec_attr_count) {
-    err_major[5] = CSR_smprintf4(
+    err_major[6] = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "have %s attribute%s (has %s)", CSR_len_as_chr(prim_attr_count),
       prim_attr_count != 1 ? "s" : "", CSR_len_as_chr(sec_attr_count), ""
@@ -793,8 +795,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
   res_attr.df = *is_df;
   int i;
-  for(i = 0; i < 6; i++) {
-    if(strlen(err_major[i]) && (!rev || (rev && set->attr_mode == 2))) {
+  for(i = 0; i < 7; i++) {
+    if(err_major[i][0] && (!rev || (rev && set->attr_mode == 2))) {
       res_attr.success = 0;
       res_attr.message = err_major[i];
       res_attr.lvl = i;

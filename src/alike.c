@@ -91,7 +91,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
     if(!res_attr.success) {
-      if(res_attr.lvl == 0) err = 1;   // If top level error (class), make sure not overriden by others
+      if(res_attr.lvl <= 2) err = 1;   // If top level error (class), make sure not overriden by others
       else err_attr = 1;
       err_base = res_attr.message;
     }
