@@ -211,13 +211,13 @@ unitizer_sect("Calls / Formulas", {
 
   # # Repeating parses to deal with potential parse issues in clean R runs
 
-  # exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)", keep.source=TRUE)
-  # exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)", keep.source=TRUE)
-  # exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)", keep.source=TRUE)
+  exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)", keep.source=TRUE)
+  exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)", keep.source=TRUE)
+  exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)", keep.source=TRUE)
 
-  # alike(exp.1, exp.2)
-  # alike(exp.2, exp.3)
-  # alike(exp.3, exp.2)
+  alike(exp.1, exp.2)
+  alike(exp.2, exp.3)
+  alike(exp.3, exp.2)
 
   exp.4 <- expression(1 + 1, 2 + x)
   exp.5 <- expression(1 + 1, 5 + y)
