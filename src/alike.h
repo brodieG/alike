@@ -61,7 +61,8 @@
     SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
     SEXP suppress_warnings, SEXP match_env
   );
-  SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
+  SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
+  SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );

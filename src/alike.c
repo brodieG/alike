@@ -539,10 +539,23 @@ R_GlobalEnv, which should be fine since all the other arguments to `alike` have
 already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
-SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
+SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
   struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
+SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
+  if(settings == R_NilValue) {
+    return ALIKEC_alike_fast2(target, current);
+  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 5) {
+    return ALIKEC_alike(
+      target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
+      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4)
+    );
+  }
+  error("Argument `settings` is not a length 5 list as expected");
+  return R_NilValue;
+}
+
 /* Normal version, a little slower but more flexible */
 
 SEXP ALIKEC_alike (

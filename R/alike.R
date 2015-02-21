@@ -9,11 +9,11 @@
 #' If you are interested in more details, see the vignette
 #' (\href{../doc/alike.html}{vignette("alike")}).
 #'
-#' @section \code{.alike}:
+#' @section \code{.alike} and \code{.alike2}:
 #'
-#' \code{.alike} is identical to \code{alike}, except that it does not accept
-#' any parameters outside of \code{target} and \code{current}, and as a result
-#' is slightly faster.
+#' These are slightly faster versions of \code{alike} that are available if you
+#' are trying to squeeze out that last microsecond (literally) from your code.
+#' See \href{../doc/alike.html}{the vignette} for details.
 #'
 #' @export
 #' @import cstringr
@@ -113,9 +113,26 @@ alike <- function(
     suppress.warnings, match.call.env
   )
 
+#' @rdname alike
 #' @export
 
-.alike <- function(target, current) .Call(ALIKEC_alike_fast, target, current)
+.alike <- function(target, current, .settings=NULL)
+  .Call(ALIKEC_alike_fast1, target, current, settings)
+
+#' @rdname alike
+#' @export
+
+.alike2 <- function(target, current)
+  .Call(ALIKEC_alike_fast2, target, current)
+
+#' @rdname alike
+#' @export
+
+alike_settings <- function(
+  type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L, suppress.warnings=FALSE,
+  match.call.env=parent.frame()
+)
+  list(type.mode, int.tol, attr.mode, suppress.warnings, match.call.env)
 
 #' Similar to \code{\link{typeof}}, but Treats Numerics Differently
 #'
