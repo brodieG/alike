@@ -724,7 +724,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
           tar_attr_el_val_tmp, cur_attr_el_val_tmp, is_df, set
         );
         UNPROTECT(2);
-        if(strlen(class_comp)) {
+        if(class_comp[0]) {
           err_major[0] = class_comp;
           break;
         }
