@@ -193,6 +193,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case SPECIALSXP:
       case EXPRSXP:
       case SYMSXP:
+      case EXTPTRSXP:
+      case WEAKREFSXP:
         break;
       default:
         warning(
