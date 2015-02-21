@@ -1,7 +1,7 @@
 alike 0.3.0
 ===========
 
-**NOTE**: this change list is preliminary.
+External Changes:
 
 * Added support for additional recursive objects: environments, pairlists, and
   expressions are now recursed through, with `alike` applied recursively to each
@@ -9,9 +9,15 @@ alike 0.3.0
   type)
 * Improved comparison of language objects (calls, symbols, formulas, and
   functions); see docs for explanations of what makes language objects alike
+  (#10, #11, #14)
 * Attributes are now recursively compared with `alike` as well instead of
   identical
+* Added `abstract` functions to assist in the creation of objects (#9)
+* `ts` class objects now have specialized comparison
 
+Internal Changes:
+
+* C level optimizations (#7, #13)
 
 alike 0.2.5
 ===========
