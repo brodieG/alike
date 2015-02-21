@@ -278,7 +278,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268"); // should have been handled previously
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
-      return "have identical values for %%s";
+      return "have identical values for `%%s`";
     return "";
   } else if (tar_type == STRSXP) {
     if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
@@ -290,7 +290,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
-            "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
+            "be \"%s\" at index [[%s]] for `%%s` (is \"%s\")",
             tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
           );
     } } }
