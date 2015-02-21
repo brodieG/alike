@@ -5,64 +5,35 @@
 #' argument must match.
 #'
 #' Exactly what makes two objects \code{alike} is complex, but should be
-#' intuitive.  The best way to understand "alikenes" is to review the examples.
-#' If you are interested in more details, see the vignette.
-#'
-#' @section Value Comparisons:
-#'
-#' Values are never compared explicitly by \code{alike}.
-#'
-#' @section Length Comparisons:
-#'
-#' The lengths of two objects must be equal in order for them to be considered
-#' alike, though in the special case where \code{target} is length zero, then
-#' \code{current} may be any length..
-#'
-#' @section Types:
-#'
-#' The underlying data types between two objects must be \code{\link{type_alike}}.
-#'
-#' @section Attribute Comparison:
-#'
-#' Generally speaking attributes between \code{target} and \code{current}
-#' must be identical, but there are some exceptions:
-#'
-#' Paramter \code{attr.mode} controls how attributes are compared:
-#' \itemize{
-#'   \item 0: special attributes are compared specially, and only attributes
-#'     present in \code{target} are compared (i.e. \code{current} may have
-#'     additional attributes).  Special attributes include:
-#'     \itemize{
-#'       \item \code{dim}, \code{dimnames}, \code{row.names}, and \code{names}
-#'       \item \code{class}
-#'       \item zero-length attributes
-#'       \item reference attributes (e.g. external pointers environments, etc.)
-#'     }
-#'   \item 1: all attributes present in \code{target} must be present in
-#'     \code{current} and be identical.
-#'   \item 2: attributes in \code{target} and \code{current} must be identical
-#' }
-#' Please see vignette for details on for how special attributes are compared.
-#' Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
-#' generally required to be identical in \code{target} and \code{current},
-#' though \code{names(dimnames(x))} itself is a special case.
+#' intuitive.  The best way to understand "alikeness" is to review the examples.
+#' If you are interested in more details, see the vignette
+#' (\href{../doc/alike.html}{vignette("alike")}).
 #'
 #' @section \code{.alike}:
 #'
-#' \code{.alike} is identical to \code{alike}, except that it doesn't accept
+#' \code{.alike} is identical to \code{alike}, except that it does not accept
 #' any parameters outside of \code{target} and \code{current}, and as a result
 #' is slightly faster.
 #'
 #' @export
 #' @import cstringr
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
-#' @seealso type_alike, type_of
+#' @seealso \code{\link{type_alike}}, \code{\link{type_of}},
+#'   \code{\link{abstract}}
 #' @param target the template to compare the object to
 #' @param current the object to determine alikeness to the template
-#' @param type.mode integer(1L) in 0:2, see \code{mode} parameter to \code{\link{type_alike}}
-#' @param int.tol numeric(1L) see \code{tolerance} paramter to \code{\link{type_alike}}
-#' @param attr.mode integer(1L) in 0:2 determines strictness of attribute comparison, see details
-#' @return TRUE if target and current are alike, character(1L) describing why they are not if they are not
+#' @param type.mode integer(1L) in 0:2, see \code{mode} parameter to
+#'   \code{\link{type_alike}}
+#' @param int.tol numeric(1L) see \code{tolerance} parameter to
+#'   \code{\link{type_alike}}
+#' @param attr.mode integer(1L) in 0:2 determines strictness of attribute
+#'   comparison, see \href{../doc/alike.html}{vignette}
+#' @param suppress.warnings logical(1L)
+#' @param match.call.env when matching calls, what frame to look up functions
+#'   definitions in to run \code{match.call} on
+#'   (see \href{../doc/alike.html}{vignette})
+#' @return TRUE if target and current are alike, character(1L) describing why
+#'   they are not if they are not
 #' @examples
 #' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
@@ -86,10 +57,10 @@
 #'
 #' alike(integer(), 1:10)
 #'
-#' # NULL matches anything
+#' # NULL matches anything when nested in a list, but not top level
 #'
-#' alike(NULL, mtcars)
 #' alike(list(NULL, NULL), list(iris, mtcars))
+#' alike(NULL, mtcars)
 #'
 #' # `alike` will compare data frame columns
 #'
@@ -100,9 +71,15 @@
 #' alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
 #' alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
 #'
-#' # factor levels must match; makes sense, otherwise it really isn't the same
-#' # type of data (note this is a recursive comparison); for better understanding
-#' # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
+#' # Easily create a template to match a particular data frame structure
+#'
+#' alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), ])     # TRUE
+#' alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), -2])   # FALSE, missing second column
+#'
+#' # factor levels must match; makes sense, otherwise it really is n9t the same
+#' # type of data (note this is a recursive comparison); for better
+#' # understanding of error examine `levels(df.tpl[[2]])` and
+#' # `levels(df.cur2[[2]])`
 #'
 #' alike(df.tpl, df.cur2)
 #'
@@ -118,6 +95,14 @@
 #'
 #' alike(obj.tpl, obj.cur.1)
 #' alike(obj.tpl, obj.cur.2)
+#'
+#' # You can compare language objects; these are alike if they are self
+#' # consistent; we don't care what the symbols are, so long as they are used
+#' # consistently across target and current:
+#'
+#' alike(quote(x + y), quote(a + b))   # TRUE, symbols are consistent (adding two different symbols)
+#' alike(quote(x + y), quote(a - b))   # FALSE, different function
+#' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 
 alike <- function(
   target, current, type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
@@ -132,22 +117,22 @@ alike <- function(
 
 .alike <- function(target, current) .Call(ALIKEC_alike_fast, target, current)
 
-#' Similar to \code{`\link{typeof}`}, but Treats Numerics Differently
+#' Similar to \code{\link{typeof}}, but Treats Numerics Differently
 #'
-#' Numerics that look like integers at tolerance \code{`tolerance`} are reported
-#' as integers.  Otherwise the same as \code{`typeof`}.
+#' Numerics that look like integers at tolerance \code{tolerance} are reported
+#' as integers.  Otherwise the same as \code{typeof}.
 #'
-#' \code{`tolerance`} controls what is considered "integer-like". "integer-likeness"
-#' is roughly defined as occurring when \code{`all.equal(as.integer(x), x) == TRUE`}.
-#' The \code{`tolerance`} value corresponds to the value of the \code{`tolerance`}
-#' argument used by \code{`all.equal.numeric`}.  Note though this is only an
-#' approximate comparison as \code{`type_of`} does not use \code{`all.equal`}.
-#' The default tolerance value is equal to \code{`.Machine$double.eps ^ .5`},
+#' \code{tolerance} controls what is considered "integer-like". "integer-likeness"
+#' is roughly defined as occurring when \code{all.equal(as.integer(x), x) == TRUE}.
+#' The \code{tolerance} value corresponds to the value of the \code{tolerance}
+#' argument used by \code{all.equal.numeric}.  Note though this is only an
+#' approximate comparison as \code{type_of} does not use \code{all.equal}.
+#' The default tolerance value is equal to \code{.Machine$double.eps ^ .5},
 #' though note that this value is pre-computed when the package is loaded and stored in
-#' \code{`alike:::MachDblEpsSqrt`} in order to minimize function overhead.
+#' \code{alike:::MachDblEpsSqrt} in order to minimize function overhead.
 #'
-#' \code{`.typeof`} is a slightly faster version that does not allow you to
-#' modify the \code{`tolerance`} parameter.
+#' \code{.typeof} is a slightly faster version that does not allow you to
+#' modify the \code{tolerance} parameter.
 #'
 #' @aliases .type_of
 #' @param object the object to check the type of
@@ -171,20 +156,20 @@ type_of <- function(object, tolerance=MachDblEpsSqrt)
 
 #' Compare Types of Objects
 #'
-#' By default, checks \code{`\link{type_of}`} objects and two objects are
-#' considered \code{`type_alike`} if they have the same type.  There is special
+#' By default, checks \code{\link{type_of}} objects and two objects are
+#' considered \code{type_alike} if they have the same type.  There is special
 #' handling for integers, reals, and functions.
 #'
-#' For integers and reals, if \code{`current`} is integer or integer-like
-#' (e.g. 1.0) it will match real or integer \code{`target`} values.  Closures,
+#' For integers and reals, if \code{current} is integer or integer-like
+#' (e.g. 1.0) it will match real or integer \code{target} values.  Closures,
 #' built-ins, and specials are all treated as type function.
 #'
-#' Specific behavior can be tuned with the \code{`mode`} parameter the values
-#' of which range from \code{`0L`} to \code{`2L`}, with a lower value
+#' Specific behavior can be tuned with the \code{mode} parameter the values
+#' of which range from \code{0L} to \code{2L}, with a lower value
 #' corresponding to more relaxed comparison level.
 #'
 #' \itemize{
-#'   \item 0: integer like reals (e.g. \code{`1.0`}) can match against integer
+#'   \item 0: integer like reals (e.g. \code{1.0}) can match against integer
 #'     templates, and integers always match real templates; all
 #'     function types are considered of the same type
 #'   \item 1: integers always match against numeric templates, but not vice
@@ -200,7 +185,7 @@ type_of <- function(object, tolerance=MachDblEpsSqrt)
 #' @param target the object to test type alikeness against
 #' @param current the object to test the type alikeness of
 #' @param mode integer(1L) in 0:2, see details
-#' @param tolerance see \code{`tolerance`} parameter for \code{`\link{type_of}`}
+#' @param tolerance see \code{tolerance} parameter for \code{\link{type_of}}
 #' @export
 
 type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
@@ -213,7 +198,7 @@ type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
 
 #' Compare Attributes
 #'
-#' R interface for an internal C functions used by \code{`alike`}.  Provided
+#' R interface for an internal C functions used by \code{alike}.  Provided
 #' primarily for unit testing purposes
 #'
 #' @aliases name_compare, class_compare, dimname_compare, dim_compare
@@ -276,6 +261,6 @@ alike_test <- function(mode, a, b) .Call(ALIKEC_test, mode, a, b)
 
 #' Pre-calculated Precision Level
 #'
-#' Used to limit overhead of calls the require use of \code{`.Machine$double.eps ^ 0.5`}
+#' Used to limit overhead of calls the require use of \code{.Machine$double.eps ^ 0.5}
 
 MachDblEpsSqrt <- .Machine$double.eps ^ 0.5

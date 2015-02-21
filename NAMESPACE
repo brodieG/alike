@@ -3,6 +3,7 @@
 S3method(abstract,array)
 S3method(abstract,data.frame)
 S3method(abstract,default)
+S3method(abstract,environment)
 S3method(abstract,list)
 S3method(abstract,lm)
 S3method(abstract,matrix)

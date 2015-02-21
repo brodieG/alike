@@ -17,7 +17,7 @@ External Changes:
 
 Internal Changes:
 
-* C level optimizations (#7, #13)
+* C level optimizations (#7, #13, but #13 not complete)
 
 alike 0.2.5
 ===========

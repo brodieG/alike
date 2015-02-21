@@ -304,6 +304,11 @@ unitizer_sect("Examples", {
   alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
   alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
 
+  # Easily create a template to match a particular data frame structure
+
+  alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), ])     # TRUE
+  alike(abstract(iris), iris[sample(seq(nrow(iris), 5)), -2])   # FALSE, missing second column
+
   # factor levels must match; makes sense, otherwise it really isn't the same
   # type of data (note this is a recursive comparison); for better understanding
   # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
@@ -322,4 +327,11 @@ unitizer_sect("Examples", {
 
   alike(obj.tpl, obj.cur.1)
   alike(obj.tpl, obj.cur.2)
+
+  # Calls
+
+  alike(quote(x + y), quote(a + b))   # TRUE, symbols are consistent (adding two different symbols)
+  alike(quote(x + y), quote(a - b))   # FALSE, different function
+  alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
+
 } )
