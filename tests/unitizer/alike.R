@@ -184,6 +184,12 @@ unitizer_sect("Calls / Formulas", {
   alike(quote(fun(1, 2)), quote(fun2(1, 2)))            # FALSE, fun mismatch
   alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))  # FALSE, fun mismatch, nested
 
+  # zero len matches anything
+
+  alike(quote(fun()), quote(fun(a, b, c)))    # TRUE
+  alike(quote(fun()), quote(fun2(a, b, c)))   # FALSE, still need match fun names
+  alike(quote(fun(a, fun2())), quote(fun(b, fun2(a, b, c))))    # TRUE
+
   # Attributes on sub-components should not affect anything
   # actually, these tests need to be with alike since lang_alike doesn't check
   # attributes
