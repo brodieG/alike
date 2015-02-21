@@ -747,7 +747,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         const char * dim_comp = ALIKEC_compare_dims(
           tar_attr_el_val, cur_attr_el_val, target, current, class_mode, set
         );
-        if(class_mode) { // implicit class error
+        if(* class_mode) { // implicit class error
           err_major[0] = dim_comp;
         } else {
           err_major[2] = dim_comp;
