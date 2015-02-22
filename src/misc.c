@@ -57,15 +57,85 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
 }
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test(SEXP target, SEXP current, SEXP settings) {
-  if(settings == R_NilValue) {
-    return ALIKEC_alike_fast2(target, current);
-  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 5) {
-    return ALIKEC_alike(
-      target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
-      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4)
-    );
+  R_xlen_t obj_len = XLENGTH(current), i, items=0;
+  int finite;
+  double tolerance = sqrt(DOUBLE_EPS), * obj_real, val, diff_abs, flr;
+  obj_real = REAL(current);
+
+  switch(asInteger(target)) {
+    case 0: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
+          obj_real[i] != (flr = floor(obj_real[i]))
+        ) {
+          items = items + 1;
+          diff_abs = diff_abs + fabs((obj_real[i] - flr) / obj_real[i]);
+          val = val + fabs(obj_real[i]);
+        } else if (!finite) return ScalarLogical(1);
+      }
+      if(items > 0 && val / items > tolerance && diff_abs / items > tolerance) {
+        return ScalarLogical(0);
+      } else {
+        return ScalarLogical(1);
+      }
+    }
+    break;
+    case 1: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
+          obj_real[i] != floor(obj_real[i])
+        ) {
+          return ScalarLogical(0);
+        } else if (!finite) return ScalarLogical(0);
+      }
+      return ScalarLogical(1);
+    }
+    case 2: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
+          obj_real[i] != nearbyintl(obj_real[i])
+        ) {
+          return ScalarLogical(0);
+        } else if (!finite) return ScalarLogical(0);
+      }
+      return ScalarLogical(1);
+    }
+    case 3: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          !isnan(obj_real[i]) && (finite = isfinite(obj_real[i])) &&
+          obj_real[i] != trunc(obj_real[i])
+        ) {
+          return ScalarLogical(0);
+        } else if (!finite) return ScalarLogical(0);
+      }
+      return ScalarLogical(1);
+    }
+    case 4: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          obj_real[i] != trunc(obj_real[i])
+        ) {
+          return ScalarLogical(0);
+        }
+      }
+      return ScalarLogical(1);
+    }
+    case 5: {
+      for(i = 0; i < obj_len; i++) {
+        if(
+          obj_real[i] != (int) obj_real[i]
+        ) {
+          return ScalarLogical(0);
+        }
+      }
+      return ScalarLogical(1);
+    }
   }
-  error("Argument `settings` is not a length 5 list as expected");
+
   return R_NilValue;
 }
 SEXP ALIKEC_test2(
