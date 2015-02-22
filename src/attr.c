@@ -812,9 +812,12 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 external interface for compare attributes
 */
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
-  SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
+  SEXPTYPE attr_mode_type = TYPEOF(attr_mode);
 
-  if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
+  if(
+    (attr_mode_type != INTSXP && attr_mode_type != REALSXP) ||
+    XLENGTH(attr_mode) != 1
+  )
     error("Argument `mode` must be a one length integer like vector");
 
   struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
