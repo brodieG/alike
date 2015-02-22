@@ -52,10 +52,5 @@ type_of <- function(object)
 #' @param tolerance see \code{tolerance} parameter for \code{\link{type_of}}
 #' @export
 
-type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
-  .Call(ALIKEC_type_alike, target, current, mode, tolerance)
-
-#' @export
-
-.type_alike <- function(target, current)
-  .Call(ALIKEC_type_alike_fast, target, current)
+type_alike <- function(target, current, mode=0L, max.len=100)
+  .Call(ALIKEC_type_alike, target, current, mode, max.len)
