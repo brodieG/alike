@@ -97,8 +97,11 @@ SEXPTYPE ALIKEC_typeof_internal(SEXP object) {
       {
         R_xlen_t obj_len = XLENGTH(object), i;
         obj_real = REAL(object);
+        /* could optimize this more by using the magic number tricks, etc, but
+        at end of day this still wouldn't be fast enough to realistically use on
+        a very large vector, so it doesn't really matter*/
         for(i = 0; i < obj_len; i++)
-          if(obj_real[i] != NA_REAL && obj_real[i] != (int)obj_real[i])
+          if(!isnan(obj_real[i]) && obj_real[i] != (int)obj_real[i])
             return REALSXP;
         return INTSXP;
       }
