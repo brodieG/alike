@@ -66,16 +66,16 @@
   const char * ALIKEC_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
-  SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
+  SEXP ALIKEC_typeof(SEXP object);
   SEXP ALIKEC_typeof_fast(SEXP object);
-  SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
+  SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len);
   SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 
   // - Internal Funs -------------------------------------------------------------
 
-  SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
+  SEXPTYPE ALIKEC_typeof_internal(SEXP object);
   const char *  ALIKEC_type_alike_internal(
-    SEXP target, SEXP current, int mode, double tolerance
+    SEXP target, SEXP current, int mode, R_xlen_t max_len
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);

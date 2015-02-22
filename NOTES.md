@@ -1,4 +1,4 @@
-These are internal developer notes
+These are internal developer notes; don't expect any of it to make much sense.
 
 ## C Benchmarking
 
@@ -328,3 +328,36 @@ TBD how many arguments we want to pile up.  Here are some to discuss:
 2. lang.match = fast or slow?
 
 Actually, could combine match.fun.env to be either an environment or NULL, and if NULL don't do the match!
+
+## Integer-likeness
+
+`type.mode`
+
+Probably don't want to check more than 100 numbers by default
+
+Need to handle:
+
+* wanting to specify how many elements before we kill integer-alike tests
+* whether to generically allow integer-alikeness
+* whether ints can be considered numeric
+
+Before we had 0 (inf integer-alikeness), 1 (must be int), 2 (must be num)
+
+Note this actually affects closures / functions as well
+
+Proposal:
+* 0 strictest
+* 1 strict, but subset types (e.g. INT) can be considered part of superset (how does this affect functions)
+* 2 - N how may 1eN elements we allow before we switch to mode 1
+
+Blergh.  Attempting to combine two dimensions (strictness and allowable size) into one number is really shit.  Really don't want to add another parameter to `alike` though.  Maybe the right answer is to use a fixed allowable size (e.g. 100), and if you really want to use larger then you have to use `.alike` with `settings`.
+
+
+
+
+
+
+
+
+
+
