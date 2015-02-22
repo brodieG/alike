@@ -17,8 +17,14 @@ const char * ALIKEC_type_alike_internal(
     return "";
 
   if(
-    mode == 0 && tar_type_raw == INTSXP &&
-    XLENGTH(target) <= max_len && XLENGTH(current) <= max_len
+    mode == 0 && (
+      (
+        tar_type_raw == INTSXP && XLENGTH(target) <= max_len &&
+        XLENGTH(current) <= max_len
+      ) || (
+        tar_type_raw == CLOSXP || tar_type_raw == SPECIALSXP ||
+        tar_type_raw == BUILTINSXP
+    ) )
   ) {
     tar_type = ALIKEC_typeof_internal(target);
     cur_type = ALIKEC_typeof_internal(current);
