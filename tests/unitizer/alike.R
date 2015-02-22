@@ -263,6 +263,9 @@ unitizer_sect(".alike", {
   .alike(1:10, "hello")  # object type mismatch, no dive
   .alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
   .alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+
+  .alike(integer(), c(1, 2, 3), alike_settings())
+  .alike(integer(), c(1, 2, 3), alike_settings(type.mode=1))
 } )
 # These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks

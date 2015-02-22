@@ -131,7 +131,7 @@ alike <- function(
 #' @rdname alike
 #' @export
 
-.alike <- function(target, current, .settings=NULL)
+.alike <- function(target, current, settings=NULL)
   .Call(ALIKEC_alike_fast1, target, current, settings)
 
 #' @rdname alike
