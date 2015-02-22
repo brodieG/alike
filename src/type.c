@@ -18,7 +18,7 @@ const char * ALIKEC_type_alike_internal(
 
   if(
     mode == 0 && tar_type_raw == INTSXP &&
-    XLENGTH(target) < max_len && XLENGTH(current) < max_len
+    XLENGTH(target) <= max_len && XLENGTH(current) <= max_len
   ) {
     tar_type = ALIKEC_typeof_internal(target);
     cur_type = ALIKEC_typeof_internal(current);
