@@ -112,6 +112,3 @@ SEXP return in the internal use case
 SEXP ALIKEC_typeof(SEXP object) {
   return mkString(type2char(ALIKEC_typeof_internal(object)));
 }
-SEXP ALIKEC_typeof_fast(SEXP object) {
-  return mkString(type2char(ALIKEC_typeof_internal(object)));
-}

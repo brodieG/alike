@@ -149,42 +149,25 @@ alike_settings <- function(
 )
   list(type.mode, int.tol, attr.mode, suppress.warnings, match.call.env)
 
-#' Similar to \code{\link{typeof}}, but Treats Numerics Differently
+#' A Fuzzier Version \code{\link{typeof}}
 #'
-#' Numerics that look like integers at tolerance \code{tolerance} are reported
-#' as integers.  Otherwise the same as \code{typeof}.
+#' Numerics that are equivalent to integers (e.g \code{x == floor(x)}) are
+#' classified as integers, and builtin and special functions are reported as
+#' closures.
 #'
-#' \code{tolerance} controls what is considered "integer-like". "integer-likeness"
-#' is roughly defined as occurring when \code{all.equal(as.integer(x), x) == TRUE}.
-#' The \code{tolerance} value corresponds to the value of the \code{tolerance}
-#' argument used by \code{all.equal.numeric}.  Note though this is only an
-#' approximate comparison as \code{type_of} does not use \code{all.equal}.
-#' The default tolerance value is equal to \code{.Machine$double.eps ^ .5},
-#' though note that this value is pre-computed when the package is loaded and stored in
-#' \code{alike:::MachDblEpsSqrt} in order to minimize function overhead.
-#'
-#' \code{.typeof} is a slightly faster version that does not allow you to
-#' modify the \code{tolerance} parameter.
-#'
-#' @aliases .type_of
 #' @param object the object to check the type of
-#' @param tolerance see details
 #' @return character(1L) the type of the object
 #' @export
 #' @examples
 #'
 #' type_of(1.0001)                     # numeric
-#' type_of(1 + 1e-20)                  # integer
-#' type_of(1)                          # integer
-#' type_of(data.frame(a=1:3))          # list
+#' type_of(1.0)                        # integer (`typeof` returns numeric)
+#' type_of(1)                          # integer (`typeof` returns numeric)
+#' type_of(sum)                        # closure (`typeof` returns builtin)
+#' type_of(`$`)                        # closure (`typeof` returns special)
 
-type_of <- function(object, tolerance=MachDblEpsSqrt)
-  .Call(ALIKEC_typeof, object, tolerance)
-
-#' @export
-
-.type_of <- function(object)
-  .Call(ALIKEC_typeof_fast, object)
+type_of <- function(object)
+  .Call(ALIKEC_typeof, object)
 
 #' Compare Types of Objects
 #'
