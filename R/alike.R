@@ -51,6 +51,9 @@
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
 #'
+#' alike(1:100, 1:100 + 0.0)  # TRUE
+#' alike(1:101, 1:101 + 0.0)  # FALSE, we do not check numerics for integerness if longer than 100
+#'
 #' # Scalarness can now be checked at same time as type
 #'
 #' alike(integer(1L), 1)            # integer-like and length 1?
@@ -119,14 +122,8 @@
 #' alike(quote(x + y), quote(a - b))   # FALSE, different function
 #' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 
-alike <- function(
-  target, current, type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
-  suppress.warnings=FALSE, match.call.env=parent.frame()
-)
-  .Call(
-    ALIKEC_alike, target, current, type.mode, int.tol, attr.mode,
-    suppress.warnings, match.call.env
-  )
+alike <- function(target, current)
+  .Call(ALIKEC_alike_ext, target, current, parent.frame())
 
 #' @rdname alike
 #' @export
@@ -135,7 +132,6 @@ alike <- function(
   .Call(ALIKEC_alike_fast1, target, current, settings)
 
 #' @rdname alike
-#' @export
 
 .alike2 <- function(target, current)
   .Call(ALIKEC_alike_fast2, target, current)
@@ -144,7 +140,7 @@ alike <- function(
 #' @export
 
 alike_settings <- function(
-  type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L, suppress.warnings=FALSE,
-  match.call.env=parent.frame()
+  type.mode=0L, attr.mode=0L, env=parent.frame(), fuzzy.int.max.len=100L,
+  suppress.warnings=FALSE
 )
-  list(type.mode, int.tol, attr.mode, suppress.warnings, match.call.env)
+  list(type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings)

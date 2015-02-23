@@ -60,20 +60,20 @@ env_track <- function(env, size_init = 32)
 #' @export
 #' @keywords internal
 
-alike_test <- function(target, current, .settings=NULL)
-  .Call(ALIKEC_test, target, current, .settings)
+alike_test <- function(target, current, settings=parent.frame())
+  .Call(ALIKEC_test, target, current, settings)
 
 #' @export
 #' @keywords internal
 
-alike_test2 <-   function(target, current, type.mode=0L, int.tol=MachDblEpsSqrt,
-  attr.mode=0L, suppress.warnings=FALSE, match.call.env=parent.frame()
-)
-  .Call(
-    ALIKEC_test2, target, current, type.mode, int.tol, attr.mode,
-    suppress.warnings, match.call.env
-  )
+alike_test2 <- function(target, current)
+  .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
 
+#' @export
+#' @keywords internal
+
+alike_test3 <- function(target, current)
+  .Call(ALIKEC_test2, target, current)
 
 
 #' Pre-calculated Precision Level

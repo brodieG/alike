@@ -329,8 +329,6 @@ TBD how many arguments we want to pile up.  Here are some to discuss:
 
 Actually, could combine match.fun.env to be either an environment or NULL, and if NULL don't do the match!
 
-## Integer-likeness
-
 `type.mode`
 
 Probably don't want to check more than 100 numbers by default
@@ -352,9 +350,19 @@ Proposal:
 
 Blergh.  Attempting to combine two dimensions (strictness and allowable size) into one number is really shit.  Really don't want to add another parameter to `alike` though.  Maybe the right answer is to use a fixed allowable size (e.g. 100), and if you really want to use larger then you have to use `.alike` with `settings`.
 
+* attr.mode
+* type.mode
+* match.call.env
+* fuzzy.int.max.len
+* suppress.warnings
 
+Answer is probably to simplify `alike` use by not having any arguments other
+than target and current; then all other arguments are accessible through
+`alike_settings`.
 
+Do we give up on `parent.frame()`?  Do we provide it not even as an argument?
 
+The main draw-back is that by not providing that argument we move away from the standard of having default behavior of `alike` be what we think is the most correct in most cases.  One possibility is to use `parent.frame`, but not have it as an argument in the actual R interface function.  This won't save us any time, and we lose the flexibility of actually turning off function matching, but the interface is consistent (therere isn't one random argument that we can adjust.)
 
 
 

@@ -37,12 +37,9 @@
     int debug;
   };
   struct ALIKEC_settings {
-    int type_mode;
-    double int_tolerance;
-    int attr_mode;
+    int type_mode, attr_mode, fuzzy_int_max_len, suppress_warnings;
     const char * prepend;
-    int suppress_warnings;
-    SEXP match_env;                         // what environment to look for functions to match call in
+    SEXP env;                               // what environment to look for functions to match call in
     struct ALIKEC_settings_env * env_set;   // Used to track whether we've encountered an environment before
     int no_rec;                             // block futher recursion into environments
     size_t in_attr;                         // whether we're recursing through attributes
@@ -58,9 +55,10 @@
   // - Main Funs ---------------------------------------------------------------
 
   SEXP ALIKEC_alike (
-    SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
-    SEXP suppress_warnings, SEXP match_env
+    SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
+    SEXP fuzzy_int_max_len, SEXP suppress_warnings
   );
+  SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
   SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
@@ -103,8 +101,7 @@
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP mode, SEXP a, SEXP b);
   SEXP ALIKEC_test2(
-    SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
-    SEXP suppress_warnings, SEXP match_env
+    SEXP target, SEXP current
   );
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);

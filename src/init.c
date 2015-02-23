@@ -3,14 +3,14 @@
 
 static const
 R_CallMethodDef callMethods[] = {
-  {"alike", (DL_FUNC) &ALIKEC_alike, 7},
+  {"alike_ext", (DL_FUNC) &ALIKEC_alike_ext, 3},
   {"alike_fast1", (DL_FUNC) &ALIKEC_alike_fast1, 3},
   {"alike_fast2", (DL_FUNC) &ALIKEC_alike_fast2, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
   {"test", (DL_FUNC) &ALIKEC_test, 3},
-  {"test2", (DL_FUNC) &ALIKEC_test2, 7},
+  {"test2", (DL_FUNC) &ALIKEC_test2, 2},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 2},
