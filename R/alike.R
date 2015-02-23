@@ -47,7 +47,7 @@
 #' @examples
 #' # Type comparison
 #'
-#' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
+##' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
 #'
@@ -74,7 +74,7 @@
 #' )
 #' alike(
 #'   list(integer(), list(character(), logical(1L))),
-#'   list(1:10, list(letters, c(TRUE, FALSE))
+#'   list(1:10, list(letters, c(TRUE, FALSE)))
 #' )
 #' # `NULL` is a wild card when nested within recursive objects
 #'
@@ -85,13 +85,13 @@
 #'
 #' iris.fake <- transform(iris, Species=as.character(Species))
 #' alike(iris, iris.fake)
-#' iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species, "americana"))))
+#' iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species), "americana")))
 #' alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 #'
 #' # We can use partially specified objects as templates
 #'
 #' iris.tpl <- abstract(iris)
-#' str(iris)
+#' str(iris.tpl)
 #' alike(iris.tpl, iris)
 #' alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])    # any row sample of iris matches our iris template
 #' alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])              # but column order matters
@@ -128,7 +128,7 @@ alike <- function(target, current)
 #' @rdname alike
 #' @export
 
-.alike <- function(target, current, settings=NULL)
+.alike <- function(target, current, settings=alike_settings())
   .Call(ALIKEC_alike_fast1, target, current, settings)
 
 #' @rdname alike
