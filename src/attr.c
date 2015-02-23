@@ -646,7 +646,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   attributes, which should be rare
   */
   SEXP prim_attr_el, sec_attr_el;
-  int sec_attr_counted = 0, sec_attr_count = 0, prim_attr_count = 0;
+  size_t sec_attr_counted = 0, sec_attr_count = 0, prim_attr_count = 0;
 
   for(
     prim_attr_el = prim_attr; prim_attr_el != R_NilValue;
@@ -655,15 +655,20 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     SEXP prim_tag = TAG(prim_attr_el);
     const char * tx = CHAR(PRINTNAME(prim_tag));
     prim_attr_count++;
+    SEXP sec_attr_el_tmp = R_NilValue;
 
     for(
       sec_attr_el = sec_attr; sec_attr_el != R_NilValue;
       sec_attr_el = CDR(sec_attr_el)
     ) {
       if(!sec_attr_counted) sec_attr_count++;
-      if(prim_tag == TAG(sec_attr_el)) break;
-    }
+      if(prim_tag == TAG(sec_attr_el)) {
+        sec_attr_el_tmp = sec_attr_el;
+        if(sec_attr_counted) break;  // Don't need to do full loop since we did it once already
+    } }
     sec_attr_counted = 1;
+    sec_attr_el = sec_attr_el_tmp;
+
     if(prim_attr_el == R_NilValue) { // NULL attrs shouldn't be possible
       error(
         "Logic Error: attribute %s is NULL for `%s`", tx,
@@ -820,9 +825,9 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   )
     error("Argument `mode` must be a one length integer like vector");
 
-  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
-    0, sqrt(DOUBLE_EPS), asInteger(attr_mode), "", 0, R_NilValue
-  };
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  set->attr_mode = asInteger(attr_mode);
+
   struct ALIKEC_res_attr comp_res =
     ALIKEC_compare_attributes_internal(target, current, set);
   if(!comp_res.success) {
