@@ -9,7 +9,8 @@
 #' Generally speaking two objects are alike if they are of the same type (as
 #' determined by \code{\link{type_alike}}) and length.  Attributes on the
 #' objects are required to be recursively \code{alike}, though the following
-#' attributes are treated specially: .
+#' attributes are treated specially: \code{class}, \code{dim}, \code{dimnames},
+#' \code{names}, \code{row.names}, \code{levels}, and \code{tsp}.
 #'
 #' Exactly what makes two objects \code{alike} is complex, but should be
 #' intuitive.  The best way to understand "alikeness" is to review the examples.
@@ -36,7 +37,7 @@
 #'   comparison: \itemize{
 #'     \item \code{0} only checks attributes that are present in target, and uses special
 #'       comparisons for the special attributes (\code{class}, \code{dim},
-#'       \code{dimnames}, \code{names}, \code{row.names}, \code{levels},
+#'       \code{dimnames}, \code{names}, \code{row.names}, \code{levels}, and
 #'       \code{tsp}) while requiring other attributes to be \code{alike}
 #'     \item \code{1} is like 0, except all atributes must be \code{alike}
 #'     \item \code{2} requires all attributes to be present in \code{target} and
@@ -44,7 +45,7 @@
 #'   }
 #' @param fuzzy.int.max.len max length of numeric vectors to consider for
 #'   integer likeness (e.g. \code{c(1, 2)} can be considered "integer", even
-#'   though it is numeric); currently we limit the flexible check to vectors
+#'   though it is numeric); currently we limit this check to vectors
 #'   shorter than 100 to avoid a potentially expensive computation on large
 #'   vectors
 #' @param env environment used internally when evaluating expressions; currently
