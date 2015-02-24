@@ -294,7 +294,7 @@ unitizer_sect("Examples", {
 
   iris.fake <- transform(iris, Species=as.character(Species))
   alike(iris, iris.fake)
-  iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species), "americana")))
+  iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
   alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 
   # We can use partially specified objects as templates

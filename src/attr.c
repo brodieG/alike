@@ -264,7 +264,7 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
     ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
 }
 const char * ALIKEC_compare_special_char_attrs_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
@@ -286,7 +286,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         const char * cur_name_val = CHAR(STRING_ELT(current, i));
         const char * tar_name_val = CHAR(STRING_ELT(target, i));
         if(         // check dimnames names match
-          tar_name_val[0] && strcmp(tar_name_val, cur_name_val) != 0
+          (strict || tar_name_val[0]) && strcmp(tar_name_val, cur_name_val) != 0
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
@@ -303,7 +303,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
   return mkString(
     ALIKEC_compare_special_char_attrs_internal(
-      target, current, ALIKEC_set_def("")
+      target, current, ALIKEC_set_def(""), 0
     )
   );
 }
@@ -392,7 +392,7 @@ const char * ALIKEC_compare_dimnames(
 
   if(prim_names != R_NilValue) {
     const char * dimnames_name_comp = ALIKEC_compare_special_char_attrs_internal(
-      prim_names, sec_names, set
+      prim_names, sec_names, set, 0
     );
     if(strlen(dimnames_name_comp)) {
       return CSR_smprintf4(
@@ -409,7 +409,7 @@ const char * ALIKEC_compare_dimnames(
       sec_obj = VECTOR_ELT(sec, attr_i);
 
       const char * dimnames_comp = ALIKEC_compare_special_char_attrs_internal(
-        prim_obj, sec_obj, set
+        prim_obj, sec_obj, set, 0
       );
       if(strlen(dimnames_comp)) {
         const char * err_msg;
@@ -474,9 +474,12 @@ const char * ALIKEC_compare_levels(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   if(TYPEOF(target) == STRSXP && TYPEOF(current) == STRSXP) {
-    if(XLENGTH(target))
-      if(!R_compute_identical(target, current, 16))
-        return "have identical values for attribute \"levels\"";
+    const char * res = ALIKEC_compare_special_char_attrs_internal(
+      target, current, set, 1
+    );
+    if(res[0]) {
+      return CSR_smprintf4(ALIKEC_MAX_CHAR, res, "\"levels\"", "", "", "");
+    }
     return "";
   }
   return ALIKEC_alike_attr(target, current, "levels", set);
@@ -737,7 +740,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
       } else if (tar_tag == R_NamesSymbol || tar_tag == R_RowNamesSymbol) {
         const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
-          tar_attr_el_val, cur_attr_el_val, set
+          tar_attr_el_val, cur_attr_el_val, set, 0
         );
         if(name_comp[0])
           err_major[3] =
