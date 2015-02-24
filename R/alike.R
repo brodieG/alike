@@ -4,110 +4,105 @@
 #' value.  The \code{target} argument defines a template that the \code{current}
 #' argument must match.
 #'
+#' @section alikeness:
+#'
+#' Generally speaking two objects are alike if they are of the same type (as
+#' determined by \code{\link{type_alike}}) and length.  Attributes on the
+#' objects are required to be recursively \code{alike}, though the following
+#' attributes are treated specially: \code{class}, \code{dim}, \code{dimnames},
+#' \code{names}, \code{row.names}, \code{levels}, \code{tsp}.
+#'
 #' Exactly what makes two objects \code{alike} is complex, but should be
-#' intuitive.  The best way to understand "alikenes" is to review the examples.
-#' If you are interested in more details, see the vignette.
+#' intuitive.  The best way to understand "alikeness" is to review the examples.
+#' For a thorough exposition see \href{../doc/alike.html}{the vignette}.
 #'
-#' @section Value Comparisons:
+#' @section \code{.alike} and \code{.alike2}:
 #'
-#' Values are never compared explicitly by \code{alike}.
-#'
-#' @section Length Comparisons:
-#'
-#' The lengths of two objects must be equal in order for them to be considered
-#' alike, though in the special case where \code{target} is length zero, then
-#' \code{current} may be any length..
-#'
-#' @section Types:
-#'
-#' The underlying data types between two objects must be \code{\link{type_alike}}.
-#'
-#' @section Attribute Comparison:
-#'
-#' Generally speaking attributes between \code{target} and \code{current}
-#' must be identical, but there are some exceptions:
-#'
-#' Paramter \code{attr.mode} controls how attributes are compared:
-#' \itemize{
-#'   \item 0: special attributes are compared specially, and only attributes
-#'     present in \code{target} are compared (i.e. \code{current} may have
-#'     additional attributes).  Special attributes include:
-#'     \itemize{
-#'       \item \code{dim}, \code{dimnames}, \code{row.names}, and \code{names}
-#'       \item \code{class}
-#'       \item zero-length attributes
-#'       \item reference attributes (e.g. external pointers environments, etc.)
-#'     }
-#'   \item 1: all attributes present in \code{target} must be present in
-#'     \code{current} and be identical.
-#'   \item 2: attributes in \code{target} and \code{current} must be identical
-#' }
-#' Please see vignette for details on for how special attributes are compared.
-#' Note that attributes on attributes (e.g. \code{names(dimnames(x))}) are
-#' generally required to be identical in \code{target} and \code{current},
-#' though \code{names(dimnames(x))} itself is a special case.
-#'
-#' @section \code{.alike}:
-#'
-#' \code{.alike} is identical to \code{alike}, except that it doesn't accept
-#' any parameters outside of \code{target} and \code{current}, and as a result
-#' is slightly faster.
+#' These are slightly faster versions of \code{alike} that are available if you
+#' are trying to squeeze out that last microsecond (literally) from your code.
+#' See \href{../doc/alike.html}{the vignette} for details.
 #'
 #' @export
 #' @import cstringr
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
-#' @seealso type_alike, type_of
+#' @seealso \code{\link{type_alike}}, \code{\link{type_of}},
+#'   \code{\link{abstract}}
 #' @param target the template to compare the object to
 #' @param current the object to determine alikeness to the template
-#' @param type.mode integer(1L) in 0:2, see \code{mode} parameter to \code{\link{type_alike}}
-#' @param int.tol numeric(1L) see \code{tolerance} paramter to \code{\link{type_alike}}
-#' @param attr.mode integer(1L) in 0:2 determines strictness of attribute comparison, see details
-#' @return TRUE if target and current are alike, character(1L) describing why they are not if they are not
+#' @param type.mode integer(1L) in 0:2, see \code{mode} parameter to
+#'   \code{\link{type_alike}}
+#' @param int.tol numeric(1L) see \code{tolerance} parameter to
+#'   \code{\link{type_alike}}
+#' @param attr.mode integer(1L) in 0:2 determines strictness of attribute
+#'   comparison, see \href{../doc/alike.html}{vignette}
+#' @param suppress.warnings logical(1L)
+#' @param match.call.env when matching calls, what frame to look up functions
+#'   definitions in to run \code{match.call} on
+#'   (see \href{../doc/alike.html}{vignette})
+#' @param settings a substitue for all parameters outside of \code{target} and
+#'   \code{current} when using \code{.alike}; generate using
+#'   \code{alike_settings}
+#' @return TRUE if target and current are alike, character(1L) describing why
+#'   they are not if they are not
 #' @examples
-#' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
+#' # Type comparison
+#'
+##' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
-#' alike(integer(), 1:4)  # TRUE, Zero length `target` matches any length `current`
-#' alike(1:4, integer())  # But not vice versa
+#'
+#' alike(1:100, 1:100 + 0.0)  # TRUE
+#' alike(1:101, 1:101 + 0.0)  # FALSE, we do not check numerics for integerness if longer than 100
 #'
 #' # Scalarness can now be checked at same time as type
 #'
-#' x <- 1
-#' x.2 <- 1:3
-#' y <- TRUE
-#' y.2 <- c(TRUE, TRUE)
-#'
-#' alike(integer(1L), x)
-#' alike(logical(1L), y)
-#' alike(integer(1L), x.2)
-#' alike(logical(1L), y.2)
+#' alike(integer(1L), 1)            # integer-like and length 1?
+#' alike(logical(1L), TRUE)         # logical and length 1?
+#' alike(integer(1L), 1:3)
+#' alike(logical(1L), c(TRUE, TRUE))
 #'
 #' # Zero length match any length of same type
 #'
 #' alike(integer(), 1:10)
+#' alike(1:10, integer())   # but not the other way around
 #'
-#' # NULL matches anything
+#' # Recursive objects compared recursively
 #'
-#' alike(NULL, mtcars)
+#' alike(
+#'   list(integer(), list(character(), logical(1L))),
+#'   list(1:10, list(letters, TRUE))
+#' )
+#' alike(
+#'   list(integer(), list(character(), logical(1L))),
+#'   list(1:10, list(letters, c(TRUE, FALSE)))
+#' )
+#' # `NULL` is a wild card when nested within recursive objects
+#'
 #' alike(list(NULL, NULL), list(iris, mtcars))
+#' alike(NULL, mtcars)    # but not at top level
 #'
-#' # `alike` will compare data frame columns
+#' # Since `data.frame` are lists, we can compare them recursively:
 #'
-#' df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
-#' df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
-#' df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
+#' iris.fake <- transform(iris, Species=as.character(Species))
+#' alike(iris, iris.fake)
+#' iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species), "americana")))
+#' alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 #'
-#' alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
-#' alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
+#' # We can use partially specified objects as templates
 #'
-#' # factor levels must match; makes sense, otherwise it really isn't the same
-#' # type of data (note this is a recursive comparison); for better understanding
-#' # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
+#' iris.tpl <- abstract(iris)
+#' str(iris.tpl)
+#' alike(iris.tpl, iris)
+#' alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])    # any row sample of iris matches our iris template
+#' alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])              # but column order matters
 #'
-#' alike(df.tpl, df.cur2)
+#' # Also works with matrices / arrays
 #'
-#' alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
-#' alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
+#' alike(matrix(integer(), 3, 3), matrix(1:9, nrow=3))         # 3 x 3 integer
+#' alike(matrix(integer(), 3, 3), matrix(runif(9), nrow=3))    # 3 x 3, but not integer!
+#' alike(matrix(integer(), 3), matrix(1:12, nrow=3))           # partial spec, any 3 row integer matrix
+#' alike(matrix(integer(), 3), matrix(1:12, nrow=4))
+#' alike(matrix(logical()), array(rep(TRUE, 8), rep(2, 3)))    # Any logical matrix (but not arrays)
 #'
 #' # In order for objects to be alike, they must share a family tree, not just
 #' # a common class
@@ -118,164 +113,34 @@
 #'
 #' alike(obj.tpl, obj.cur.1)
 #' alike(obj.tpl, obj.cur.2)
+#'
+#' # You can compare language objects; these are alike if they are self
+#' # consistent; we don't care what the symbols are, so long as they are used
+#' # consistently across target and current:
+#'
+#' alike(quote(x + y), quote(a + b))   # TRUE, symbols are consistent (adding two different symbols)
+#' alike(quote(x + y), quote(a - b))   # FALSE, different function
+#' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 
-alike <- function(
-  target, current, type.mode=0L, int.tol=MachDblEpsSqrt, attr.mode=0L,
-  suppress.warnings=FALSE, match.call.env=parent.frame()
+alike <- function(target, current)
+  .Call(ALIKEC_alike_ext, target, current, parent.frame())
+
+#' @rdname alike
+#' @export
+
+.alike <- function(target, current, settings=alike_settings())
+  .Call(ALIKEC_alike_fast1, target, current, settings)
+
+#' @rdname alike
+
+.alike2 <- function(target, current)
+  .Call(ALIKEC_alike_fast2, target, current)
+
+#' @rdname alike
+#' @export
+
+alike_settings <- function(
+  type.mode=0L, attr.mode=0L, env=parent.frame(), fuzzy.int.max.len=100L,
+  suppress.warnings=FALSE
 )
-  .Call(
-    ALIKEC_alike, target, current, type.mode, int.tol, attr.mode,
-    suppress.warnings, match.call.env
-  )
-
-#' @export
-
-.alike <- function(target, current) .Call(ALIKEC_alike_fast, target, current)
-
-#' Similar to \code{`\link{typeof}`}, but Treats Numerics Differently
-#'
-#' Numerics that look like integers at tolerance \code{`tolerance`} are reported
-#' as integers.  Otherwise the same as \code{`typeof`}.
-#'
-#' \code{`tolerance`} controls what is considered "integer-like". "integer-likeness"
-#' is roughly defined as occurring when \code{`all.equal(as.integer(x), x) == TRUE`}.
-#' The \code{`tolerance`} value corresponds to the value of the \code{`tolerance`}
-#' argument used by \code{`all.equal.numeric`}.  Note though this is only an
-#' approximate comparison as \code{`type_of`} does not use \code{`all.equal`}.
-#' The default tolerance value is equal to \code{`.Machine$double.eps ^ .5`},
-#' though note that this value is pre-computed when the package is loaded and stored in
-#' \code{`alike:::MachDblEpsSqrt`} in order to minimize function overhead.
-#'
-#' \code{`.typeof`} is a slightly faster version that does not allow you to
-#' modify the \code{`tolerance`} parameter.
-#'
-#' @aliases .type_of
-#' @param object the object to check the type of
-#' @param tolerance see details
-#' @return character(1L) the type of the object
-#' @export
-#' @examples
-#'
-#' type_of(1.0001)                     # numeric
-#' type_of(1 + 1e-20)                  # integer
-#' type_of(1)                          # integer
-#' type_of(data.frame(a=1:3))          # list
-
-type_of <- function(object, tolerance=MachDblEpsSqrt)
-  .Call(ALIKEC_typeof, object, tolerance)
-
-#' @export
-
-.type_of <- function(object)
-  .Call(ALIKEC_typeof_fast, object)
-
-#' Compare Types of Objects
-#'
-#' By default, checks \code{`\link{type_of}`} objects and two objects are
-#' considered \code{`type_alike`} if they have the same type.  There is special
-#' handling for integers, reals, and functions.
-#'
-#' For integers and reals, if \code{`current`} is integer or integer-like
-#' (e.g. 1.0) it will match real or integer \code{`target`} values.  Closures,
-#' built-ins, and specials are all treated as type function.
-#'
-#' Specific behavior can be tuned with the \code{`mode`} parameter the values
-#' of which range from \code{`0L`} to \code{`2L`}, with a lower value
-#' corresponding to more relaxed comparison level.
-#'
-#' \itemize{
-#'   \item 0: integer like reals (e.g. \code{`1.0`}) can match against integer
-#'     templates, and integers always match real templates; all
-#'     function types are considered of the same type
-#'   \item 1: integers always match against numeric templates, but not vice
-#'     versa, and integer-like reals are treated only as reals; functions only
-#'     match same function type (i.e. closures only match closures, builtins
-#'     builtins, and specials specials)
-#'   \item 2: types must be equal for all objects types (for functions, this is
-#'     unchanged from 1)
-#' }
-#'
-#' @seealso type_of, alike
-#' @aliases .type_alike
-#' @param target the object to test type alikeness against
-#' @param current the object to test the type alikeness of
-#' @param mode integer(1L) in 0:2, see details
-#' @param tolerance see \code{`tolerance`} parameter for \code{`\link{type_of}`}
-#' @export
-
-type_alike <- function(target, current, mode=0L, tolerance=MachDblEpsSqrt)
-  .Call(ALIKEC_type_alike, target, current, mode, tolerance)
-
-#' @export
-
-.type_alike <- function(target, current)
-  .Call(ALIKEC_type_alike_fast, target, current)
-
-#' Compare Attributes
-#'
-#' R interface for an internal C functions used by \code{`alike`}.  Provided
-#' primarily for unit testing purposes
-#'
-#' @aliases name_compare, class_compare, dimname_compare, dim_compare
-#' @keywords internal
-#' @param int_mode
-
-attr_compare <- function(target, current, attr.mode=0L)
-  .Call(ALIKEC_compare_attributes, target, current, attr.mode)
-
-#' @export
-
-name_compare <- function(target, current)
-  .Call(ALIKEC_compare_names, target, current)
-
-class_compare <- function(target, current, rev=0)  # `rev` is unused; here for legacy
-  .Call(ALIKEC_compare_class, target, current)
-
-dimname_compare <- function(target, current)
-  .Call(ALIKEC_compare_dimnames, target, current)
-
-dim_compare <- function(
-  target, current, tar_obj=integer(), cur_obj=integer(), rev=0L
-)
-  .Call(ALIKEC_compare_dims, target, current, tar_obj, cur_obj, rev);
-
-ts_compare <- function(target, current)
-  .Call(ALIKEC_compare_ts, target, current)
-
-#' @export
-
-lang_alike <- function(target, current, match.call.env=parent.frame())
-  .Call(ALIKEC_lang_alike, target, current, match.call.env)
-
-#' @export
-
-fun_alike <- function(target, current)
-  .Call(ALIKEC_fun_alike, target, current)
-
-#' @export
-
-dep_alike <- function(obj, lines)
-  .Call(ALIKEC_deparse, obj, lines)
-
-#' @export
-
-match_call_alike <- function(call, env)
-  .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
-
-#' @export
-
-env_track <- function(env, size_init = 32)
-  .Call(ALIKEC_env_track, env, size_init)
-
-#' Used for testing C code
-#'
-#' @export
-#' @keywords internal
-
-alike_test <- function(mode, a, b) .Call(ALIKEC_test, mode, a, b)
-
-#' Pre-calculated Precision Level
-#'
-#' Used to limit overhead of calls the require use of \code{`.Machine$double.eps ^ 0.5`}
-
-MachDblEpsSqrt <- .Machine$double.eps ^ 0.5
+  list(type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings)

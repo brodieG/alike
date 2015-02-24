@@ -278,7 +278,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268"); // should have been handled previously
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
-      return "have identical values for %%s";
+      return "have identical values for `%%s`";
     return "";
   } else if (tar_type == STRSXP) {
     if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
@@ -290,7 +290,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
-            "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
+            "be \"%s\" at index [[%s]] for `%%s` (is \"%s\")",
             tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
           );
     } } }
@@ -586,13 +586,14 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   /*
   Array to store major errors from, in order:
     0. class,
-    1. names/rownames,
+    1. tsp
     2. dim
-    3. dimnames
-    4. other
-    5. missing*/
+    3. names/rownames
+    4. dimnames
+    5. other
+    6. missing*/
 
-  const char * err_major[6] = {"", "", "", "", "", ""};
+  const char * err_major[7] = {"", "", "", "", "", "", ""};
   struct ALIKEC_res_attr res_attr = {1, "", 0, 0};
 
   // Note we don't protect these because target and curent should come in
@@ -618,13 +619,13 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     prim_attr = cur_attr;
     sec_attr = tar_attr;
     if(set->attr_mode == 2) {
-      err_major[5] = "have attributes";
+      err_major[6] = "have attributes";
     }
   } else {
     prim_attr = tar_attr;
     sec_attr = cur_attr;
     if(cur_attr == R_NilValue) {
-      err_major[5] = CSR_smprintf4(
+      err_major[6] = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "not have attributes (has %s attributes)",
         CSR_len_as_chr(xlength(cur_attr)), "", "", ""
   );} }
@@ -645,7 +646,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   attributes, which should be rare
   */
   SEXP prim_attr_el, sec_attr_el;
-  int sec_attr_counted = 0, sec_attr_count = 0, prim_attr_count = 0;
+  size_t sec_attr_counted = 0, sec_attr_count = 0, prim_attr_count = 0;
 
   for(
     prim_attr_el = prim_attr; prim_attr_el != R_NilValue;
@@ -654,15 +655,20 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     SEXP prim_tag = TAG(prim_attr_el);
     const char * tx = CHAR(PRINTNAME(prim_tag));
     prim_attr_count++;
+    SEXP sec_attr_el_tmp = R_NilValue;
 
     for(
       sec_attr_el = sec_attr; sec_attr_el != R_NilValue;
       sec_attr_el = CDR(sec_attr_el)
     ) {
       if(!sec_attr_counted) sec_attr_count++;
-      if(prim_tag == TAG(sec_attr_el)) break;
-    }
+      if(prim_tag == TAG(sec_attr_el)) {
+        sec_attr_el_tmp = sec_attr_el;
+        if(sec_attr_counted) break;  // Don't need to do full loop since we did it once already
+    } }
     sec_attr_counted = 1;
+    sec_attr_el = sec_attr_el_tmp;
+
     if(prim_attr_el == R_NilValue) { // NULL attrs shouldn't be possible
       error(
         "Logic Error: attribute %s is NULL for `%s`", tx,
@@ -686,9 +692,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       (
         (tar_attr_el == R_NilValue && set->attr_mode == 2) ||
         cur_attr_el == R_NilValue
-      ) && !err_major[5][0]
+      ) && !err_major[6][0]
     ) {
-      err_major[5] = CSR_smprintf4(
+      err_major[6] = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%shave attribute \"%s\"",
         (cur_attr_el == R_NilValue ? "" : "not "), tx, "", ""
       );
@@ -698,8 +704,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
     // = Baseline Check ========================================================
 
-    if(set->attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[4])) {
-      err_major[4] = ALIKEC_compare_attributes_internal_simple(
+    if(set->attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[5])) {
+      err_major[5] = ALIKEC_compare_attributes_internal_simple(
         tar_attr_el_val, cur_attr_el_val, tx, set
       );
     // = Custom Checks =========================================================
@@ -723,7 +729,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
           tar_attr_el_val_tmp, cur_attr_el_val_tmp, is_df, set
         );
         UNPROTECT(2);
-        if(strlen(class_comp)) {
+        if(class_comp[0]) {
           err_major[0] = class_comp;
           break;
         }
@@ -733,8 +739,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
           tar_attr_el_val, cur_attr_el_val, set
         );
-        if(strlen(name_comp))
-          err_major[1] = CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx, "", "", "");
+        if(name_comp[0])
+          err_major[3] =
+            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx, "", "", "");
         continue;
       // - Dims ----------------------------------------------------------------
 
@@ -745,7 +752,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         const char * dim_comp = ALIKEC_compare_dims(
           tar_attr_el_val, cur_attr_el_val, target, current, class_mode, set
         );
-        if(class_mode) { // implicit class error
+        if(* class_mode) { // implicit class error
           err_major[0] = dim_comp;
         } else {
           err_major[2] = dim_comp;
@@ -753,34 +760,34 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       // - dimnames ------------------------------------------------------------
 
       } else if (tar_tag == R_DimNamesSymbol) {
-        err_major[3] = ALIKEC_compare_dimnames(
+        err_major[4] = ALIKEC_compare_dimnames(
           tar_attr_el_val, cur_attr_el_val, set
         );
 
       // - levels --------------------------------------------------------------
 
       } else if (tar_tag == R_LevelsSymbol) {
-        err_major[4] =
+        err_major[5] =
           ALIKEC_compare_levels(tar_attr_el_val, cur_attr_el_val, set);
 
       // - tsp -----------------------------------------------------------------
 
       } else if (tar_tag == R_TspSymbol) {
 
-        err_major[4] = ALIKEC_compare_ts(
+        err_major[1] = ALIKEC_compare_ts(
           tar_attr_el_val, cur_attr_el_val, set
         );
       // - normal attrs --------------------------------------------------------
 
       } else {
-        err_major[4] = ALIKEC_compare_attributes_internal_simple(
+        err_major[5] = ALIKEC_compare_attributes_internal_simple(
           tar_attr_el_val, cur_attr_el_val, tx, set
       );}
   } }
   // If in strict mode, must have the same number of attributes
 
   if(set->attr_mode == 2 && prim_attr_count != sec_attr_count) {
-    err_major[5] = CSR_smprintf4(
+    err_major[6] = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "have %s attribute%s (has %s)", CSR_len_as_chr(prim_attr_count),
       prim_attr_count != 1 ? "s" : "", CSR_len_as_chr(sec_attr_count), ""
@@ -793,8 +800,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 
   res_attr.df = *is_df;
   int i;
-  for(i = 0; i < 6; i++) {
-    if(strlen(err_major[i]) && (!rev || (rev && set->attr_mode == 2))) {
+  for(i = 0; i < 7; i++) {
+    if(err_major[i][0] && (!rev || (rev && set->attr_mode == 2))) {
       res_attr.success = 0;
       res_attr.message = err_major[i];
       res_attr.lvl = i;
@@ -810,14 +817,17 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
 external interface for compare attributes
 */
 SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
-  SEXPTYPE attr_mode_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
+  SEXPTYPE attr_mode_type = TYPEOF(attr_mode);
 
-  if(attr_mode_type != INTSXP || XLENGTH(attr_mode) != 1)
+  if(
+    (attr_mode_type != INTSXP && attr_mode_type != REALSXP) ||
+    XLENGTH(attr_mode) != 1
+  )
     error("Argument `mode` must be a one length integer like vector");
 
-  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
-    0, sqrt(DOUBLE_EPS), asInteger(attr_mode), "", 0, R_NilValue
-  };
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  set->attr_mode = asInteger(attr_mode);
+
   struct ALIKEC_res_attr comp_res =
     ALIKEC_compare_attributes_internal(target, current, set);
   if(!comp_res.success) {

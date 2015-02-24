@@ -1,4 +1,4 @@
-These are internal developer notes
+These are internal developer notes; don't expect any of it to make much sense.
 
 ## C Benchmarking
 
@@ -180,6 +180,28 @@ When comparing language objects, the hash mechanism we use that needs to allocat
 
 Also, we pre-allocate the object used to deparse the error message even before error occurs.  Is there a way to only do so if an error occurs?  Might be difficult since we need both the starting pointer as well as the location of error pointer in the same pointer chain.
 
+After removing `strcmp` in the cases where the names are known to be identical:
+
+    > microbenchmark(alike(mtcars, mtcars), alike(mtcars.a, mtcars), times=1000)
+    Unit: microseconds
+                        expr   min     lq median     uq    max neval
+       alike(mtcars, mtcars) 2.966 3.1465 3.2430 3.4005  4.728  1000
+     alike(mtcars.a, mtcars) 2.931 3.1060 3.2075 3.3820 30.654  1000
+
+Finally, collapsing all the settings into one argument:
+
+    > sets <- list(0L, alike:::MachDblEpsSqrt, 0L, FALSE, sys.frame(sys.nframe()))
+    > microbenchmark(alike(mtcars, mtcars), alike_test(mtcars, mtcars, sets), alike_test(mtcars, mtcars, NULL), .alike(mtcars, mtcars), times=10000)
+    Unit: microseconds
+                                 expr   min    lq median    uq     max neval
+                alike(mtcars, mtcars) 2.934 3.161  3.319 3.486 808.905 10000
+     alike_test(mtcars, mtcars, sets) 2.157 2.313  2.394 2.534  12.154 10000
+     alike_test(mtcars, mtcars, NULL) 2.070 2.243  2.335 2.480 655.997 10000
+               .alike(mtcars, mtcars) 1.951 2.124  2.199 2.318  13.585 10000
+
+The extra argument over the original "fast" version costs ~120ns, and the argument validation another ~80ns.
+
+
 ### Stack Manipulation
 
 The is the baseline:
@@ -306,3 +328,44 @@ TBD how many arguments we want to pile up.  Here are some to discuss:
 2. lang.match = fast or slow?
 
 Actually, could combine match.fun.env to be either an environment or NULL, and if NULL don't do the match!
+
+`type.mode`
+
+Probably don't want to check more than 100 numbers by default
+
+Need to handle:
+
+* wanting to specify how many elements before we kill integer-alike tests
+* whether to generically allow integer-alikeness
+* whether ints can be considered numeric
+
+Before we had 0 (inf integer-alikeness), 1 (must be int), 2 (must be num)
+
+Note this actually affects closures / functions as well
+
+Proposal:
+* 0 strictest
+* 1 strict, but subset types (e.g. INT) can be considered part of superset (how does this affect functions)
+* 2 - N how may 1eN elements we allow before we switch to mode 1
+
+Blergh.  Attempting to combine two dimensions (strictness and allowable size) into one number is really shit.  Really don't want to add another parameter to `alike` though.  Maybe the right answer is to use a fixed allowable size (e.g. 100), and if you really want to use larger then you have to use `.alike` with `settings`.
+
+* attr.mode
+* type.mode
+* match.call.env
+* fuzzy.int.max.len
+* suppress.warnings
+
+Answer is probably to simplify `alike` use by not having any arguments other
+than target and current; then all other arguments are accessible through
+`alike_settings`.
+
+Do we give up on `parent.frame()`?  Do we provide it not even as an argument?
+
+The main draw-back is that by not providing that argument we move away from the standard of having default behavior of `alike` be what we think is the most correct in most cases.  One possibility is to use `parent.frame`, but not have it as an argument in the actual R interface function.  This won't save us any time, and we lose the flexibility of actually turning off function matching, but the interface is consistent (therere isn't one random argument that we can adjust.)
+
+
+
+
+
+

@@ -13,8 +13,8 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
 
   ALIKEC_set_tmp_val->type_mode = 0;
   ALIKEC_set_tmp_val->attr_mode = 0;
-  ALIKEC_set_tmp_val->int_tolerance = 0.0;
-  ALIKEC_set_tmp_val->match_env = R_NilValue;
+  ALIKEC_set_tmp_val->fuzzy_int_max_len = 100;
+  ALIKEC_set_tmp_val->env = R_NilValue;
   ALIKEC_set_tmp_val->prepend = prepend;
   ALIKEC_set_tmp_val->env_set = 0;
   ALIKEC_set_tmp_val->no_rec = 0;
@@ -91,7 +91,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
     if(!res_attr.success) {
-      if(res_attr.lvl == 0) err = 1;   // If top level error (class), make sure not overriden by others
+      if(res_attr.lvl <= 2) err = 1;   // If top level error (class), make sure not overriden by others
       else err_attr = 1;
       err_base = res_attr.message;
     }
@@ -107,7 +107,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
-      err_lang = ALIKEC_lang_alike_internal(target, current, set->match_env);
+      err_lang = ALIKEC_lang_alike_internal(target, current, set->env);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
@@ -126,7 +126,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       !err && !is_lang && // lang excluded because we can have symbol-lang comparisons that resolve to symbol symbol
       strlen(
         err_type = ALIKEC_type_alike_internal(
-          target, current, set->type_mode, set->int_tolerance
+          target, current, set->type_mode, set->fuzzy_int_max_len
       ) )
     ) {
       err = 1;
@@ -193,6 +193,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
       case SPECIALSXP:
       case EXPRSXP:
       case SYMSXP:
+      case EXTPTRSXP:
+      case WEAKREFSXP:
         break;
       default:
         warning(
@@ -537,38 +539,86 @@ R_GlobalEnv, which should be fine since all the other arguments to `alike` have
 already been evaluated, but the standard `alike` function evaluates it in the
 calling environment */
 
-SEXP ALIKEC_alike_fast(SEXP target, SEXP current) {
+SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
   struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
-/* Normal version, a little slower but more flexible */
+/*
+Originally the "fast" version, but is now the version that allows us to specify
+settings
+*/
+
+SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
+  if(settings == R_NilValue) {
+    return ALIKEC_alike_fast2(target, current);
+  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 5) {
+    return ALIKEC_alike(
+      target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
+      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4)
+    );
+  }
+  error("Argument `settings` is not a length 5 list as expected");
+  return R_NilValue;
+}
+
+/* Main external interface, no settings */
+
+SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env) {
+  if(TYPEOF(env) != ENVSXP)
+    error("Logic Error; `env` argument should be environment; contact maintainer.");
+  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  set->env = env;
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
+}
+/*
+Semi-internal interface; used to be the main external one but no longer as we
+changed the interface
+*/
 
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP type_mode, SEXP int_tolerance, SEXP attr_mode,
-  SEXP suppress_warnings, SEXP match_env
+  SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
+  SEXP fuzzy_int_max_len, SEXP suppress_warnings
 ) {
-  SEXPTYPE int_mod_type, tol_type, attr_mod_type;
-  int supp_warn;
+  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type;
+  int supp_warn = 0, type_int = 0, attr_int = 0;
+  R_xlen_t fuzzy_int_max_len_int;
 
-  int_mod_type = ALIKEC_typeof_internal(type_mode, sqrt(DOUBLE_EPS));
-  attr_mod_type = ALIKEC_typeof_internal(attr_mode, sqrt(DOUBLE_EPS));
-  tol_type = ALIKEC_typeof_internal(int_tolerance, sqrt(DOUBLE_EPS));
+  int_mod_type = TYPEOF(type_mode);
+  attr_mod_type = TYPEOF(attr_mode);
+  fuzzy_type = TYPEOF(fuzzy_int_max_len);
 
-  if(int_mod_type != INTSXP || XLENGTH(type_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `type.mode` must be a one length integer like vector");
-  if(attr_mod_type != INTSXP || XLENGTH(attr_mode) != 1)   /* borrowed code from type_alike, maybe needs to be function */
-    error("Argument `attr.mode` must be a one length integer like vector");
-  if((tol_type != INTSXP && tol_type != REALSXP) || XLENGTH(int_tolerance) != 1)
-    error("Argument `int.tol` must be a one length numeric vector");
+  if(
+    (int_mod_type != INTSXP && int_mod_type != REALSXP) ||
+    XLENGTH(type_mode) != 1 || (type_int = asInteger(type_mode)) == NA_INTEGER ||
+    type_int < 0 || type_int > 2
+  )
+    error("Argument `type.mode` must be a one length numeric between 0 and 2");
+  if(
+    (attr_mod_type != INTSXP && attr_mod_type != REALSXP) ||
+    XLENGTH(attr_mode) != 1 || (attr_int = asInteger(attr_mode)) == NA_INTEGER ||
+    attr_int < 0 || attr_int > 2
+  )
+    error("Argument `attr.mode` must be a one length numeric");
+  if(
+    (fuzzy_type != INTSXP && fuzzy_type != REALSXP) ||
+    XLENGTH(fuzzy_int_max_len) != 1 ||
+    (fuzzy_int_max_len_int = asInteger(fuzzy_int_max_len)) == NA_INTEGER
+  )
+    error("Argument `fuzzy.int.max.len` must be an integer one length vector");
   if(
     TYPEOF(suppress_warnings) != LGLSXP || XLENGTH(suppress_warnings) != 1 ||
     (supp_warn = asLogical(suppress_warnings)) == NA_LOGICAL
   )
     error("Argument `suppress.warnings` must be TRUE or FALSE");
+  if(env != R_NilValue && TYPEOF(env) != ENVSXP)
+    error("Argument `env` must be NULL or an environment");
 
-  struct ALIKEC_settings * set = &(struct ALIKEC_settings) {
-    asInteger(type_mode), asReal(int_tolerance),
-    asInteger(attr_mode), "should ", supp_warn, match_env, 0, 0, 0, 0, 0
-  };
+  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  set->type_mode = type_int;
+  set->attr_mode = attr_int;
+  set->fuzzy_int_max_len = fuzzy_int_max_len_int;
+  set->suppress_warnings = supp_warn;
+  set->env = env;
+
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }

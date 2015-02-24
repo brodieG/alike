@@ -37,12 +37,9 @@
     int debug;
   };
   struct ALIKEC_settings {
-    int type_mode;
-    double int_tolerance;
-    int attr_mode;
+    int type_mode, attr_mode, fuzzy_int_max_len, suppress_warnings;
     const char * prepend;
-    int suppress_warnings;
-    SEXP match_env;                         // what environment to look for functions to match call in
+    SEXP env;                               // what environment to look for functions to match call in
     struct ALIKEC_settings_env * env_set;   // Used to track whether we've encountered an environment before
     int no_rec;                             // block futher recursion into environments
     size_t in_attr;                         // whether we're recursing through attributes
@@ -58,23 +55,24 @@
   // - Main Funs ---------------------------------------------------------------
 
   SEXP ALIKEC_alike (
-    SEXP target, SEXP current, SEXP type_mode, SEXP int_tol, SEXP attr_mode,
-    SEXP suppress_warnings, SEXP match_env
+    SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
+    SEXP fuzzy_int_max_len, SEXP suppress_warnings
   );
-  SEXP ALIKEC_alike_fast (SEXP target, SEXP current);
+  SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
+  SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
+  SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
-  SEXP ALIKEC_typeof(SEXP object, SEXP tolerance);
-  SEXP ALIKEC_typeof_fast(SEXP object);
-  SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP tolerance);
+  SEXP ALIKEC_typeof(SEXP object);
+  SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len);
   SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 
   // - Internal Funs -------------------------------------------------------------
 
-  SEXPTYPE ALIKEC_typeof_internal(SEXP object, double tolerance);
+  SEXPTYPE ALIKEC_typeof_internal(SEXP object);
   const char *  ALIKEC_type_alike_internal(
-    SEXP target, SEXP current, int mode, double tolerance
+    SEXP target, SEXP current, int mode, R_xlen_t max_len
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
@@ -102,6 +100,9 @@
   struct ALIKEC_settings * ALIKEC_set_def();
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP mode, SEXP a, SEXP b);
+  SEXP ALIKEC_test2(
+    SEXP target, SEXP current
+  );
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);

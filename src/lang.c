@@ -203,6 +203,10 @@ const char * ALIKEC_lang_alike_rec(
     ALIKEC_symb_mark(current);
     return (const char *) res;
   }
+  // Zero length calls match anything
+
+  if(CDR(target) == R_NilValue) return "";
+
   // Match the calls before comparison; small inefficiency below since we know
   // that target and current must be the same fun; we shouldn't need to retrieve
   // it twice as we do now
