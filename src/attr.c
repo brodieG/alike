@@ -278,7 +278,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268"); // should have been handled previously
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
-      return "have identical values for `%%s`";
+      return "have identical values for %%s";
     return "";
   } else if (tar_type == STRSXP) {
     if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
@@ -290,7 +290,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
-            "be \"%s\" at index [[%s]] for `%%s` (is \"%s\")",
+            "be \"%s\" at index [[%s]] for %%s (is \"%s\")",
             tar_name_val, CSR_len_as_chr((R_xlen_t)(i + 1)), cur_name_val, ""
           );
     } } }
@@ -415,7 +415,7 @@ const char * ALIKEC_compare_dimnames(
         const char * err_msg;
         if(prim_len == 2) { // matrix like
           switch(attr_i) {
-            case (R_xlen_t) 0: err_msg = "row names"; break;
+            case (R_xlen_t) 0: err_msg = "\"row.names\""; break;
             case (R_xlen_t) 1: err_msg = "column names"; break;
             default: error("Logic Error: dimnames dimension mismatch; contact maintainer.");
           }
@@ -742,9 +742,13 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         const char * name_comp = ALIKEC_compare_special_char_attrs_internal(
           tar_attr_el_val, cur_attr_el_val, set, 0
         );
-        if(name_comp[0])
+        if(name_comp[0]) {
+          char * tx_name = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "\"%s\"", tx, "", "", ""
+          );
           err_major[3] =
-            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx, "", "", "");
+            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, "", "", "");
+        }
         continue;
       // - Dims ----------------------------------------------------------------
 
