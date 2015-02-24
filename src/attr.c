@@ -3,7 +3,8 @@
 /*
 Runs alike on an attribute, really just like running alike, but since it is on
 an attribute and we don't want a massive nested error message, provide a
-different error message
+different error message; this is not very efficient; in theory we could just
+stop recursion since we're not returning the nested error message.
 */
 
 const char * ALIKEC_alike_attr(
@@ -528,7 +529,7 @@ const char * ALIKEC_compare_attributes_internal_simple(
   ) {
     // Because these attributes are references to other objects that
     // we cannot directly compare, and could for all intents and
-    // purposes be "identical" in the typical R sense, i.e. not
+    // purposes be "alike" in the typical R sense, i.e. not
     // pointing to exact same memory location, but otherwise the
     // same, we consider the fact that they are of the same type
     // a match for alike purposes.  This is a bit of a cop out,
@@ -551,36 +552,9 @@ const char * ALIKEC_compare_attributes_internal_simple(
   }
   return "";
 }
-/* Used by alike to compare attributes; returns pointer to zero length character
-string if successful, an error message otherwise
+/* Used by alike to compare attributes;
 
-Code heavily inspired by `R_compute_identical` (thanks R CORE)
-
-Problems to resolve:
-- Different dimnames don't seem to trigger errors
-- zero length row.names don't match row.names
-- zero length attributes generally don't match attributes
-- class matching seems buggy
-
-Other notes:
-- Special attributes are class, dim, dimnames
-- dimnames may have at most a names attribute if in special attr mode
-- all other attribute attributes must be identical
-
-lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
-mx.1 <- matrix(integer(), 3, 3, dimnames = list(NULL, letters[2:4]))
-mx.2 <- matrix(integer(), 3, 3, dimnames = list(LETTERS[1:3], letters[1:3]))
-
-microbenchmark(
-  attr_compare(lst, lst),   # no attrs
-  attr_compare(mx.2, mx.2), # attrs but no error
-  attr_compare(mx.1, mx.2)  # attrs and error
-)
-Unit: microseconds
-                     expr   min     lq median     uq    max neval
-   attr_compare(lst, lst) 1.278 1.3755 1.4635 1.5510 23.470   100
- attr_compare(mx.2, mx.2) 1.539 1.6380 1.7905 1.8885  2.426   100
- attr_compare(mx.1, mx.2) 2.406 2.5380 2.6100 2.7150 13.482   100
+Code originally inspired by `R_compute_identical` (thanks R CORE)
 */
 
 struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
@@ -714,7 +688,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     // = Custom Checks =========================================================
 
     /* see alike documentation for explanations of how the special
-    attributes class, dim, and dimnames are compared */
+    attributes in this section are compared */
 
     } else {
       // - Class ---------------------------------------------------------------

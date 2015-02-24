@@ -5,6 +5,9 @@
 
   // - Data Structures ---------------------------------------------------------
 
+  /*
+  index structures used to track the location at which an error occurs
+  */
   union ALIKEC_index_raw {
     R_xlen_t num;
     const char * chr;

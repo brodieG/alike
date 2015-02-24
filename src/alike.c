@@ -1,11 +1,19 @@
 #include "alike.h"
 
+/*-----------------------------------------------------------------------------\
+\-----------------------------------------------------------------------------*/
 /*
-Construct settings objects; these are really only used for testing sub-functions
-or for the `fast` alike function.
+Initialize settings.
 
 We provide only the prepend argument as an input since that is the only one that
-requires differnet treatment between fast and internal functions
+requires differnet treatment between external and internal functions.
+
+Note settings are effectively global for the entire duration of a `.Call`
+across all these functions (i.e. they are all refering to the same settings
+in memory) so we have to think carefully when modifying them.
+
+An alternative would have been to just instantiate new settings objects for each
+recursion, but that seems potentially wasteful (though we haven't tested).
 */
 struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   struct ALIKEC_settings * ALIKEC_set_tmp_val =
@@ -24,9 +32,18 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
 
   return ALIKEC_set_tmp_val;
 }
+/*-----------------------------------------------------------------------------\
+\-----------------------------------------------------------------------------*/
 /*
-non recursive check (well, except for attributes will recurse if needed in
-final implementation)
+Basic Object Check
+
+This will not recurse directly on recursive objects, though recursive attributes
+will get recursed into.
+
+Check:
+- type
+- length
+- attributes
 */
 struct ALIKEC_res ALIKEC_alike_obj(
   SEXP target, SEXP current, struct ALIKEC_settings * set
@@ -50,10 +67,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err_base = "%sbe S4";
       err_tok1 = (s4_tar ? "" : "not ");
     } else {
-      // Here we pull the class symbol, install "inherits" from R proper, and
-      // evaluate it in the base environment to avoid conflicts with other
-      // symbols
-
       SEXP klass, klass_attrib;
       SEXP s, t;
 
@@ -63,6 +76,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
       klass_attrib = getAttrib(klass, ALIKEC_SYM_package);
       if(xlength(klass_attrib) != 1 || TYPEOF(klass_attrib) != STRSXP)
         error("Logic Error: unexpected S4 class \"class\" attribute does not have `package` attribute in expected structure");
+
+      // Construct call to `inherits`; we evaluate in base env since class
+      // definitions should still be visible and this way unlikely that
+      // inherits gets overwritten
 
       t = s = PROTECT(allocList(3));
       SET_TYPEOF(s, LANGSXP);
@@ -77,7 +94,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       }
       UNPROTECT(1);
     }
-  } else if(target != R_NilValue) {  // Nil objects match anything when nested (should also be true for envs?)
+  } else if(target != R_NilValue) {  // Nil objects match anything when nested
     // - Attributes ------------------------------------------------------------
     /*
     Attributes must be run first to figure out whether we are dealing with a
@@ -173,7 +190,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
     } }
   }
-  // - Known Limitations -----------------------------------------------------
+  // - Known Limitations -------------------------------------------------------
 
   if(!set->suppress_warnings) {
     switch(tar_type) {
@@ -221,7 +238,13 @@ Utility functions for updating index list for error reporting.  General logic
 is to track depth of recursion, and when an error occurs, allocate enough
 space for as many ALIKEC_index structs as there is recursion depth.
 */
+/*-----------------------------------------------------------------------------\
+\-----------------------------------------------------------------------------*/
+/*
+Recursion functions
 
+The first set here manages tracking the indeces during recursion
+*/
 void ALIKEC_res_ind_set(
   struct ALIKEC_res res, struct ALIKEC_index ind, size_t lvl
 ) {
@@ -239,7 +262,6 @@ void ALIKEC_res_ind_num(struct ALIKEC_res res, R_xlen_t ind, size_t lvl) {
   union ALIKEC_index_raw ind_u = {.num = ind};
   ALIKEC_res_ind_set(res, (struct ALIKEC_index) {ind_u, 0}, lvl);
 }
-
 struct ALIKEC_res ALIKEC_res_ind_init(
   struct ALIKEC_res res, struct ALIKEC_settings * set
 ) {
@@ -257,20 +279,16 @@ struct ALIKEC_res ALIKEC_res_ind_init(
   }
   return res;
 }
-
 /*
 Handle recursive types; these include VECSXP, environments, and pair lists.
-One possible slow step here is that we keep create new CONS for each new
-index element; not sure if this is meanifully slow or not
 */
-
 struct ALIKEC_res ALIKEC_alike_rec(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   /*
   Recurse through various types of recursive structures.
   VERY IMPORTANT: there are several return points throughout here that don't
-  actually imply recursion; make sure to initialize the index trackign when
+  actually imply recursion; make sure to initialize the index tracking when
   that happens.  Note that exit points to ALIKEC_alike_rec don't require this.
 
   Side note: probably don't need to generate full error report unless we're on
@@ -346,15 +364,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
           UNPROTECT(2);
           return(res1);
         }
-        /*
-        UNCLEAR WHAT I MEANT BY THIS COMMENT??? SHOULD BE ABLE TO RECURSE FINE
-        PROVIDED WE CHECK FOR CIRCULARITY. CHANGING TO REC FOR NOW
-        We cannot recurse here because environments allow for the possibility
-        of a self referential loop.  Note that even ALIKEC_alike_obj can cause
-        recursion due to use of `alike` on attributes, so if already in an
-        environment, then we must content ourselves with a non-recursive alike
-        comparison
-        */
         res1 = ALIKEC_alike_rec(
           findVarInFrame(target, var_name), var_cur_val, set
         );
@@ -402,10 +411,11 @@ struct ALIKEC_res ALIKEC_alike_rec(
   set->rec_lvl--;
   return res1;
 }
+/*-----------------------------------------------------------------------------\
+\-----------------------------------------------------------------------------*/
 /*
 Run alike calculation, and in particular, compose error message if relevant
 */
-
 const char * ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
@@ -532,13 +542,11 @@ const char * ALIKEC_alike_internal(
   set->rec_lvl_last = rec_lvl_last_prev;
   return (const char *) err_final;
 }
-
-/* "fast" version doesn't allow messing with optional parameters to avoid arg
-evaluations in R; note that S4 tests will be done by evaluating `inherits` in
-R_GlobalEnv, which should be fine since all the other arguments to `alike` have
-already been evaluated, but the standard `alike` function evaluates it in the
-calling environment */
-
+/*
+"fast" version doesn't allow messing with optional parameters to avoid arg
+evaluations in R; this is basically deprecated now though still accessible
+through the non-exported `.alike2` R function
+*/
 SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
   struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
@@ -547,7 +555,6 @@ SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
 Originally the "fast" version, but is now the version that allows us to specify
 settings
 */
-
 SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
   if(settings == R_NilValue) {
     return ALIKEC_alike_fast2(target, current);
@@ -560,9 +567,9 @@ SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
   error("Argument `settings` is not a length 5 list as expected");
   return R_NilValue;
 }
-
-/* Main external interface, no settings */
-
+/*
+Main external interface, no settings
+*/
 SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env) {
   if(TYPEOF(env) != ENVSXP)
     error("Logic Error; `env` argument should be environment; contact maintainer.");
@@ -574,7 +581,6 @@ SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env) {
 Semi-internal interface; used to be the main external one but no longer as we
 changed the interface
 */
-
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
   SEXP fuzzy_int_max_len, SEXP suppress_warnings
