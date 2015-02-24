@@ -63,9 +63,7 @@ SEXP ALIKEC_test2(
     SEXP target, SEXP current
 ) {
   return R_NilValue;
-};
-
-
+}
 /*
 deparse into character
 */

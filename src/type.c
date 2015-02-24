@@ -19,9 +19,10 @@ const char * ALIKEC_type_alike_internal(
   if(
     mode == 0 && (
       (
-        tar_type_raw == INTSXP && XLENGTH(target) <= max_len &&
-        XLENGTH(current) <= max_len
-      ) || (
+        tar_type_raw == INTSXP && (
+          max_len < 0 ||
+          (XLENGTH(target) <= max_len && XLENGTH(current) <= max_len)
+      ) ) || (
         tar_type_raw == CLOSXP || tar_type_raw == SPECIALSXP ||
         tar_type_raw == BUILTINSXP
     ) )
