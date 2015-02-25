@@ -1,0 +1,22 @@
+The `alike` package as a whole is distributed under GPL >= 3.  The package also
+includes code from third parties with different but compatible licenses:
+
+Hashtable and hashing functions written by Paxdiablo
+--------------------------------------------------------------------------------
+
+License is "do whatever the heck you want with it" licence, the official text of
+which is:
+
+> 1/ You are hereby permitted to do whatever the heck you want with it.
+
+Code was originally copied from: http://powerfield-software.com/?p=615
+
+Assorted Code and Code Patterns from R Sources
+--------------------------------------------------------------------------------
+
+I used the R sources to learn how to write C extensions for R, and as such I
+borrowed patterns and methods from them liberally.
+
+Code was downloaded from: http://cran.r-project.org/sources.html
+
+License is GPL-2 | GPL-3.
