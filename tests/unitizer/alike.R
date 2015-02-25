@@ -244,6 +244,7 @@ unitizer_sect(".alike", {
   .alike(1.0, 1L, alike_settings(type.mode=2L))   # FALSE
   .alike(1:101, 1:101 + 0.0)  # FALSE
   .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=200)) # TRUE
+  .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=-1))  # TRUE
   .alike(list(a=1:10), data.frame(a=1:10))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=1L))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=2L))  # FALSE
