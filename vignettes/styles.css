@@ -167,19 +167,21 @@ h5, h6 {
 }
 
 a {
-  color: #2255dd;
-  font-weight: bold;
+  color: #34b;
+  /*font-weight: bold;*/
   text-decoration: none;
+}
+
+div#TOC a {
+  font-weight: bold;
 }
   a:hover {
     color: #6666ff; }
   a:visited {
-    color: #800080; }
+    color: #700070; }
   a:visited:hover {
     color: #BB00BB; }
-  a[href^="http:"] {
-    text-decoration: underline; }
-  a[href^="https:"] {
+  a[href^="http:"], a[href^="https:"] {
     text-decoration: underline; }
 
 /* Class described in https://benjeffrey.com/posts/pandoc-syntax-highlighting-css
@@ -192,7 +194,7 @@ code > span.bn { color: #d14; } /* BaseN */
 code > span.fl { color: #d14; } /* Float */
 code > span.ch { color: #d14; } /* Char */
 code > span.st { color: #d14; } /* String */
-code > span.co { color: #8D8; font-style: italic; } /* Comment */
+code > span.co { color: #6D6; font-style: italic; } /* Comment */
 code > span.ot { color: #007020; } /* OtherToken */
 code > span.al { color: #ff0000; font-weight: bold; } /* AlertToken */
 code > span.fu { color: #900; font-weight: bold; } /* Function calls */
@@ -225,13 +227,13 @@ pre {
   font-size: 85%;
 }
 pre.sourceCode {
-  border: 1px solid #EEE;
+  border: 1px solid #CCC;
 }
 pre:not([class]) {
-  background-color: #F6F6F6;
+  background-color: #EEE;
 }
 pre:not([class]) > code {
-  color: #999;
+  color: #888;
   background-color: transparent;
 }
 pre > code.sourceCode {
