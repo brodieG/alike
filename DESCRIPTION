@@ -5,11 +5,11 @@ Description: Compares object structures rather than values.  This is
     matrix(integer(), ncol=3)) that they wish to compare other objects against
     (e.g. three column integer matrices).
 Version: 1.0.0
-Authors@R: c(
-    person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com", role=c("aut", "cre")),
-    person(family="Paxdiablo", role="cph", comment="Hash table implementation in src/pfhash.h"),
-    person(family="R Core Team", email="R-core@r-project.org", role="cph", comment="Used/adapted several code snippets from R sources")
-)
+Authors@R: c( person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")), person(family="Paxdiablo", role="cph", comment="Hash
+    table implementation in src/pfhash.h"), person(family="R Core Team",
+    email="R-core@r-project.org", role="cph", comment="Used/adapted several
+    code snippets from R sources"))
 Depends:
     R (>= 3.1.2)
 License: GPL (>=3) | file LICENSE
