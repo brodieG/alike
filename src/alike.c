@@ -295,6 +295,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
   outermost `ALIKEC_alike_internal` call since we don't display the inner
   reports anyway, so could be a bit more efficient there.
   */
+  void R_CheckUserInterrupt(void);
+
   size_t rec_lvl_old = set->rec_lvl;
   set->rec_lvl++;  //Mark recursion depth
   if(rec_lvl_old >= set->rec_lvl)
