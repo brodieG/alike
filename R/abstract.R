@@ -92,7 +92,7 @@ abstract.lm <- function(x, ...) {
   names(attr(attr(x$model, "terms"), "dataClasses")) <- NULL
   attr(attr(x$model, "terms"), ".Environment") <- emptyenv()
   attr(x$terms, ".Environment") <- emptyenv()
-  x$call <- call(as.character(x$call[[1L]]), x$call[[2L]], data=NULL)
+  x$call <- call(as.character(x$call[[1L]]))  # zero length call should match any call
   NextMethod()
 }
 #' @rdname abstract
