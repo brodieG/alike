@@ -125,10 +125,13 @@ const char * ALIKEC_lang_obj_compare(
         rev_symb, csc_text, "", ""
       );
     };
-  } else if (
-    (tsc_type == LANGSXP && csc_type != LANGSXP) ||
-    (tsc_type != LANGSXP && csc_type == LANGSXP)
-  ) {
+  } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
+    ALIKEC_symb_mark(cur_par);
+    return CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be a call to \"%s\" (is a symbol) for `%s`",
+      ALIKEC_deparse(CAR(target), 1), ALIKEC_deparse(current, 1), "", ""
+    );
+  } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\") for `%s`",
@@ -141,7 +144,7 @@ const char * ALIKEC_lang_obj_compare(
       target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
       cur_varnum, formula, match_call, match_env
     );
-    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nunking call since we don't want it in this case
+    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nuking call since we don't want it in this case
     if(res[0]) {
       return res;
     }
