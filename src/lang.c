@@ -128,8 +128,9 @@ const char * ALIKEC_lang_obj_compare(
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be a call to \"%s\" (is a symbol) for `%s`",
-      ALIKEC_deparse(CAR(target), 1), ALIKEC_deparse(current, 1), "", ""
+      ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\") for `%s`",
+      ALIKEC_deparse(CAR(target), 1), type2char(csc_type),
+      ALIKEC_deparse(current, 1), ""
     );
   } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
     ALIKEC_symb_mark(cur_par);
@@ -275,8 +276,9 @@ that for calls constants need not be the same
 */
 
 const char * ALIKEC_lang_alike_internal(
-  SEXP target, SEXP current, SEXP match_env
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
+  SEXP match_env = set->env;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
   if(
     !
@@ -356,7 +358,9 @@ const char * ALIKEC_lang_alike_internal(
           break;
         }
       }
-      int with_nl = has_nl || (strlen(res) + 4 + i + 1 > max_chars);
+      int with_nl = has_nl || (
+        strlen(res) + strlen(set->prepend) + 4 + i + 1 > max_chars
+      );
       err_msg = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
       );
@@ -371,7 +375,9 @@ const char * ALIKEC_lang_alike_internal(
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
-  const char * res = ALIKEC_lang_alike_internal(target, current, match_env);
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  set->env = match_env;
+  const char * res = ALIKEC_lang_alike_internal(target, current, set);
   if(strlen(res)) return mkString(res);
   return ScalarLogical(1);
 }

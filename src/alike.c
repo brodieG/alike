@@ -124,7 +124,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
-      err_lang = ALIKEC_lang_alike_internal(target, current, set->env);
+      err_lang = ALIKEC_lang_alike_internal(target, current, set);
       if(strlen(err_lang)) {
         err = 1;
         err_base = err_lang;
@@ -516,6 +516,12 @@ const char * ALIKEC_alike_internal(
       }
     }
     char * err_interim;
+    int has_nl = 0;
+    for(int i = 0; err_msg[i] && i < ALIKEC_MAX_CHAR; i++) {
+      if(err_msg[i] == '\n') {
+        has_nl = 1;
+        break;
+    } }
     if(res.rec_lvl == 1) {
       if(res.df) {
         err_interim = CSR_smprintf4(
@@ -537,8 +543,8 @@ const char * ALIKEC_alike_internal(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s at %s", top_lvl ? set->prepend : "",
-      err_msg, err_interim, ""
+      ALIKEC_MAX_CHAR, "%s%s%sat %s", top_lvl ? set->prepend : "",
+      err_msg, has_nl ? "\n" : " ", err_interim
     );
   }
   set->rec_lvl_last = rec_lvl_last_prev;
