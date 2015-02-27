@@ -476,7 +476,7 @@ const char * ALIKEC_compare_levels(
 ) {
   if(TYPEOF(target) == STRSXP && TYPEOF(current) == STRSXP) {
     const char * res = ALIKEC_compare_special_char_attrs_internal(
-      target, current, set, 1
+      target, current, set, 0
     );
     if(res[0]) {
       return CSR_smprintf4(ALIKEC_MAX_CHAR, res, "\"levels\"", "", "", "");

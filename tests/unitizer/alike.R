@@ -118,6 +118,19 @@ unitizer_sect("Time Series", {
   alike(ts.5, matrix(runif(24 * 3), ncol=3))
 
 })
+unitizer_sect("Factors", {
+  f1 <- factor(letters[1:5])
+  f2 <- factor(letters[1:5], levels=letters[5:1])
+  f3 <- f1
+  levels(f3)[[5]] <- ""
+  f4 <- factor(c(letters[1:4], "f"))
+
+  alike(f1, f2)   # FALSE
+  alike(f1, f3)   # FALSE
+  alike(f1, f4)   # FALSE
+  alike(f3, f1)   # TRUE, wildcard matches anything
+  alike(f3, f4)   # TRUE, wildcard matches anything
+})
 unitizer_sect("Environments / Pairlists", {
   env0 <- new.env()
   env1 <- list2env(list(a=character(), b=list(), c=NULL))

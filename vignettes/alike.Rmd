@@ -283,7 +283,7 @@ The `tsp` attribute of `ts` objects behaves similarly to the [`dim` attribute](#
 
 #### levels
 
-Levels must be identical between objects for the objects to be `alike`.
+Levels are compared like [row.names and names](#row.names-and-names).
 
 #### Normal Attributes that Happen To Have Special Names
 
