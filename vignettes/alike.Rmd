@@ -160,6 +160,14 @@ alike(y ~ x ^ 2, a ~ b ^ 3)
 
 We concede that the rules for "alikeness" of language objects are arbitrary, but hope the outcomes of those rules is generally intuitive.  Unfortunately value and structure are somewhat intertwined for language objects so we must impose our own view of what is value and what is structure.
 
+`NULL` is a wild card in calls as well:
+
+```{r}
+str(one.arg.tpl <- as.call(list(NULL, NULL)))
+alike(one.arg.tpl, quote(log(10)))
+alike(one.arg.tpl, quote(log(10, 10)))
+```
+
 ### Functions
 
 Functions are `alike` if the signature of the `current` function can reasonably be interpreted as a valid method for the `target` function:
