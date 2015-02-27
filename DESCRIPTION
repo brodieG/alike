@@ -20,4 +20,5 @@ Imports:
 Suggests:
     knitr,
     microbenchmark,
-    unitizer
+    unitizer,
+    ggplot2

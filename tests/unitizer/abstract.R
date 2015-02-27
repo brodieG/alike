@@ -48,3 +48,20 @@ unitizer_sect("lm", {
 
   alike(abstract(mdl), mdl4)
 })
+unitizer_sect("ggplot", {
+  # Rather experimental
+
+  library(ggplot2)
+  df1 <- data.frame(x=runif(20), y=runif(20))
+  df2 <- data.frame(x=runif(20), y=runif(20), z=rep(c("a", "b"), 10))
+  df3 <- data.frame(a=runif(30), b=runif(30))
+  g1 <- ggplot(df1) + geom_point(aes(x=x, y=y))
+  g2 <- ggplot(df1) + geom_line(aes(x=x, y=y))
+  g3 <- ggplot(df3) + geom_point(aes(x=a, y=b))
+  g4 <- ggplot(df1, aes(x=x, y=y)) + geom_point() + geom_line()
+  g.abs <- abstract(g1)
+
+  alike(g.abs, g1)
+  alike(g.abs, g2)
+  alike(g.abs, g3)
+})

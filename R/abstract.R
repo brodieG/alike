@@ -79,7 +79,9 @@ abstract.matrix <-function(x, ...) abstract.array(x, ...)
 
 abstract.list <- function(x, ...) {
   for(i in seq_along(x)) {
-    x[[i]] <- abstract(x[[i]])
+    xi.abs <- abstract(x[[i]])
+    if(is.null(xi.abs)) x <- nullify(x, i)
+    else x[[i]] <- xi.abs
   }
   x
 }
@@ -95,10 +97,24 @@ abstract.lm <- function(x, ...) {
   x$call <- call(as.character(x$call[[1L]]))  # zero length call should match any call
   NextMethod()
 }
+#' Experimental Abstraction Method for GGPlot
+#'
+#' Not entirely sure this can ever work well since so much of \code{ggplot} is
+#' done with \code{proto} objects and those do not really use meta data, which makes
+#' \code{alike} rather useless.
+#'
+#' @keywords internal
+#' @export
+
+abstract.ggplot <- function(x, ...) {
+  x <- NextMethod()
+  x$data <- data.frame()
+  x
+}
 #' @rdname abstract
 #' @export
 
-abstract.environment <- function(x, ...) emptyenv()
+abstract.environment <- function(x, ...) if(!is.object(x)) emptyenv() else x
 
 #' Abstract Time Series
 #'
@@ -135,4 +151,84 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
 
   tsp[match(unique(what), what.valid)] <- 0
   .Call(ALIKEC_abstract_ts, x, tsp)
+}
+
+
+#' NULLs value in an object without removing slot from object
+#'
+#' This function is required because there is no straightforward way to over-write
+#' a value in a list with NULL without completely removing the entry from the
+#' list as well.
+#'
+#' This returns a copy of the object modified with null slots; it doesn't modify
+#' the input argument.
+#'
+#' Default method will attempt to convert non-list objects to lists
+#' with \code{`\link{as.list}`}, and then back to whatever they
+#' were by using a function with name \code{`paste0("as.", class(obj)[[1L]])`}
+#' if it exists and works.  If the object cannot be coerced back
+#' to its original type the corresponding list will be returned.
+#'
+#' If this is not appropriate for your object type
+#' you can write an S3 method for it.
+#'
+#' @note attributes are copied from original object and
+#'   re-applied to final object before return, which may
+#'   not make sense in some circumstances.
+#'
+#' @export
+#' @param obj the R object to NULL a value in
+#' @param index an indexing vectors of values to NULL
+#' @return object with selected values NULLified
+#' @examples
+#' nullify(list(1, 2, 3), 2)
+#' nullify(call("fun", 1, 2, 3), 2)
+
+nullify <- function(obj, index) {
+  UseMethod("nullify")
+}
+#' @method nullify default
+#' @S3method nullify default
+
+nullify.default <- function (obj, index) {
+  not.list <- FALSE
+  if(!is.list(obj)) {
+    not.list <- TRUE
+    class <- class(obj)
+    if(inherits(try(obj <- as.list(obj), silent=TRUE), "try-error")) stop("Could not coerce `obj` to list")
+  }
+  if(!is.character(index) && !(is.numeric(index) && all(index >= 1L)) && !is.logical(index)) {
+    stop("Argument `index` must be a valid subsetting index and if numeric must be greater than or equal to one.")
+  }
+  seq.along <- seq_along(obj)
+  if(is.numeric(index)) {
+    if(min(index) < min(seq.along) || max(index) > max(seq.along)) {
+      stop("Argument `index` can only contain values that exist within seq_along(`obj`).")
+    }
+    vec.subset <- seq.along %in% index
+  } else if(is.logical(index)) {
+    if(length(index) > length(obj)) {
+      stop("Argument `index` may be no longer than `obj` if it is logical.")
+    }
+    else if(length(obj) %% length(index) > 0L) {
+      warning("Argument `obj` is not a multiple in length of argument `obj`")
+    }
+    vec.subset <- rep(index, ceiling(length(obj) / length(index)))[seq.along]
+  } else if (is.character(index)) {
+    ind.match <- index %in% names(obj)
+    if(!all(ind.match)) {
+      stop("Argument `index` contains values not present in names of `obj` (", paste(index[ind.match], collapse=", "), ").")
+    }
+    vec.subset <- names(obj) %in% index
+  }
+  res <- ifelse(vec.subset, lapply(seq.along, function(x) NULL), obj)
+  if(not.list) {  # try to reconvert object
+    if(inherits(try(res.conv <- eval(call(paste0("as.", class[[1L]]), res)), silent=TRUE), "try-error")) {
+      warning("Unable to convert object back to class \"", class[[1L]],"\"")
+    } else {
+      res <- res.conv
+    }
+  }
+  attributes(res) <- attributes(obj)
+  res
 }
