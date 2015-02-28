@@ -66,8 +66,13 @@ SEXP ALIKEC_test2(
 }
 /*
 deparse into character
+
+@param max_chars determines how many characters before we try to turn into
+  multi-line deparse; set to -1 to ignore
+@param lines how many lines to show, if it deparses to more than lines append
+  `...` a end; set to -1 to ignore
 */
-const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines) {
+const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars) {
   SEXP quot_call = PROTECT(list2(R_QuoteSymbol, obj));
   SET_TYPEOF(quot_call, LANGSXP);
 
@@ -79,19 +84,25 @@ const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines) {
   R_xlen_t line_max = XLENGTH(obj_dep), i;
   if(!line_max) return "";
   if(lines < 0) lines = line_max;
-  char * res = "";
+  char * res = "", * dep_pad = "";
+  int nl = 0;
 
   for(i = 0; i < lines; i++) {
-    res = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", res, i ? "\n" : "",
-      CHAR(STRING_ELT(obj_dep, i)),
-      i == lines - 1 && lines < line_max ? "..." : ""
+    const char * dep_err = CHAR(STRING_ELT(obj_dep, i));
+    if(!i) {
+      nl = lines > 1 || (max_chars > 0 && strlen(dep_err) > max_chars);
+      if(nl) dep_pad = "> ";
+    } else if(nl) dep_pad ="+ ";
+    res = CSR_smprintf6(
+      ALIKEC_MAX_CHAR, "%s%s%s%s%s", res, dep_pad, dep_err,
+      i == lines - 1 && lines < line_max ? "..." : "",
+      nl && i < lines - 1 ? "\n" : "", ""
   );}
   UNPROTECT(3);
   return res;
 }
 SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines) {
-  return mkString(ALIKEC_deparse(obj, asInteger(lines)));
+  return mkString(ALIKEC_deparse(obj, asInteger(lines), 80));
 }
 
 /*

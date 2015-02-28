@@ -42,6 +42,12 @@ void R_init_alike(DllInfo *info)
       size_t, const char *, const char *, const char *,  const char *,  const char *
     )
   ) R_GetCCallable("cstringr", "CSR_smprintf4");
+  CSR_smprintf6 = (
+    char *(*)(
+      size_t, const char *, const char *, const char *,  const char *,
+      const char *,  const char *,  const char *
+    )
+  ) R_GetCCallable("cstringr", "CSR_smprintf6");
   CSR_len_chr_len = (size_t(*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_chr_len");
   CSR_strmlen = (size_t(*)(const char *, size_t)) R_GetCCallable("cstringr", "CSR_strmlen");
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
