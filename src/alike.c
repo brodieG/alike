@@ -35,7 +35,7 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
-Basic Object Check
+Object Check
 
 This will not recurse directly on recursive objects, though recursive attributes
 will get recursed into.
@@ -151,10 +151,13 @@ struct ALIKEC_res ALIKEC_alike_obj(
     }
     // - Length ----------------------------------------------------------------
 
-    // Note length is not checked explicilty for language objects and functions
-    // since parens or dots allow for different length objects to be alike
+    /*
+    Note length is not checked explicilty for language objects and functions
+    since parens or dots allow for different length objects to be alike, and
+    for environments since rules for alikeness are different for environments
+    */
 
-    if(!is_lang && !is_fun) {
+    if(!is_lang && !is_fun && tar_type != ENVSXP) {
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       if(
@@ -344,9 +347,14 @@ struct ALIKEC_res ALIKEC_alike_rec(
       warning("`alike` environment stack exhausted; unable to recurse any further into environments");
       set->no_rec = 1; // so we only get warning once
     }
-    if(set->no_rec) {
+    if(set->no_rec || target == current) {
       res1.success = 1;
     } else {
+      if(target == R_GlobalEnv && current != R_GlobalEnv) {
+        res1.success = 0;
+        res1.message = "be the global environment";
+        return(res1);
+      }
       SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
       R_xlen_t tar_name_len = XLENGTH(tar_names), i;
 

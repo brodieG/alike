@@ -142,8 +142,20 @@ unitizer_sect("Environments / Pairlists", {
   alike(env0, env2)  # zero length, matches anything
   alike(env1, env2)  # TRUE
   alike(env1, env3)  # length mismatch
-  alike(env1, env4)  # length mismatch
+  alike(env3, env1)  # component mismatch
+  alike(env1, env4)  # TRUE length mismatch but longer allowed
   alike(env1, env5)  # order change, should still match
+
+  # Test infinite recursion protection
+
+  rec.env <- rec.env.cpy <- new.env()
+
+  for(i in 1:50) {
+    rec.env.cpy$a <- new.env()
+    rec.env.cpy <- rec.env.cpy$a
+  }
+  rec.env.cpy$a <- rec.env;
+  alike(rec.env, rec.env)
 
   plst1 <- pairlist(a=character(), b=list(), c=NULL)
   plst2 <- pairlist(a="hello", b=iris, c=matrix(1:3))

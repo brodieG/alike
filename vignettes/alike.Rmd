@@ -112,6 +112,11 @@ Closures, builtins, and specials are all treated as a single type, even though i
 
 `alike` will recurse through lists (and by extension data frames), pairlists, expressions, and environments and will check pairwise alikeness between the corresponding elements of the `target` and `current` objects.
 
+Environments have slightly different comparison rules in two respects:
+
+* only the elements present in the template are checked, so `current` may have additional items
+* if the template is the global environment, then `current` must be too (this is because the global environment is often littered with many objects, and explicitly comparing it to another environment could be computationally expensive)
+
 `NULL` elements within templates in recursive objects are considered undefined and as such act like wildcards:
 
 ```{r}
@@ -197,7 +202,7 @@ These are typically attached as attributes to other objects that contain the inf
 
 ### Normal Attributes
 
-Much of the structure of an object is determined by attributes.  `alike` recursively compares object attributes and requires them to be `alike`, unless the attribute is a [special attribute](#special-attributes) or an environment.  Environments within attributes are compared only on type and length to avoid expensive computations on objects that commonly include environments in their attributes (e.g. formulas); note this is different than the treatment of environments as actual objects.
+Much of the structure of an object is determined by attributes.  `alike` recursively compares object attributes and requires them to be `alike`, unless the attribute is a [special attribute](#special-attributes) or an environment.  Environments within attributes in the template must be matched by an environment, but nothing is checked about the environments to avoid expensive computations on objects that commonly include environments in their attributes (e.g. formulas); note this is different than the treatment of environments as actual objects.
 
 Only attributes present in the template object are checked:
 

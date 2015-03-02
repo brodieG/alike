@@ -14,7 +14,8 @@ const char * ALIKEC_alike_attr(
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
     return (const char *) CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "have alike attribute `%s` (check `alike(attr(<target>, \"%s\"), attr(<current>, \"%s\"))`)",
+      ALIKEC_MAX_CHAR,
+      "have alike attribute `%s` (check `alike(attr(<target>, \"%s\"), attr(<current>, \"%s\"))`)",
       attr_name, attr_name, attr_name, ""
   );}
   return "";
