@@ -138,7 +138,7 @@ alike <- function(target, current)
 #' @rdname alike
 #' @export
 
-.alike <- function(target, current, settings=alike_settings())
+.alike <- function(target, current, settings=alike_settings(env=parent.frame()))
   .Call(ALIKEC_alike_fast1, target, current, settings)
 
 #' @keywords internal
