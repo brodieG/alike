@@ -65,3 +65,7 @@ unitizer_sect("ggplot", {
   alike(g.abs, g2)
   alike(g.abs, g3)
 })
+unitizer_sect("nullify", {
+  nullify(list(1, 2, 3), 2)
+  nullify(iris[1:10, ], 4)
+})

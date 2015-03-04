@@ -153,28 +153,26 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
   tsp[match(unique(what), what.valid)] <- 0
   .Call(ALIKEC_abstract_ts, x, tsp)
 }
-
-
 #' NULLs value in an object without removing slot from object
 #'
 #' This function is required because there is no straightforward way to over-write
 #' a value in a list with NULL without completely removing the entry from the
 #' list as well.
 #'
-#' This returns a copy of the object modified with null slots; it doesn't modify
-#' the input argument.
+#' This returns a copy of the object modified with null slots; it does
+#' not modify the input argument.
 #'
 #' Default method will attempt to convert non-list objects to lists
-#' with \code{`\link{as.list}`}, and then back to whatever they
-#' were by using a function with name \code{`paste0("as.", class(obj)[[1L]])`}
+#' with \code{\link{as.list}}, and then back to whatever they were by using a
+#' function with name \code{`paste0("as.", class(obj)[[1L]])`}
 #' if it exists and works.  If the object cannot be coerced back
 #' to its original type the corresponding list will be returned.
 #'
-#' If this is not appropriate for your object type
-#' you can write an S3 method for it.
+#' If this is not appropriate for your object type you can write an S3 method
+#' for it.
 #'
-#' @note attributes are copied from original object and
-#'   re-applied to final object before return, which may
+#' @note attributes are copied from original object and re-applied to final
+#'   object before return, which may
 #'   not make sense in some circumstances.
 #'
 #' @export
@@ -188,8 +186,8 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
 nullify <- function(obj, index) {
   UseMethod("nullify")
 }
-#' @method nullify default
-#' @S3method nullify default
+#' @rdname nullify
+#' @export
 
 nullify.default <- function (obj, index) {
   not.list <- FALSE
@@ -230,6 +228,8 @@ nullify.default <- function (obj, index) {
       res <- res.conv
     }
   }
-  attributes(res) <- attributes(obj)
+  attrs.new <- attributes(res)
+  attributes(res) <- if(!is.null(attrs.new))
+    modifyList(attributes(obj), attrs.new) else attributes(obj)
   res
 }
