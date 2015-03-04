@@ -16,7 +16,7 @@ vignette: >
 
 ### What is Alikeness?
 
-`alike` is similar to `all.equal` from base R, except it only compares object structure.  As with `all.equal`, the first argument (`target`) must be matched by the second (`current`).
+`alike` is similar to `all.equal` from base R except it only compares object structure.  As with `all.equal`, the first argument (`target`) must be matched by the second (`current`).
 
 ```{r}
 library(alike)
@@ -79,7 +79,7 @@ We will defer discussion of attribute comparison to the [attributes section](#at
 
 ### Length Comparison
 
-Objects must be the same length to be `alike`, unless the template (`target`) is zero length, in which case the object may be any length.
+Objects must be the same length to be `alike`, unless the template (`target`) is zero length, in which case the object may be any length.  [Environments](#environments) are an exception: we only require that all the elements present in `target` be present in `current`.  Also, note that calls to `(` are ignored in [language objects](#language-objects), which may affect length computation.
 
 ### Type Comparison
 
@@ -112,7 +112,7 @@ Closures, builtins, and specials are all treated as a single type, even though i
 
 `alike` will recurse through lists (and by extension data frames), pairlists, expressions, and environments and will check pairwise alikeness between the corresponding elements of the `target` and `current` objects.
 
-Environments have slightly different comparison rules in two respects:
+<a name="environments"></a>Environments have slightly different comparison rules in two respects:
 
 * only the elements present in the template are checked, so `current` may have additional items
 * if the template is the global environment, then `current` must be too (this is because the global environment is often littered with many objects, and explicitly comparing it to another environment could be computationally expensive)
@@ -154,7 +154,7 @@ alike(quote(fun(p, q, p)), quote(fun(y, x, x)))
 alike(quote(fun(p, q, p)), quote(fun(b=y, x, x)))  # `match.call` re-orders arguments
 ```
 
-Constants match any constants, but keep in mind that espressions like `1:10` or `c(1, 2, 3)` are calls to `:` and `c` respectively, not constants in the context of language objects.
+Constants match any constants, but keep in mind that expressions like `1:10` or `c(1, 2, 3)` are calls to `:` and `c` respectively, not constants in the context of language objects.
 
 Formulas are treated like calls, except that constants must match:
 
@@ -163,15 +163,18 @@ alike(y ~ x ^ 2, a ~ b ^ 2)
 alike(y ~ x ^ 2, a ~ b ^ 3)
 ```
 
-We concede that the rules for "alikeness" of language objects are arbitrary, but hope the outcomes of those rules is generally intuitive.  Unfortunately value and structure are somewhat intertwined for language objects so we must impose our own view of what is value and what is structure.
-
 `NULL` is a wild card in calls as well:
 
 ```{r}
 str(one.arg.tpl <- as.call(list(NULL, NULL)))
 alike(one.arg.tpl, quote(log(10)))
+alike(one.arg.tpl, quote(sd(runif(20))))
 alike(one.arg.tpl, quote(log(10, 10)))
 ```
+
+Calls to `(` are ignored when comparing calls since parentheses are redundant in call trees because the tree structure encodes operation precedence independent of operator precedence.
+
+We concede that the rules for "alikeness" of language objects are arbitrary, but hope the outcomes of those rules is generally intuitive.  Unfortunately value and structure are somewhat intertwined for language objects so we must impose our own view of what is value and what is structure.
 
 ### Functions
 
@@ -186,7 +189,7 @@ A method of a generic must have all arguments present in the generic, with the s
 
 ### S4 and R5 (RC Objects)
 
-S4 and RC objects are considered alike if `current` inherits from `class(target)`.  Since these objects embed structural information `alike` relies on class alone to estabilish alikeness.
+S4 and RC objects are considered alike if `current` inherits from `class(target)`.  Since these objects embed structural information in their definitions `alike` relies on class alone to estabilish alikeness.
 
 ### Pointer Objects
 
@@ -350,17 +353,26 @@ We have gone to great lengths to make `alike` fast so that it can be included in
 
 ```{r}
 library(microbenchmark)
+type_and_len <- function(a, b) typeof(a) == typeof(b) && length(a) == length(b)  # for reference
 microbenchmark(
-  all.equal(rivers, rivers),
   identical(rivers, rivers),
   alike(rivers, rivers),
-  all.equal(mtcars, mtcars),
+  type_and_len(rivers, rivers)
+)
+```
+
+While `alike` is slower than `identical`, it is competitive and is actually faster than a bare bones R function that checks types and length.  As objects grow more complex, `identical` will obviously pull ahead, though `alike` should be sufficiently fast for most applications:
+
+```{r}
+library(microbenchmark)
+microbenchmark(
   identical(mtcars, mtcars),
   alike(mtcars, mtcars)
 )
 ```
+In the above example, we are comparing the data frames, their attributes, and the 11 columns individually.
 
-With very simple objects `alike` is competitive with `identical`.  As objects grow more complex, `identical` will obviously pull ahead.  Keep in mind that the complexity of the `alike` comparison is driven by the complexity of the template, not the object we are checking, so we can always manage the expense of the `alike` evaluation.
+Keep in mind that the complexity of the `alike` comparison is driven by the complexity of the template, not the object we are checking, so we can always manage the expense of the `alike` evaluation.
 
 Comparisons that succeed will be substantially faster than comparisons that fail as the construction of error messages is non-trivial and we have prioritized optimization in the success case.
 
@@ -374,10 +386,10 @@ Large objects will be slower to evaluate.  Let us revisit the `lm` example, thou
 mdl.tpl <- abstract(lm(y ~ x + z, data.frame(x=runif(3), y=runif(3), z=runif(3))))
 mb <- microbenchmark(unit="us",
   alike(mdl.tpl, mdl.tpl),       # compare mdl.tpl to itself to ensure success in all three scenarios
-  all.equal(mdl.tpl, mdl.tpl),
+  all.equal(mdl.tpl, mdl.tpl),   # for reference
   identical(mdl.tpl, mdl.tpl)
 )
-summary(mb)[1:4]
+summary(mb)[1:4]  # note: in microseconds
 ```
 
 Even with template as large as `lm` results (check `str(mdl.tpl)`) we can evaluate `alike` thousands of times before the overhead becomes noticeable.
@@ -391,11 +403,11 @@ df.tpl <- data.frame(integer(), numeric())
 df.cur <- data.frame(a=1:10, b=1:10 + .1)
 
 library(microbenchmark)
-mb <- microbenchmark(
+mb <- microbenchmark(unit="us",
   alike(df.tpl, df.cur),
   alike(data.frame(integer(), numeric()), df.cur)
 )
-summary(mb)[1:4]
+summary(mb)[1:4]  # note: in microseconds
 ```
 
 `data.frame` is a particularly slow constructor, but in general you are best served by defining your templates (including calls to `abstract`) outside of your function so they are created on package load rather than every time your function is called.
