@@ -20,7 +20,17 @@
 #'
 #' \code{.alike} is identical to \code{alike}, except that it exposes the
 #' \code{settings} parameter that modifies certain aspects of how "alikeness" is
-#' computed. See \href{../doc/alike.html}{the vignette} for details.
+#' computed. See
+#' \href{../doc/alike.html#modifying-comparison-behavior}{the vignette} for
+#' details.  There is only one \code{settings} parameter to minimize the
+#' overhead associated with \code{.alike}.  If you intend to run \code{.alike}
+#' as part of a process that runs many times, consider defining the value for
+#' \code{settings} outside of the function call once:
+#' \code{
+#' sets <- alike_settings(...)                  # specify settings once
+#' for(i in 1e5) .alike(x[[i]], y[[i]], sets)   # re-use settings 1e5 times
+#' }
+#' The settings specification adds substantial overhead to the operation.
 #'
 #' @export
 #' @import cstringr

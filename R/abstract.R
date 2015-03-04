@@ -129,6 +129,7 @@ abstract.environment <- function(x, ...) if(!is.object(x)) emptyenv() else x
 #' attribute and attempts to prevent such attributes.
 #'
 #' @seealso \code{\link{abstract}}
+#' @inheritParams abstract
 #' @param what which portion of the \code{ts} attribute to abstract, by default
 #'   all three are abstracted, but you can select, any one, two, or all
 #' @return a \code{ts} object with the \code{ts} parameter modified
