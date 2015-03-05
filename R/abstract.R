@@ -9,7 +9,11 @@
 #' R computations and may cause errors (or worse) if you try to use them as
 #' normal R objects.
 #'
-#' \code{\link{alike}} is an S3 generic.  Note that the default method will
+#' There is no guarantee that the \code{abstract}ed object is suitable for use
+#' as a template to \code{alike} as is.  You may need to modify it further so
+#' that it suits your purposes.
+#'
+#' \code{abstract} is an S3 generic.  The default method will
 #' dispatch on implicit classes, so if you attempt to \code{abstract} an object
 #' without an explicit \code{abstract} method, it will get abstracted based on
 #' its implicit class.  If you define your own \code{abstract} method and do not
@@ -26,7 +30,7 @@
 #' @examples
 #' iris.tpl <- abstract(iris)
 #' alike(iris.tpl, iris[1:10, ])
-#' alike(iris.tpl, transform(iris, Species=as.character(Species))
+#' alike(iris.tpl, transform(iris, Species=as.character(Species)))
 #'
 #' abstract(1:10)
 #' abstract(matrix(1:9, nrow=3))
@@ -164,7 +168,7 @@ abstract.ts <- function(x, what=c("start", "end", "frequency"), ...) {
 #'
 #' Default method will attempt to convert non-list objects to lists
 #' with \code{\link{as.list}}, and then back to whatever they were by using a
-#' function with name \code{`paste0("as.", class(obj)[[1L]])`}
+#' function with name \code{paste0("as.", class(obj)[[1L]])}
 #' if it exists and works.  If the object cannot be coerced back
 #' to its original type the corresponding list will be returned.
 #'

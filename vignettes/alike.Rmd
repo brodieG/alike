@@ -364,7 +364,6 @@ microbenchmark(
 While `alike` is slower than `identical`, it is competitive and is actually faster than a bare bones R function that checks types and length.  As objects grow more complex, `identical` will obviously pull ahead, though `alike` should be sufficiently fast for most applications:
 
 ```{r}
-library(microbenchmark)
 microbenchmark(
   identical(mtcars, mtcars),
   alike(mtcars, mtcars)
@@ -402,7 +401,6 @@ Some fairly innocuous R expressions carry substantial overhead.  Consider:
 df.tpl <- data.frame(a=integer(), b=numeric())
 df.cur <- data.frame(a=1:10, b=1:10 + .1)
 
-library(microbenchmark)
 mb <- microbenchmark(unit="us",
   alike(df.tpl, df.cur),
   alike(data.frame(integer(), numeric()), df.cur)

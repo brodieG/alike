@@ -25,12 +25,10 @@
 #' details.  There is only one \code{settings} parameter to minimize the
 #' overhead associated with \code{.alike}.  If you intend to run \code{.alike}
 #' as part of a process that runs many times, consider defining the value for
-#' \code{settings} outside of the function call once:
-#' \code{
-#' sets <- alike_settings(...)                  # specify settings once
-#' for(i in 1e5) .alike(x[[i]], y[[i]], sets)   # re-use settings 1e5 times
+#' \code{settings} outside of the function call once:\preformatted{
+#'   sets <- alike_settings(...)                  # specify settings once
+#'   for(i in 1e5) .alike(x[[i]], y[[i]], sets)   # re-use settings 1e5 times
 #' }
-#' The settings specification adds substantial overhead to the operation.
 #'
 #' @export
 #' @import cstringr
@@ -49,15 +47,11 @@
 #'       comparisons for the special attributes (\code{class}, \code{dim},
 #'       \code{dimnames}, \code{names}, \code{row.names}, \code{levels}, and
 #'       \code{tsp}) while requiring other attributes to be \code{alike}
-#'     \item \code{1} is like 0, except all atributes must be \code{alike}
+#'     \item \code{1} is like \code{0}, except all atributes must be \code{alike}
 #'     \item \code{2} requires all attributes to be present in \code{target} and
 #'       \code{current} and to be alike
 #'   }
-#' @param fuzzy.int.max.len max length of numeric vectors to consider for
-#'   integer likeness (e.g. \code{c(1, 2)} can be considered "integer", even
-#'   though it is numeric); currently we limit this check to vectors
-#'   shorter than 100 to avoid a potentially expensive computation on large
-#'   vectors
+#' @param fuzzy.int.max.len see same parameter for \code{\link{type_alike}}
 #' @param env environment used internally when evaluating expressions; currently
 #'   used only when looking up functions to \code{\link{match.call}} when
 #'   testing language objects; set to NULL to turn off this feature
