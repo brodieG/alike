@@ -21,6 +21,7 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
 
   ALIKEC_set_tmp_val->type_mode = 0;
   ALIKEC_set_tmp_val->attr_mode = 0;
+  ALIKEC_set_tmp_val->lang_mode = 0;
   ALIKEC_set_tmp_val->fuzzy_int_max_len = 100;
   ALIKEC_set_tmp_val->env = R_NilValue;
   ALIKEC_set_tmp_val->prepend = prepend;
@@ -574,10 +575,11 @@ settings
 SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
   if(settings == R_NilValue) {
     return ALIKEC_alike_fast2(target, current);
-  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 5) {
+  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 6) {
     return ALIKEC_alike(
       target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
-      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4)
+      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4),
+      VECTOR_ELT(settings, 5)
     );
   }
   error("Argument `settings` is not a length 5 list as expected");
@@ -599,14 +601,15 @@ changed the interface
 */
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
-  SEXP fuzzy_int_max_len, SEXP suppress_warnings
+  SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
 ) {
-  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type;
-  int supp_warn = 0, type_int = 0, attr_int = 0;
+  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type, lang_mod_type;
+  int supp_warn = 0, type_int = 0, attr_int = 0, lang_int = 0;
   R_xlen_t fuzzy_int_max_len_int;
 
   int_mod_type = TYPEOF(type_mode);
   attr_mod_type = TYPEOF(attr_mode);
+  lang_mod_type = TYPEOF(lang_mode);
   fuzzy_type = TYPEOF(fuzzy_int_max_len);
 
   if(
@@ -621,6 +624,12 @@ SEXP ALIKEC_alike (
     attr_int < 0 || attr_int > 2
   )
     error("Argument `attr.mode` must be a one length numeric");
+  if(
+    (lang_mod_type != INTSXP && lang_mod_type != REALSXP) ||
+    XLENGTH(lang_mode) != 1 || (lang_int = asInteger(lang_mode)) == NA_INTEGER ||
+    lang_int < 0 || lang_int > 1
+  )
+    error("Argument `lang.mode` must be a one length numeric between 0 and 1");
   if(
     (fuzzy_type != INTSXP && fuzzy_type != REALSXP) ||
     XLENGTH(fuzzy_int_max_len) != 1 ||
@@ -638,6 +647,7 @@ SEXP ALIKEC_alike (
   struct ALIKEC_settings * set = ALIKEC_set_def("should ");
   set->type_mode = type_int;
   set->attr_mode = attr_int;
+  set->lang_mode = lang_int;
   set->fuzzy_int_max_len = fuzzy_int_max_len_int;
   set->suppress_warnings = supp_warn;
   set->env = env;

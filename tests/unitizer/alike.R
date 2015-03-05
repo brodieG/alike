@@ -188,6 +188,10 @@ unitizer_sect("Calls / Formulas", {
 
   fun <- function(a, b, c) NULL
   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  .alike(  # FALSE, match.call disabled
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
+    alike_settings(lang.mode=1)
+  )
   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
   alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
 

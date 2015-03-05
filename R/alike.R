@@ -51,10 +51,14 @@
 #'     \item \code{2} requires all attributes to be present in \code{target} and
 #'       \code{current} and to be alike
 #'   }
+#' @param lang.mode integer(1L) in 0:1 controls language matching, set to `1` to
+#'   turn off use of \code{\link{match.call}}
+#' @param rec.mode integer(1L) `0` currently unused, intended to control how
+#'   recursive structures (other than language objects) are compared
 #' @param fuzzy.int.max.len see same parameter for \code{\link{type_alike}}
 #' @param env environment used internally when evaluating expressions; currently
 #'   used only when looking up functions to \code{\link{match.call}} when
-#'   testing language objects; set to NULL to turn off this feature
+#'   testing language objects
 #' @param suppress.warnings logical(1L)
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
@@ -154,7 +158,9 @@ alike <- function(target, current)
 #' @export
 
 alike_settings <- function(
-  type.mode=0L, attr.mode=0L, env=parent.frame(), fuzzy.int.max.len=100L,
-  suppress.warnings=FALSE
+  type.mode=0L, attr.mode=0L, lang.mode=0L, rec.mode=0L,
+  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE
 )
-  list(type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings)
+  list(
+    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode
+  )

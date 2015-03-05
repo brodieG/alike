@@ -98,7 +98,8 @@ Handle language object comparison; return zero length string if equal
 const char * ALIKEC_lang_obj_compare(
   SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
-  size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env
+  size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
+  struct ALIKEC_settings * set
 ) {
   if(target == R_NilValue) return ""; // NULL matches anything
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
@@ -143,7 +144,7 @@ const char * ALIKEC_lang_obj_compare(
     // Note how we pass cur_par and not current so we can modify cur_par
     res = ALIKEC_lang_alike_rec(
       target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env
+      cur_varnum, formula, match_call, match_env, set
     );
     if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nuking call since we don't want it in this case
     if(res[0]) {
@@ -188,14 +189,14 @@ call).
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_call, SEXP match_env
+  SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
 ) {
   SEXP current = ALIKEC_skip_paren(CAR(cur_par));
   target = ALIKEC_skip_paren(target);
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
     return ALIKEC_lang_obj_compare(
       target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env
+      cur_varnum, formula, match_call, match_env, set
   );}
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
@@ -215,7 +216,7 @@ const char * ALIKEC_lang_alike_rec(
   // that target and current must be the same fun; we shouldn't need to retrieve
   // it twice as we do now
 
-  if(match_env != R_NilValue) {
+  if(match_env != R_NilValue && set->lang_mode != 1) {
     target = ALIKEC_match_call(target, match_call, match_env);
     SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
     current = CAR(cur_par);
@@ -257,7 +258,7 @@ const char * ALIKEC_lang_alike_rec(
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
     const char * res = ALIKEC_lang_obj_compare(
       tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
-      tar_varnum, cur_varnum, formula, match_call, match_env
+      tar_varnum, cur_varnum, formula, match_call, match_env, set
     );
     if(res[0]) return(res);
   }
@@ -324,7 +325,7 @@ const char * ALIKEC_lang_alike_internal(
   SEXP curr_cpy_par = PROTECT(list1(duplicate(current)));
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy_par, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula, match_call, match_env
+    formula, match_call, match_env, set
   );
   // Construct error message
 

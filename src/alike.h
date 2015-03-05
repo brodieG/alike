@@ -40,7 +40,7 @@
     int debug;
   };
   struct ALIKEC_settings {
-    int type_mode, attr_mode, fuzzy_int_max_len, suppress_warnings;
+    int type_mode, attr_mode, lang_mode, fuzzy_int_max_len, suppress_warnings;
     const char * prepend;
     SEXP env;                               // what environment to look for functions to match call in
     struct ALIKEC_settings_env * env_set;   // Used to track whether we've encountered an environment before
@@ -59,7 +59,7 @@
 
   SEXP ALIKEC_alike (
     SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
-    SEXP fuzzy_int_max_len, SEXP suppress_warnings
+    SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
@@ -92,7 +92,7 @@
   const char * ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
-    int formula, SEXP match_call, SEXP match_env
+    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
   );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
