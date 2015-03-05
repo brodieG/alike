@@ -25,7 +25,7 @@ unitizer_sect("type_alike", {
 
   type_alike(1:100, 1:100 + 0.0)  # TRUE
   type_alike(1:101, 1:101 + 0.0)  # FALSE
-  type_alike(1:101, 1:101 + 0.0, max.len = 200)  # TRUE
+  type_alike(1:101, 1:101 + 0.0, fuzzy.int.max.len = 200)  # TRUE
 
   type_alike(numeric(), c(1.1, 0.053, 41.8))  # TRUE
   type_alike(numeric(), list(1.1))  # FALSE
