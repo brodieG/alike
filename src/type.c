@@ -1,10 +1,10 @@
 #include "alike.h"
 
 /*
-compare types, accounting for "integer like" numerics; empty string means success,
-otherwise outputs an a character string explaining why the types are not alike
+compare types, accounting for "integer like" numerics; empty string means
+success, otherwise outputs an a character string explaining why the types are
+not alike
 */
-
 const char * ALIKEC_type_alike_internal(
   SEXP target, SEXP current, int mode, R_xlen_t max_len
 ) {
@@ -19,9 +19,10 @@ const char * ALIKEC_type_alike_internal(
   if(
     mode == 0 && (
       (
-        tar_type_raw == INTSXP && XLENGTH(target) <= max_len &&
-        XLENGTH(current) <= max_len
-      ) || (
+        tar_type_raw == INTSXP && (
+          max_len < 0 ||
+          (XLENGTH(target) <= max_len && XLENGTH(current) <= max_len)
+      ) ) || (
         tar_type_raw == CLOSXP || tar_type_raw == SPECIALSXP ||
         tar_type_raw == BUILTINSXP
     ) )
@@ -97,9 +98,11 @@ SEXPTYPE ALIKEC_typeof_internal(SEXP object) {
       {
         R_xlen_t obj_len = XLENGTH(object), i;
         obj_real = REAL(object);
-        /* could optimize this more by using the magic number tricks, etc, but
-        at end of day this still wouldn't be fast enough to realistically use on
-        a very large vector, so it doesn't really matter*/
+        /*
+        could optimize this more by using the magic number tricks or bit
+        fiddling, but at end of day this still wouldn't be fast enough to
+        realistically use on a very large vector, so it doesn't really matter
+        */
         for(i = 0; i < obj_len; i++)
           if(!isnan(obj_real[i]) && obj_real[i] != (int)obj_real[i])
             return REALSXP;

@@ -118,6 +118,19 @@ unitizer_sect("Time Series", {
   alike(ts.5, matrix(runif(24 * 3), ncol=3))
 
 })
+unitizer_sect("Factors", {
+  f1 <- factor(letters[1:5])
+  f2 <- factor(letters[1:5], levels=letters[5:1])
+  f3 <- f1
+  levels(f3)[[5]] <- ""
+  f4 <- factor(c(letters[1:4], "f"))
+
+  alike(f1, f2)   # FALSE
+  alike(f1, f3)   # FALSE
+  alike(f1, f4)   # FALSE
+  alike(f3, f1)   # TRUE, wildcard matches anything
+  alike(f3, f4)   # TRUE, wildcard matches anything
+})
 unitizer_sect("Environments / Pairlists", {
   env0 <- new.env()
   env1 <- list2env(list(a=character(), b=list(), c=NULL))
@@ -129,8 +142,20 @@ unitizer_sect("Environments / Pairlists", {
   alike(env0, env2)  # zero length, matches anything
   alike(env1, env2)  # TRUE
   alike(env1, env3)  # length mismatch
-  alike(env1, env4)  # length mismatch
+  alike(env3, env1)  # component mismatch
+  alike(env1, env4)  # TRUE length mismatch but longer allowed
   alike(env1, env5)  # order change, should still match
+
+  # Test infinite recursion protection
+
+  rec.env <- rec.env.cpy <- new.env()
+
+  for(i in 1:50) {
+    rec.env.cpy$a <- new.env()
+    rec.env.cpy <- rec.env.cpy$a
+  }
+  rec.env.cpy$a <- rec.env;
+  alike(rec.env, rec.env)
 
   plst1 <- pairlist(a=character(), b=list(), c=NULL)
   plst2 <- pairlist(a="hello", b=iris, c=matrix(1:3))
@@ -163,6 +188,10 @@ unitizer_sect("Calls / Formulas", {
 
   fun <- function(a, b, c) NULL
   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  .alike(  # FALSE, match.call disabled
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
+    alike_settings(lang.mode=1)
+  )
   alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
   alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
 
@@ -244,6 +273,7 @@ unitizer_sect(".alike", {
   .alike(1.0, 1L, alike_settings(type.mode=2L))   # FALSE
   .alike(1:101, 1:101 + 0.0)  # FALSE
   .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=200)) # TRUE
+  .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=-1))  # TRUE
   .alike(list(a=1:10), data.frame(a=1:10))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=1L))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=2L))  # FALSE
@@ -294,7 +324,7 @@ unitizer_sect("Examples", {
 
   iris.fake <- transform(iris, Species=as.character(Species))
   alike(iris, iris.fake)
-  iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species), "americana")))
+  iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
   alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 
   # We can use partially specified objects as templates

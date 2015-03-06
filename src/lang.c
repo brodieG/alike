@@ -42,7 +42,7 @@ void ALIKEC_symb_mark(SEXP obj) {
     SEXPTYPE obj_type = TYPEOF(obj);
     if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
 
-    const char * car_dep = ALIKEC_deparse(CAR(obj), 1);
+    const char * car_dep = ALIKEC_deparse(CAR(obj), 1, -1);
     SETCAR(
       obj,
       install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
@@ -98,7 +98,8 @@ Handle language object comparison; return zero length string if equal
 const char * ALIKEC_lang_obj_compare(
   SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
-  size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env
+  size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
+  struct ALIKEC_settings * set
 ) {
   if(target == R_NilValue) return ""; // NULL matches anything
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
@@ -125,23 +126,27 @@ const char * ALIKEC_lang_obj_compare(
         rev_symb, csc_text, "", ""
       );
     };
-  } else if (
-    (tsc_type == LANGSXP && csc_type != LANGSXP) ||
-    (tsc_type != LANGSXP && csc_type == LANGSXP)
-  ) {
+  } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
+    ALIKEC_symb_mark(cur_par);
+    return CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\") for `%s`",
+      ALIKEC_deparse(CAR(target), 1, -1), type2char(csc_type),
+      ALIKEC_deparse(current, 1, -1), ""
+    );
+  } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\") for `%s`",
-      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse(current, 1), ""
+      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse(current, 1, -1), ""
     );
   } else if (tsc_type == LANGSXP) {
     const char * res;
     // Note how we pass cur_par and not current so we can modify cur_par
     res = ALIKEC_lang_alike_rec(
       target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env
+      cur_varnum, formula, match_call, match_env, set
     );
-    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nunking call since we don't want it in this case
+    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nuking call since we don't want it in this case
     if(res[0]) {
       return res;
     }
@@ -152,7 +157,7 @@ const char * ALIKEC_lang_obj_compare(
       ALIKEC_MAX_CHAR,
       "be \"%s\" (is \"%s\") for token `%s`",
       type2char(tsc_type), type2char(csc_type),
-      ALIKEC_deparse(current, 1), ""
+      ALIKEC_deparse(current, 1, -1), ""
     );
   } else if (formula && !R_compute_identical(target, current, 16)) {
     // Maybe this shouldn't be "identical", but too much of a pain in the butt
@@ -184,21 +189,21 @@ call).
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_call, SEXP match_env
+  SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
 ) {
   SEXP current = ALIKEC_skip_paren(CAR(cur_par));
   target = ALIKEC_skip_paren(target);
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
     return ALIKEC_lang_obj_compare(
       target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env
+      cur_varnum, formula, match_call, match_env, set
   );}
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
   if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
     char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1),
-      ALIKEC_deparse(CAR(current), 1), "", ""
+      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1, -1),
+      ALIKEC_deparse(CAR(current), 1, -1), "", ""
     );
     ALIKEC_symb_mark(current);
     return (const char *) res;
@@ -211,7 +216,7 @@ const char * ALIKEC_lang_alike_rec(
   // that target and current must be the same fun; we shouldn't need to retrieve
   // it twice as we do now
 
-  if(match_env != R_NilValue) {
+  if(match_env != R_NilValue && set->lang_mode != 1) {
     target = ALIKEC_match_call(target, match_call, match_env);
     SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
     current = CAR(cur_par);
@@ -253,7 +258,7 @@ const char * ALIKEC_lang_alike_rec(
     SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
     const char * res = ALIKEC_lang_obj_compare(
       tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
-      tar_varnum, cur_varnum, formula, match_call, match_env
+      tar_varnum, cur_varnum, formula, match_call, match_env, set
     );
     if(res[0]) return(res);
   }
@@ -272,8 +277,9 @@ that for calls constants need not be the same
 */
 
 const char * ALIKEC_lang_alike_internal(
-  SEXP target, SEXP current, SEXP match_env
+  SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
+  SEXP match_env = set->env;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
   if(
     !
@@ -319,7 +325,7 @@ const char * ALIKEC_lang_alike_internal(
   SEXP curr_cpy_par = PROTECT(list1(duplicate(current)));
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy_par, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula, match_call, match_env
+    formula, match_call, match_env, set
   );
   // Construct error message
 
@@ -344,16 +350,21 @@ const char * ALIKEC_lang_alike_internal(
     */
     int use_in = CAR(curr_cpy_par) != R_NilValue;
     if(use_in) {
-      int  i, has_nl = 0;
-      const char * err_dep =ALIKEC_deparse(CAR(curr_cpy_par), -1);
-      for(i = 0; i < max_chars; i++) { // calc dep length
-        if(!err_dep[i]) break;
-        if(err_dep[i] == '\n') {
-          has_nl = 1;
-          break;
-        }
-      }
-      int with_nl = has_nl || (strlen(res) + 4 + i + 1 > max_chars);
+      int max_chars_net =
+        max_chars - (strlen(res) + strlen(set->prepend) + 4 + 1);
+      int err_dep_len, has_nl = 0;
+      const char * err_dep =
+        ALIKEC_deparse(CAR(curr_cpy_par), -1, max_chars_net);
+      for(err_dep_len = 0; err_dep[err_dep_len]; err_dep_len++) // calc dep length
+        if(err_dep[err_dep_len] == '\n') has_nl++;
+
+      int with_nl = has_nl || err_dep_len > max_chars_net;
+      /*
+      Add prompt looking stuff to front of deparsed call if it is multi-line;
+      really should be done elsewhere, also, we're not being super effcient
+      about this since we could record nl positions earlier
+      */
+
       err_msg = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
       );
@@ -368,7 +379,9 @@ const char * ALIKEC_lang_alike_internal(
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
-  const char * res = ALIKEC_lang_alike_internal(target, current, match_env);
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  set->env = match_env;
+  const char * res = ALIKEC_lang_alike_internal(target, current, set);
   if(strlen(res)) return mkString(res);
   return ScalarLogical(1);
 }

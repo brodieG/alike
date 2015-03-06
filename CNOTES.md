@@ -1,3 +1,5 @@
+These are internal developer notes; don't expect any of it to make much sense.
+
 ## Garbage Collection
 
 ### What Should Be PROTECTed

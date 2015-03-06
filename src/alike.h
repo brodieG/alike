@@ -5,6 +5,9 @@
 
   // - Data Structures ---------------------------------------------------------
 
+  /*
+  index structures used to track the location at which an error occurs
+  */
   union ALIKEC_index_raw {
     R_xlen_t num;
     const char * chr;
@@ -37,7 +40,7 @@
     int debug;
   };
   struct ALIKEC_settings {
-    int type_mode, attr_mode, fuzzy_int_max_len, suppress_warnings;
+    int type_mode, attr_mode, lang_mode, fuzzy_int_max_len, suppress_warnings;
     const char * prepend;
     SEXP env;                               // what environment to look for functions to match call in
     struct ALIKEC_settings_env * env_set;   // Used to track whether we've encountered an environment before
@@ -56,7 +59,7 @@
 
   SEXP ALIKEC_alike (
     SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
-    SEXP fuzzy_int_max_len, SEXP suppress_warnings
+    SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
@@ -83,13 +86,13 @@
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current);
   const char * ALIKEC_lang_alike_internal(
-    SEXP target, SEXP current, SEXP match_env
+    SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
   const char * ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
-    int formula, SEXP match_call, SEXP match_env
+    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
   );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
@@ -104,7 +107,7 @@
     SEXP target, SEXP current
   );
   SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
-  const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines);
+  const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(const char * var);
@@ -118,6 +121,10 @@
 
   char * (*CSR_smprintf4)(
     size_t, const char *, const char *, const char *, const char *, const char *
+  );
+  char * (*CSR_smprintf6)(
+    size_t, const char *, const char *, const char *, const char *, const char *,
+    const char *, const char *
   );
   char * (*CSR_len_as_chr)(R_xlen_t);
   size_t (*CSR_strmlen)(const char *, size_t);

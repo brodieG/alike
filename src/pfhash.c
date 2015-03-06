@@ -268,7 +268,7 @@ void pfHashDebug (pfHashTable *tbl, char *desc) {
 
     uint32_t numEntries = tbl->fn (NULL);
 
-    printf ("=====: %s %d entries\n", desc, numEntries);
+    Rprintf ("=====: %s %d entries\n", desc, numEntries);
 
     // For each lookup entry, free the list.
 
@@ -277,15 +277,15 @@ void pfHashDebug (pfHashTable *tbl, char *desc) {
 
         if (tbl->lookup[i] != NULL) {
             int sz = 0;
-            printf ("Entry #%3d:", i);
+            Rprintf ("Entry #%3d:", i);
             pfHashNode *node = tbl->lookup[i];
             while (node != NULL) {
-                printf (" ['%s' = '%s']", node->key, node->data);
+                Rprintf (" ['%s' = '%s']", node->key, node->data);
                 node = node->next;
                 sz++;
             }
-            printf (", size=%d\n", sz);
+            Rprintf (", size=%d\n", sz);
         }
     }
-    printf ("\n");
+    Rprintf ("\n");
 }

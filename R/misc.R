@@ -11,8 +11,6 @@
 attr_compare <- function(target, current, attr.mode=0L)
   .Call(ALIKEC_compare_attributes, target, current, attr.mode)
 
-#' @export
-
 name_compare <- function(target, current)
   .Call(ALIKEC_compare_names, target, current)
 
@@ -30,46 +28,33 @@ dim_compare <- function(
 ts_compare <- function(target, current)
   .Call(ALIKEC_compare_ts, target, current)
 
-#' @export
-
 lang_alike <- function(target, current, match.call.env=parent.frame())
   .Call(ALIKEC_lang_alike, target, current, match.call.env)
-
-#' @export
 
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
-#' @export
-
 dep_alike <- function(obj, lines)
   .Call(ALIKEC_deparse, obj, lines)
 
-#' @export
-
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
-
-#' @export
 
 env_track <- function(env, size_init = 32)
   .Call(ALIKEC_env_track, env, size_init)
 
 #' Used for testing C code
 #'
-#' @export
 #' @keywords internal
 
 alike_test <- function(target, current, settings=parent.frame())
   .Call(ALIKEC_test, target, current, settings)
 
-#' @export
 #' @keywords internal
 
 alike_test2 <- function(target, current)
   .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
 
-#' @export
 #' @keywords internal
 
 alike_test3 <- function(target, current)

@@ -49,8 +49,12 @@ type_of <- function(object)
 #' @param target the object to test type alikeness against
 #' @param current the object to test the type alikeness of
 #' @param mode integer(1L) in 0:2, see details
-#' @param tolerance see \code{tolerance} parameter for \code{\link{type_of}}
+#' @param fuzzy.int.max.len max length of numeric vectors to consider for
+#'   integer likeness (e.g. \code{c(1, 2)} can be considered "integer", even
+#'   though it is numeric); currently we limit this check to vectors
+#'   shorter than 100 to avoid a potentially expensive computation on large
+#'   vectors
 #' @export
 
-type_alike <- function(target, current, mode=0L, max.len=100)
-  .Call(ALIKEC_type_alike, target, current, mode, max.len)
+type_alike <- function(target, current, mode=0L, fuzzy.int.max.len=100)
+  .Call(ALIKEC_type_alike, target, current, mode, fuzzy.int.max.len)

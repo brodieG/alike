@@ -10,17 +10,25 @@
 #' determined by \code{\link{type_alike}}) and length.  Attributes on the
 #' objects are required to be recursively \code{alike}, though the following
 #' attributes are treated specially: \code{class}, \code{dim}, \code{dimnames},
-#' \code{names}, \code{row.names}, \code{levels}, \code{tsp}.
+#' \code{names}, \code{row.names}, \code{levels}, and \code{tsp}.
 #'
 #' Exactly what makes two objects \code{alike} is complex, but should be
 #' intuitive.  The best way to understand "alikeness" is to review the examples.
 #' For a thorough exposition see \href{../doc/alike.html}{the vignette}.
 #'
-#' @section \code{.alike} and \code{.alike2}:
+#' @section \code{.alike}:
 #'
-#' These are slightly faster versions of \code{alike} that are available if you
-#' are trying to squeeze out that last microsecond (literally) from your code.
-#' See \href{../doc/alike.html}{the vignette} for details.
+#' \code{.alike} is identical to \code{alike}, except that it exposes the
+#' \code{settings} parameter that modifies certain aspects of how "alikeness" is
+#' computed. See
+#' \href{../doc/alike.html#modifying-comparison-behavior}{the vignette} for
+#' details.  There is only one \code{settings} parameter to minimize the
+#' overhead associated with \code{.alike}.  If you intend to run \code{.alike}
+#' as part of a process that runs many times, consider defining the value for
+#' \code{settings} outside of the function call once:\preformatted{
+#'   sets <- alike_settings(...)                  # specify settings once
+#'   for(i in 1e5) .alike(x[[i]], y[[i]], sets)   # re-use settings 1e5 times
+#' }
 #'
 #' @export
 #' @import cstringr
@@ -28,26 +36,36 @@
 #' @seealso \code{\link{type_alike}}, \code{\link{type_of}},
 #'   \code{\link{abstract}}
 #' @param target the template to compare the object to
-#' @param current the object to determine alikeness to the template
+#' @param current the object to determine alikeness of to the template
+#' @param settings a list of settings for \code{.alike} generated using
+#'   \code{alike_settings}
 #' @param type.mode integer(1L) in 0:2, see \code{mode} parameter to
 #'   \code{\link{type_alike}}
-#' @param int.tol numeric(1L) see \code{tolerance} parameter to
-#'   \code{\link{type_alike}}
 #' @param attr.mode integer(1L) in 0:2 determines strictness of attribute
-#'   comparison, see \href{../doc/alike.html}{vignette}
+#'   comparison: \itemize{
+#'     \item \code{0} only checks attributes that are present in target, and uses special
+#'       comparisons for the special attributes (\code{class}, \code{dim},
+#'       \code{dimnames}, \code{names}, \code{row.names}, \code{levels}, and
+#'       \code{tsp}) while requiring other attributes to be \code{alike}
+#'     \item \code{1} is like \code{0}, except all atributes must be \code{alike}
+#'     \item \code{2} requires all attributes to be present in \code{target} and
+#'       \code{current} and to be alike
+#'   }
+#' @param lang.mode integer(1L) in 0:1 controls language matching, set to `1` to
+#'   turn off use of \code{\link{match.call}}
+#' @param rec.mode integer(1L) `0` currently unused, intended to control how
+#'   recursive structures (other than language objects) are compared
+#' @param fuzzy.int.max.len see same parameter for \code{\link{type_alike}}
+#' @param env environment used internally when evaluating expressions; currently
+#'   used only when looking up functions to \code{\link{match.call}} when
+#'   testing language objects
 #' @param suppress.warnings logical(1L)
-#' @param match.call.env when matching calls, what frame to look up functions
-#'   definitions in to run \code{match.call} on
-#'   (see \href{../doc/alike.html}{vignette})
-#' @param settings a substitue for all parameters outside of \code{target} and
-#'   \code{current} when using \code{.alike}; generate using
-#'   \code{alike_settings}
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
 #' @examples
 #' # Type comparison
 #'
-##' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
+#' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
 #'
@@ -85,7 +103,7 @@
 #'
 #' iris.fake <- transform(iris, Species=as.character(Species))
 #' alike(iris, iris.fake)
-#' iris.fake2 <- transform(iris, Species=factor(Species, levels=c(levels(Species), "americana")))
+#' iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
 #' alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 #'
 #' # We can use partially specified objects as templates
@@ -128,10 +146,10 @@ alike <- function(target, current)
 #' @rdname alike
 #' @export
 
-.alike <- function(target, current, settings=alike_settings())
+.alike <- function(target, current, settings=alike_settings(env=parent.frame()))
   .Call(ALIKEC_alike_fast1, target, current, settings)
 
-#' @rdname alike
+#' @keywords internal
 
 .alike2 <- function(target, current)
   .Call(ALIKEC_alike_fast2, target, current)
@@ -140,7 +158,9 @@ alike <- function(target, current)
 #' @export
 
 alike_settings <- function(
-  type.mode=0L, attr.mode=0L, env=parent.frame(), fuzzy.int.max.len=100L,
-  suppress.warnings=FALSE
+  type.mode=0L, attr.mode=0L, lang.mode=0L, rec.mode=0L,
+  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE
 )
-  list(type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings)
+  list(
+    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode
+  )
