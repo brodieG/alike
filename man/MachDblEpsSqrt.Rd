@@ -9,7 +9,8 @@
 MachDblEpsSqrt
 }
 \description{
-Used to limit overhead of calls the require use of \code{`.Machine$double.eps ^ 0.5`}
+Used to limit overhead of calls the require use of
+\code{.Machine$double.eps ^ 0.5}
 }
 \keyword{datasets}
 

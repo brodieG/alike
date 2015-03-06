@@ -4,17 +4,16 @@ unitizer_sect("Atomic", {
   alike(integer(), 1:3)    # TRUE
   alike(integer(5L), 1:3)  # FALSE
   alike(integer(3L), 1:3)  # TRUE
-  alike(integer(), 1:3, int.mode=1L)         # TRUE, b/c `:` coerces to integer
-  alike(integer(), c(1, 2, 3), int.mode=1L)  # FALSE (compare to above)
   alike(numeric(), c(1, 2, 3))         # TRUE
   alike(numeric(), 1L)                 # TRUE
-  alike(numeric(), 1L, int.mode=2L)    # FALSE
   alike(numeric(), c(1.1,.053,41.8))   # TRUE
   alike(integer(3L), 1:3 + .01)
-  alike(integer(3L), 1:3 + .Machine$double.eps ^ .5 * 2) # FALSE, integer like Numerics must be under this
-  alike(integer(3L), 1:3 + .Machine$double.eps ^ .5)     # TRUE
+  alike(integer(6L), seq(1/6, 1, 1/6) * 6)     # FALSE, not true integers
   alike(integer(4L), letters[1:4])
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
+
+  alike(c(a=1, b=2), 3)         # Length mismatch
+  alike(c(a=1, b=2), c(1, 2))   # Names
 } )
 unitizer_sect("lists", {
   lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
@@ -101,84 +100,264 @@ unitizer_sect("Data Frames", {
   alike(mtcars, mtcars[1:10,])
   alike(mtcars[-5], mtcars)
 })
+unitizer_sect("Time Series", {
+  ts.1 <- ts(runif(24), 1970, frequency=12)
+  ts.2 <- ts(runif(24), 1970, frequency=4)
+  ts.3 <- abstract(ts.1, "end")
+  ts.4 <- abstract(ts.2, "frequency")
 
-unitizer_sect("Errors", {
-  alike(1, 1, int.mode="hello")
-  alike(1, 1, int.mode=3)
-  alike(1, 1, int.tol="hello")
-  alike(1, 1, attr.mode=3)
+  alike(ts.1, ts.2)
+  alike(ts.3, ts.1)
+  alike(ts.1, ts.3)
+  alike(ts.3, ts.2)
+
+  ts.5 <- ts(matrix(runif(24 * 3), ncol=3), 1970, frequency=12)
+  ts.6 <- ts(matrix(runif(12 * 3), ncol=3), 1970, frequency=12)
+
+  alike(ts.5, ts.6)
+  alike(ts.5, matrix(runif(24 * 3), ncol=3))
+
+})
+unitizer_sect("Factors", {
+  f1 <- factor(letters[1:5])
+  f2 <- factor(letters[1:5], levels=letters[5:1])
+  f3 <- f1
+  levels(f3)[[5]] <- ""
+  f4 <- factor(c(letters[1:4], "f"))
+
+  alike(f1, f2)   # FALSE
+  alike(f1, f3)   # FALSE
+  alike(f1, f4)   # FALSE
+  alike(f3, f1)   # TRUE, wildcard matches anything
+  alike(f3, f4)   # TRUE, wildcard matches anything
+})
+unitizer_sect("Environments / Pairlists", {
+  env0 <- new.env()
+  env1 <- list2env(list(a=character(), b=list(), c=NULL))
+  env2 <- list2env(list(a="hello", b=iris, c=matrix(1:3)))
+  env3 <- list2env(list(a="hello", b=iris))
+  env4 <- list2env(list(a="hello", b=iris, c=logical(1L), d=logical(1L)))
+  env5 <- list2env(list(b=iris, a="hello", c=matrix(1:3)))
+
+  alike(env0, env2)  # zero length, matches anything
+  alike(env1, env2)  # TRUE
+  alike(env1, env3)  # length mismatch
+  alike(env3, env1)  # component mismatch
+  alike(env1, env4)  # TRUE length mismatch but longer allowed
+  alike(env1, env5)  # order change, should still match
+
+  # Test infinite recursion protection
+
+  rec.env <- rec.env.cpy <- new.env()
+
+  for(i in 1:50) {
+    rec.env.cpy$a <- new.env()
+    rec.env.cpy <- rec.env.cpy$a
+  }
+  rec.env.cpy$a <- rec.env;
+  alike(rec.env, rec.env)
+
+  plst1 <- pairlist(a=character(), b=list(), c=NULL)
+  plst2 <- pairlist(a="hello", b=iris, c=matrix(1:3))
+  plst3 <- pairlist(a="hello", b=iris)
+  plst4 <- pairlist(a="hello", b=iris, c=logical(1L), d=logical(1L))
+  plst5 <- pairlist(a=character(), b=list(), integer())
+  plst6 <- pairlist(a=character(), b=list(), boogey=1:3)
+  plst7 <- pairlist(a=character(), boogey=1:3, b=list())
+
+  alike(plst1, plst2)  # TRUE
+  alike(plst1, plst3)  # length mismatch
+  alike(plst1, plst4)  # length mismatch
+  alike(plst1, plst5)  # fail, missing name
+  alike(plst5, plst6)  # TRUE, no name matches anything
+  alike(plst5, plst7)  # FALSE, order matters in pair lists
+
+  # Nesting
+
+  env7 <- list2env(list(a=character(), b=plst1))
+  env8 <- list2env(list(a=letters[1:3], b=plst2))
+  env9 <- list2env(list(a=letters[1:3], b=plst5))
+
+  alike(env7, env8)   # pass
+  alike(env7, env9)   # fail
+})
+unitizer_sect("Calls / Formulas", {
+  alike(quote(1 + 1), quote(x + y))
+  alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
+  alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
+
+  fun <- function(a, b, c) NULL
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  .alike(  # FALSE, match.call disabled
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
+    alike_settings(lang.mode=1)
+  )
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
+  alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
+
+  alike(quote(fun(1, 2)), quote(fun(1)))   # FALSE
+  alike(quote(fun(1)), quote(fun(1, 2)))   # FALSE
+
+  alike(quote(fun(1, 2)), quote(fun2(1, 2)))            # FALSE, fun mismatch
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))  # FALSE, fun mismatch, nested
+
+  # zero len matches anything
+
+  alike(quote(fun()), quote(fun(a, b, c)))    # TRUE
+  alike(quote(fun()), quote(fun2(a, b, c)))   # FALSE, still need match fun names
+  alike(quote(fun(a, fun2())), quote(fun(b, fun2(a, b, c))))    # TRUE
+
+  # Attributes on sub-components should not affect anything
+  # actually, these tests need to be with alike since lang_alike doesn't check
+  # attributes
+
+  c0 <- quote(fun(a, b, a, 25))
+  c0.1 <- c0.2 <- c0.3 <- c0
+  attr(c0.1, "blah") <- "hello"
+  attr(c0.2, "blah") <- 1:3
+  attr(c0.3[[1L]], "blah") <- "hello"
+
+  alike(c0, c0.1)     # TRUE
+  alike(c0.1, c0)     # Missing attribute
+  alike(c0.1, c0.2)   # Attribute mismatch
+  alike(c0.3, c0)     # TRUE, sub-attr shouldn't cause problem
+
+  # Formulas
+
+  alike(x ~ y, z ~ w)
+  alike(x ~ y, z ~ w + 1)
+  alike(x ~ y + 2, z ~ w + 1)
+  alike(x ~ y + z:y, w ~ v + u:v)
+  alike(z ~ w + 1, x ~ y)
+  alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 2 + l * j + j + w:j)
+  alike(y ~ x ^ 2 + x * z + z + w:z, q ~ l ^ 3 + l * j + j + w:j)
+
+  # # Repeating parses to deal with potential parse issues in clean R runs
+
+  exp.1 <- parse(text="x + y; fun2(fun(1, 2, 3), z)", keep.source=TRUE)
+  exp.2 <- parse(text="z + 2; fun(fun2(1, 2, 3), q)", keep.source=TRUE)
+  exp.3 <- parse(text="z + fun(3); fun(fun2(a, b, c), 3)", keep.source=TRUE)
+
+  alike(exp.1, exp.2)
+  alike(exp.2, exp.3)
+  alike(exp.3, exp.2)
+
+  exp.4 <- expression(1 + 1, 2 + x)
+  exp.5 <- expression(1 + 1, 5 + y)
+  exp.6 <- expression(1 + 1, 2 + 2)
+
+  alike(exp.4, exp.5) # TRUE
+  alike(exp.4, exp.6) # FALSE
+
+  # Symbols
+
+  alike(quote(x), quote(y))      # TRUE
+  alike(NULL, quote(x))          # FALSE, overridden by type comparison
+  alike(quote((NULL)), quote(y)) # TRUE, NULL matches anything as language object
+  alike(quote(NULL), quote(x))   # FALSE, quoting NULL doesn't make it language
+  alike(quote(x), c0)          # FALSE
+  alike(c0, quote(x))          # FALSE
+  alike(quote((x)), quote(y))    # TRUE, parens shouldn't matter
 } )
-# Subset of tests for "fast" version
+# Most fun tests in internal/type, here to make sure interface working
+unitizer_sect("Functions", {
+  alike(print, print.data.frame)              # TRUE
+  alike(print.data.frame, print)              # FALSE
+  alike(`&&`, function() NULL)                # TRUE
+})
+# Subset of tests for version with settings
 
 unitizer_sect(".alike", {
-  .alike(integer(), 1:3)    # TRUE
-  .alike(integer(5L), 1:3)  # FALSE
-  .alike(integer(3L), 1:3)  # TRUE
-  .alike(integer(), 1:3, int.mode=1L)         # Error, this arg isn't available
-  .alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
-
-  .alike(lst, lst.2)     # length mismatch
-  .alike(lst, lst.3)     # object type mismatch
-  .alike(1:10, "hello")  # object type mismatch, no dive
-  .alike(matrix(integer(), ncol=7), matrix(1:21, nrow=3))
-  .alike(matrix(integer(), ncol=3, dimnames=list(NULL, c("R", "G", "B"))), matrix(1:21, ncol=3, dimnames=list(NULL, c("R", "G", "B"))))
+  .alike(1L, 1.0, alike_settings(type.mode=1L))
+  .alike(1.0, 1L, alike_settings(type.mode=1L))
+  .alike(1.0, 1L, alike_settings(type.mode=2L))   # FALSE
+  .alike(1:101, 1:101 + 0.0)  # FALSE
+  .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=200)) # TRUE
+  .alike(1:101, 1:101 + 0.0, alike_settings(fuzzy.int.max.len=-1))  # TRUE
+  .alike(list(a=1:10), data.frame(a=1:10))
+  .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=1L))
+  .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=2L))  # FALSE
+  fun <- function(a, b, c) NULL
+  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), alike_settings(env=NULL))   # FALSE
+  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))                             # TRUE
+  .alike(`&&`, function() NULL, alike_settings(type.mode=1))   # FALSE
 } )
 # These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks
 
 unitizer_sect("Examples", {
- alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
- alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
- alike(1.1, 1L)         # TRUE, by default, integers are always considered real
- alike(integer(), 1:4)  # TRUE, Zero length `target` matches any length `current`
- alike(1:4, integer())  # But not vice versa
+  alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
+  alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
+  alike(1.1, 1L)         # TRUE, by default, integers are always considered real
 
- # Scalarness can now be checked at same time as type
+  alike(1:100, 1:100 + 0.0)  # TRUE
+  alike(1:101, 1:101 + 0.0)  # FALSE, we do not check numerics for integerness if longer than 100
 
- x <- 1
- x.2 <- 1:3
- y <- TRUE
- y.2 <- c(TRUE, TRUE)
+  # Scalarness can now be checked at same time as type
 
- alike(integer(1L), x)
- alike(logical(1L), y)
- alike(integer(1L), x.2)
- alike(logical(1L), y.2)
+  alike(integer(1L), 1)            # integer-like and length 1?
+  alike(logical(1L), TRUE)         # logical and length 1?
+  alike(integer(1L), 1:3)
+  alike(logical(1L), c(TRUE, TRUE))
 
- # Zero length match any length of same type
+  # Zero length match any length of same type
 
- alike(integer(), 1:10)
+  alike(integer(), 1:10)
+  alike(1:10, integer())   # but not the other way around
 
- # NULL matches anything
+  # Recursive objects compared recursively
 
- alike(NULL, mtcars)
- alike(list(NULL, NULL), list(iris, mtcars))
+  alike(
+    list(integer(), list(character(), logical(1L))),
+    list(1:10, list(letters, TRUE))
+  )
+  alike(
+    list(integer(), list(character(), logical(1L))),
+    list(1:10, list(letters, c(TRUE, FALSE)))
+  )
+  # `NULL` is a wild card when nested within recursive objects
 
- # `alike` will compare data frame columns
+  alike(list(NULL, NULL), list(iris, mtcars))
+  alike(NULL, mtcars)    # but not at top level
 
- df.tpl <- data.frame(id=integer(), grade=factor(levels=LETTERS[1:6]))
- df.cur <- data.frame(id=c(1, 3, 5), grade=factor(c("A", "F", "B"), levels=LETTERS[1:6]))
- df.cur2 <- data.frame(id=c(1, 3, 5), grade=c("A", "F", "B"))
+  # Since `data.frame` are lists, we can compare them recursively:
 
- alike(df.tpl, df.cur)    # zero row df as `target` matches any length df
- alike(df.cur, df.tpl)    # alike is not "commutative", now `target` is not zero row
+  iris.fake <- transform(iris, Species=as.character(Species))
+  alike(iris, iris.fake)
+  iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
+  alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 
- # factor levels must match; makes sense, otherwise it really isn't the same
- # type of data (note this is a recursive comparison); for better understanding
- # of error examine `levels(df.tpl[[2]])` and `levels(df.cur2[[2]])`
+  # We can use partially specified objects as templates
 
- alike(df.tpl, df.cur2)
+  iris.tpl <- abstract(iris)
+  str(iris.tpl)
+  alike(iris.tpl, iris)
+  alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])    # any row sample of iris matches our iris template
+  alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])              # but column order matters
 
- alike(list(integer(), df.tpl), list(1:4, df.cur))  # recursive comparison
- alike(matrix(integer(), 3), matrix(1:21, ncol=7))  # partially specified dimensions
+  # Also works with matrices / arrays
 
- # In order for objects to be alike, they must share a family tree, not just
- # a common class
+  alike(matrix(integer(), 3, 3), matrix(1:9, nrow=3))         # 3 x 3 integer
+  alike(matrix(integer(), 3, 3), matrix(runif(9), nrow=3))    # 3 x 3, but not integer!
+  alike(matrix(integer(), 3), matrix(1:12, nrow=3))           # partial spec, any 3 row integer matrix
+  alike(matrix(integer(), 3), matrix(1:12, nrow=4))
+  alike(matrix(logical()), array(rep(TRUE, 8), rep(2, 3)))    # Any logical matrix (but not arrays)
 
- obj.tpl <- structure(TRUE, class=letters[1:3])
- obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
- obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
+  # In order for objects to be alike, they must share a family tree, not just
+  # a common class
 
- alike(obj.tpl, obj.cur.1)
- alike(obj.tpl, obj.cur.2)
+  obj.tpl <- structure(TRUE, class=letters[1:3])
+  obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
+  obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
+
+  alike(obj.tpl, obj.cur.1)
+  alike(obj.tpl, obj.cur.2)
+
+  # You can compare language objects; these are alike if they are self
+  # consistent; we don't care what the symbols are, so long as they are used
+  # consistently across target and current:
+
+  alike(quote(x + y), quote(a + b))   # TRUE, symbols are consistent (adding two different symbols)
+  alike(quote(x + y), quote(a - b))   # FALSE, different function
+  alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 } )

@@ -3,7 +3,7 @@
 \alias{alike_test}
 \title{Used for testing C code}
 \usage{
-alike_test(obj1)
+alike_test(target, current, settings = parent.frame())
 }
 \description{
 Used for testing C code

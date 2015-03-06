@@ -1,8 +1,41 @@
+alike 1.0.0
+===========
+
+API Breaking Changes:
+
+* `alike` no longer accepts any parameters outside of `target` and `current`; if
+  you wish to change the previously existing settings use `.alike` and
+  `alike_settings` instead.
+
+Behavior Changes:
+
+* We now only check small numeric vectors for integerness to avoid scanning
+  through large numeric vectors to confirm they are integer like (you can
+  re-enable this using the `max.fuzzy.int.len` parameter).
+* Added support for additional recursive objects: environments, pairlists, and
+  expressions are now recursed through, with `alike` applied recursively to each
+  elemment therein; this mirrors the previous treatment for lists (the VECSXP
+  type)
+* Improved comparison of language objects (calls, symbols, formulas, and
+  functions); see docs for explanations of what makes language objects alike
+  (#10, #11, #14, #16)
+* Attributes are now recursively compared with `alike` as well instead of
+  `identical`
+* Added `abstract` functions to assist in the creation of template objects (#9)
+* `ts` class objects now have specialized comparison
+* Error messages generally tweaked
+
+Internal Changes:
+
+* C level optimizations (#7, #13, but #13 not complete)
+* Several small unreported bugs
+
 alike 0.2.5
 ===========
 
 * Doc updates
-* removed C library files to allow installs on platforms with different compilers
+* removed C library files to allow installs on platforms with different
+  compilers
 
 alike 0.2.4
 ===========

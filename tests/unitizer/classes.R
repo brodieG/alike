@@ -16,7 +16,7 @@ unitizer_sect("Class Matching", {
   alike(obj1, obj2)      # TRUE
   obj2 <- structure(numeric(), class=c("x", "a", "b", "c"))
   alike(obj1, obj2)      # TRUE
-  alike(obj1, obj2, attr.mode=1)   # FALSE
+  .alike(obj1, obj2, alike_settings(attr.mode=1))   # FALSE
 } )
 unitizer_sect("S4", {
   setClass("foo", representation(a = "character", b = "numeric"))

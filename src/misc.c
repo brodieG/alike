@@ -1,44 +1,9 @@
 #include "alike.h"
+#include "pfhash.h"
+#include <time.h>
 
 // - Helper Functions ----------------------------------------------------------
 
-/*
-Returns a character pointer to the string representation of the integer; allocates
-with R_alloc so in theory don't need to worry about freeing memory
-*/
-
-const char * ALIKEC_xlen_to_char(R_xlen_t a) {
-  if(a < 0)
-    error("Logic Error: unexpected negative length value.");
-  int int_len = (int) ceil(log10(a + 1.00001));  // + 1.00001 to account for 0
-  char * res;
-  res = R_alloc(int_len + 1, sizeof(char));
-  sprintf(res, "%d", (int) a);    // used to be %td, but doesn't work on windows?
-  return (const char *) res;
-}
-/* Returns a character pointer containing the results of using `a` as the parent
-string and all the others a substrings with `sprintf`
-
-note:
-- will over-allocate by up to 8 characters to account for possibility there may
-  not be an "%s" in `a`
-*/
-
-const char * ALIKEC_sprintf(char * a, const char * b, const char * c, const char * d, const char * e) {
-  int full_len = strlen(a) + strlen(b) + strlen(c) + strlen(d) + strlen(e) + 1;
-  char * res;
-  res = R_alloc(full_len, sizeof(char));
-  sprintf(res, a, b, c, d, e);
-  return res;
-}
-
-/* Estimate how many characters an integer can be represented with */
-
-int ALIKEC_int_charlen (R_xlen_t a) {
-  if(a < 0)
-    error("Logic Error: unexpected negative length value.");
-  return (int) ceil(log10(a + 1.1));
-}
 /* equivalent to `mode` in R, note this is a bit approximate and just trying to
 hit the obvious corner cases between `typeof` and `mode`*/
 
@@ -57,10 +22,128 @@ SEXP ALIKEC_mode(SEXP obj) {
   }
   return(mkString(class));
 }
-// - Testing Function ----------------------------------------------------------
+/*
+returns specified class, or implicit class if none
+*/
+SEXP ALIKEC_class(SEXP obj, SEXP class) {
+  if(class == R_NilValue) return(ALIKEC_mode(obj));
+  return class;
+}
+// - Abstraction ---------------------------------------------------------------
+/*
+sets the select `tsp` values to zero
+*/
+SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
+  if(TYPEOF(attr) != REALSXP || XLENGTH(attr) != 3)
+    error("Logic Error: incorrect format for tsp attr, contact maintainer");
+  SEXP x_cp = PROTECT(duplicate(x));
 
-SEXP ALIKEC_test(SEXP obj1) {
-  Rprintf("boom %s\n", type2char(TYPEOF(allocVector(VECSXP, 1))));
+  // Get to last attribute, and make sure tsp is not set
+
+  SEXP attrs = ATTRIB(x_cp), attrs_cpy, attrs_last;
+  for(attrs_cpy = attrs; attrs_cpy != R_NilValue; attrs_cpy = CDR(attrs_cpy)) {
+    attrs_last = attrs_cpy;
+    if(TAG(attrs_cpy) == R_TspSymbol) break;
+  }
+  if(attrs_cpy != R_NilValue)
+    error("Logic Error: object already has a `tsp` attribute");
+
+  // Illegally append non-kosher tsp attribute
+
+  SETCDR(attrs_last, list1(attr));
+  SET_TAG(CDR(attrs_last), R_TspSymbol);
+  UNPROTECT(1);
+  return x_cp;
+}
+// - Testing Function ----------------------------------------------------------
+SEXP ALIKEC_test(SEXP target, SEXP current, SEXP settings) {
   return R_NilValue;
 }
+SEXP ALIKEC_test2(
+    SEXP target, SEXP current
+) {
+  return R_NilValue;
+}
+/*
+deparse into character
 
+@param max_chars determines how many characters before we try to turn into
+  multi-line deparse; set to -1 to ignore
+@param lines how many lines to show, if it deparses to more than lines append
+  `...` a end; set to -1 to ignore
+*/
+const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars) {
+  SEXP quot_call = PROTECT(list2(R_QuoteSymbol, obj));
+  SET_TYPEOF(quot_call, LANGSXP);
+
+  SEXP dep_call = PROTECT(list2(ALIKEC_SYM_deparse, quot_call));
+  SET_TYPEOF(dep_call, LANGSXP);
+
+  SEXP obj_dep = PROTECT(eval(dep_call, R_BaseEnv));
+  //PrintValue(obj_dep);
+  R_xlen_t line_max = XLENGTH(obj_dep), i;
+  if(!line_max) return "";
+  if(lines < 0) lines = line_max;
+  char * res = "", * dep_pad = "";
+  int nl = 0;
+
+  for(i = 0; i < lines; i++) {
+    const char * dep_err = CHAR(STRING_ELT(obj_dep, i));
+    if(!i) {
+      nl = lines > 1 || (max_chars > 0 && strlen(dep_err) > max_chars);
+      if(nl) dep_pad = "> ";
+    } else if(nl) dep_pad ="+ ";
+    res = CSR_smprintf6(
+      ALIKEC_MAX_CHAR, "%s%s%s%s%s", res, dep_pad, dep_err,
+      i == lines - 1 && lines < line_max ? "..." : "",
+      nl && i < lines - 1 ? "\n" : "", ""
+  );}
+  UNPROTECT(3);
+  return res;
+}
+SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines) {
+  return mkString(ALIKEC_deparse(obj, asInteger(lines), 80));
+}
+
+/*
+Simplified version of R's internal findFun
+
+Doesn't do quick lookups for special symbols, or use the global cache if it is
+available.
+
+Most importantly, instead of failing if function is not found, returns
+R_UnboundValue.
+
+The code is copied almost verbatim from src/main/envir.c:findFun()
+*/
+
+SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
+  SEXP vl;
+  while (rho != R_EmptyEnv) {
+    vl = findVarInFrame3(rho, symbol, TRUE);
+    if (vl != R_UnboundValue) {
+      if (TYPEOF(vl) == PROMSXP) {
+        PROTECT(vl);
+        vl = eval(vl, rho);
+        UNPROTECT(1);
+      }
+      if (
+        TYPEOF(vl) == CLOSXP || TYPEOF(vl) == BUILTINSXP ||
+        TYPEOF(vl) == SPECIALSXP
+      )
+        return (vl);
+      if (vl == R_MissingArg) return R_UnboundValue;
+    }
+    rho = ENCLOS(rho);
+  }
+  return R_UnboundValue;
+}
+
+/*
+Convert convention of zero length string == TRUE to SEXP
+*/
+
+SEXP ALIKEC_string_or_true(const char * var) {
+  if(var[0]) return(mkString(var));
+  return(ScalarLogical(1));
+}

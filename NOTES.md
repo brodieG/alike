@@ -1,4 +1,4 @@
-These are internal developer notes
+These are internal developer notes; don't expect any of it to make much sense.
 
 ## C Benchmarking
 
@@ -48,7 +48,12 @@ Using PACKAGE argument to .Call seems to slow things down a fair bit, though
 this is with fully registered functions.
 
 Rcpp seems to be generally 2-3x slower than inline, and not just in terms of
-overhead (tested on simple loop sum).
+overhead (tested on simple loop sum).  Though this may be faster with RcppSugar.
+Most of Rcpp overhead seems to be related to the wrapper that converts the
+Rcpp value back to an R value.  Perhaps this wrapper can be avoided?  Also,
+looks like RCPP doesn't register entry points as objects, so that could make
+things a smidge faster as well (instead, relies on PACKAGE argument).  This is
+just looking at the default "rcpp_hello_world" example.
 
 typeof:
 
@@ -122,6 +127,80 @@ Unit: microseconds
  .alike(lst.2, lst) 1.769 1.865  1.947 2.012  4.253  1000   # no error
  .alike(lst.3, lst) 3.226 3.372  3.440 3.535 55.883  1000   # with error
 ```
+### As of Interim v0.3.0
+
+Here we actually start profiling.  Baseline:
+
+    Unit: microseconds
+                      expr   min    lq median   uq    max neval
+     alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
+
+Get rid of unnecessary prepend copy:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min   lq median    uq    max neval
+     alike(mtcars, mtcars) 3.973 4.16 4.3135 4.638 21.119  1000
+
+Astonishingly, getting rid of the index business didn't appear to improve things
+much at all:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq   max neval
+     alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
+
+Actually, maybe it did.  Had a few bug fixes in between above and below, but
+don't see why it would have been slower as a result of bugs:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median     uq    max neval
+     alike(mtcars, mtcars) 3.719 3.828  3.888 3.9645 20.667  1000
+
+Upon testing a bit more, could be starting with a fresh R process (or alternatively having a bogged down one) that makes the difference?
+
+Some more improvements of swapping out `strcmp` for direct symbol comparison:
+
+    > microbenchmark(alike(mtcars, mtcars), times=1000)
+    Unit: microseconds
+                      expr   min    lq median    uq    max neval
+     alike(mtcars, mtcars) 3.591 3.746 3.8215 3.953 30.225  1000
+
+One issue with all this, laboriously we benchmarked `strcmp` on 8 character strings, and found that 4MM comparisons, it took:
+
+    Unit: microseconds
+                    expr       min        lq     median         uq       max neval
+     alike_test(1, 2, 3) 16707.573 16806.983 16870.4480 16994.7620 21516.922   100
+     alike_test(0, 2, 3)   207.384   209.116   212.1385   221.7965   403.504   100
+
+Or about 4 ns per comparison.  In `mtcars`, based on profiling information from instruments, we found that about 7.3% of the time was spent on `strcmp` comparing names, and there are 43 names (8 cols, 35 rows) or so, so that adds up to about 6.1ns per comparison, which ties out.
+
+When comparing language objects, the hash mechanism we use that needs to allocate a bunch of names is pretty costly.  In order to fix this we would need substantial upgrades to the hashing system so that we can store stuff other than strings.  In particular, we'd want to predifine about 30 or so symbols to avoid having to allocate them at run time.  Looks like we could hash the memory addresses of the symbols (but need to figure out if good hash is portable, etc).
+
+Also, we pre-allocate the object used to deparse the error message even before error occurs.  Is there a way to only do so if an error occurs?  Might be difficult since we need both the starting pointer as well as the location of error pointer in the same pointer chain.
+
+After removing `strcmp` in the cases where the names are known to be identical:
+
+    > microbenchmark(alike(mtcars, mtcars), alike(mtcars.a, mtcars), times=1000)
+    Unit: microseconds
+                        expr   min     lq median     uq    max neval
+       alike(mtcars, mtcars) 2.966 3.1465 3.2430 3.4005  4.728  1000
+     alike(mtcars.a, mtcars) 2.931 3.1060 3.2075 3.3820 30.654  1000
+
+Finally, collapsing all the settings into one argument:
+
+    > sets <- list(0L, alike:::MachDblEpsSqrt, 0L, FALSE, sys.frame(sys.nframe()))
+    > microbenchmark(alike(mtcars, mtcars), alike_test(mtcars, mtcars, sets), alike_test(mtcars, mtcars, NULL), .alike(mtcars, mtcars), times=10000)
+    Unit: microseconds
+                                 expr   min    lq median    uq     max neval
+                alike(mtcars, mtcars) 2.934 3.161  3.319 3.486 808.905 10000
+     alike_test(mtcars, mtcars, sets) 2.157 2.313  2.394 2.534  12.154 10000
+     alike_test(mtcars, mtcars, NULL) 2.070 2.243  2.335 2.480 655.997 10000
+               .alike(mtcars, mtcars) 1.951 2.124  2.199 2.318  13.585 10000
+
+The extra argument over the original "fast" version costs ~120ns, and the argument validation another ~80ns.
+
 
 ### Stack Manipulation
 
@@ -149,7 +228,82 @@ And add a `substitute`:
 At this point we've replicated a promise of sorts, by capturing the expression,
 as well as the evaluation environment, but we've add 600ns in evaluation time.
 
+## Recursion
+
+Need to track indices, use a list?  Prototype
+
+    index = CONS(x, R_NilValue)
+    alike_rec(tar, cur, index.pl)
+    ...
+    curr.ind = SEXP
+    if(err) {
+      res = {1, mkString("Error Message")}
+    }
+    else if(recurse) {
+      SETCDR(index.pl, CONS(curr.ind))
+      return(alike_rec(rec(tar.child, cur.child, CDR(index.pl))))
+    }
+    else
+    return {0, R_NilValue}
+
+## Duplication
+
+Duplication is somewhat expensive, with:
+
+    y <- quote(x + fun(1, 2, fun2(a, b)) / 3 + news(23))
+    microbenchmark(alike_test(y, 1))
+    Unit: microseconds
+                 expr   min     lq median    uq    max neval
+     alike_test(y, 1) 1.253 1.4035 1.5475 1.754 15.181   100
+
+Reference
+
+    Unit: nanoseconds
+                 expr min    lq median   uq   max neval
+     alike_test(y, 1) 739 780.5    909 1074 89326  1000
+
+So about half a microsecond to duplicate a somewhat complex object.  Is this tolerable?
+
 ## Comparisons
+
+### Language
+
+How do we handle paren calls?  Ideally we would just ignore them, but they change length of call too...
+
+### NULL
+
+Matches NULL at top level, anything when nested?  Should it match any pairlist at top level since zero length pair list is basically NULL?  Hmm...
+
+### Environments
+
+Probably should have contents compared by name, not just sequentially?  How do we treat hashed environments vs non hashed?  Looks like we just use built in functions to do this.
+
+Should we test if environments `identical` before we dive into a full comparison?  Almost certainly yes.
+
+### Attribute Comparison
+
+Exceptions to typical treatment:
+
+* class
+* names/row.names
+* dimnames
+* dim
+
+Examples in favor of `identical`:
+
+* levels
+* tsp: start, end, frequency seem akin to dimensions (special treatment for zeroes?)
+
+Examples against
+
+* many of the attributes in the result of `lm`
+* zoo
+    * index, seems like it just tracks order
+    * when have date indices, does alikeness require the same date ranges, or only the same type of index and number of values?
+    * what about zoo.reg? frequency seems like it is closer to a dimension variable
+    * index is probably closest to row.names, but unfortunately it can be just about anything
+* proto objects, urgh
+* environments as attributes (e.g. .Environment for formula objects)
 
 ### Most Meaningful Elements
 
@@ -165,3 +319,53 @@ Actually, for now we're just treating this as any other attribute and we'll see 
 ### Rf_identical
 
 not entirely sure what the "default" flag is for `identical`, seems to be 16 by the convention that all the flags that are TRUE get set to zero, but very confusing why `ignore.environment` basically is the opposite of all the others.  Otherwise it would have made sense to have the default flag be 0  NEED TO TEST CLOSURE COMPARISON!!
+
+## `alike` Arguments
+
+TBD how many arguments we want to pile up.  Here are some to discuss:
+
+1. match.call.env = .GlobalEnv
+2. lang.match = fast or slow?
+
+Actually, could combine match.fun.env to be either an environment or NULL, and if NULL don't do the match!
+
+`type.mode`
+
+Probably don't want to check more than 100 numbers by default
+
+Need to handle:
+
+* wanting to specify how many elements before we kill integer-alike tests
+* whether to generically allow integer-alikeness
+* whether ints can be considered numeric
+
+Before we had 0 (inf integer-alikeness), 1 (must be int), 2 (must be num)
+
+Note this actually affects closures / functions as well
+
+Proposal:
+* 0 strictest
+* 1 strict, but subset types (e.g. INT) can be considered part of superset (how does this affect functions)
+* 2 - N how may 1eN elements we allow before we switch to mode 1
+
+Blergh.  Attempting to combine two dimensions (strictness and allowable size) into one number is really shit.  Really don't want to add another parameter to `alike` though.  Maybe the right answer is to use a fixed allowable size (e.g. 100), and if you really want to use larger then you have to use `.alike` with `settings`.
+
+* attr.mode
+* type.mode
+* match.call.env
+* fuzzy.int.max.len
+* suppress.warnings
+
+Answer is probably to simplify `alike` use by not having any arguments other
+than target and current; then all other arguments are accessible through
+`alike_settings`.
+
+Do we give up on `parent.frame()`?  Do we provide it not even as an argument?
+
+The main draw-back is that by not providing that argument we move away from the standard of having default behavior of `alike` be what we think is the most correct in most cases.  One possibility is to use `parent.frame`, but not have it as an argument in the actual R interface function.  This won't save us any time, and we lose the flexibility of actually turning off function matching, but the interface is consistent (therere isn't one random argument that we can adjust.)
+
+
+
+
+
+
