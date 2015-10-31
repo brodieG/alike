@@ -596,6 +596,16 @@ SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env) {
   return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
 /*
+Alternate external, only difference is that it doesn't prepend "should "
+*/
+SEXP ALIKEC_alike_ext2 (SEXP target, SEXP current, SEXP env) {
+  if(TYPEOF(env) != ENVSXP)
+    error("Logic Error; `env` argument should be environment; contact maintainer.");
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  set->env = env;
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
+}
+/*
 Semi-internal interface; used to be the main external one but no longer as we
 changed the interface
 */
