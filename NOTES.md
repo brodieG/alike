@@ -364,7 +364,7 @@ Do we give up on `parent.frame()`?  Do we provide it not even as an argument?
 
 The main draw-back is that by not providing that argument we move away from the standard of having default behavior of `alike` be what we think is the most correct in most cases.  One possibility is to use `parent.frame`, but not have it as an argument in the actual R interface function.  This won't save us any time, and we lose the flexibility of actually turning off function matching, but the interface is consistent (therere isn't one random argument that we can adjust.)
 
-
+Another option might be allow flexible numeric types only for scalars under the view that those are the only ones that are likely to be manually input?
 
 
 

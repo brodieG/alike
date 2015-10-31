@@ -16,6 +16,7 @@ Behavior Changes:
   expressions are now recursed through, with `alike` applied recursively to each
   elemment therein; this mirrors the previous treatment for lists (the VECSXP
   type)
+* Levels are compared like names (#23)
 * Improved comparison of language objects (calls, symbols, formulas, and
   functions); see docs for explanations of what makes language objects alike
   (#10, #11, #14, #16)
@@ -24,6 +25,11 @@ Behavior Changes:
 * Added `abstract` functions to assist in the creation of template objects (#9)
 * `ts` class objects now have specialized comparison
 * Error messages generally tweaked
+
+Other:
+
+* Documentation updates
+* Vignette overhaul
 
 Internal Changes:
 
