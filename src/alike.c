@@ -603,11 +603,7 @@ SEXP ALIKEC_alike_ext2 (SEXP target, SEXP current, SEXP env) {
     error("Logic Error; `env` argument should be environment; contact maintainer.");
   struct ALIKEC_settings * set = ALIKEC_set_def("");
   set->env = env;
-  SEXP res;
-  res = PROTECT(ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set)));
-  PrintValue(res);
-  UNPROTECT(1);
-  return res;
+  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
 }
 /*
 Semi-internal interface; used to be the main external one but no longer as we
