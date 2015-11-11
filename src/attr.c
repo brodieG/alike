@@ -275,15 +275,19 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
-  if(tar_type != cur_type) error("Logic Error 266");    // should have been handled previously
-  else if (!(tar_len = XLENGTH(target))) return "";     // zero len match to anything
-  else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268"); // should have been handled previously
+  // should have been handled previously
+  if(tar_type != cur_type) error("Logic Error 266");
+  // zero len match to anything
+  else if (!(tar_len = XLENGTH(target))) return "";
+  // should have been handled previously
+  else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268");
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
       return "have identical values for %%s";
     return "";
   } else if (tar_type == STRSXP) {
-    if(!R_compute_identical(target, current, 16)) { // Only determine what name is wrong if we know there is a mismatch
+    // Only determine what name is wrong if we know there is a mismatch
+    if(!R_compute_identical(target, current, 16)) {
       for(i = (R_xlen_t) 0; i < tar_len; i++) {
         const char * cur_name_val = CHAR(STRING_ELT(current, i));
         const char * tar_name_val = CHAR(STRING_ELT(target, i));
@@ -489,7 +493,7 @@ const char * ALIKEC_compare_levels(
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
-normal attribute comparison; must be identical with some exceptions for
+normal attribute comparison; must be alike with some exceptions for
 reference attributes.
 
 Note that we feed missing attributes as R_NilValue, which is unambiguous since
