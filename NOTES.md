@@ -366,6 +366,120 @@ The main draw-back is that by not providing that argument we move away from the 
 
 Another option might be allow flexible numeric types only for scalars under the view that those are the only ones that are likely to be manually input?
 
+## Error Messages
 
+When looking at something like:
+```
+## Error in analyze.test.run(x = run.1): Argument `x` should be "dist" at index [[1]] for "names" (is "x") at index [["data"]]
+```
+Perhaps:
+```
+Argument `x` should have `names(x$data)[[1]]` be "dist" (is "x")
+```
+would be better?
+```
+- Error in analyze(x = laps.3):
+-   Argument `x` should be class "POSIXct" (is "numeric") at index
+-   [["data"]][["time"]]
 
++ Error in analyze(x = laps.3):
++   Argument `x` should have `x$data$time` be class "POSIXct" (is "numeric")
 
++ Error in analyze(x = laps.2):
++   Argument `x` should have a "names" attribute ("names" missing)
+
++ Error in analyze(x = laps.2):
++   Argument `x` should have "names" ("names" attribute missing)
+
+- Argument `x` should be \"a\" at index [[1]] for \"levels\" (is \"k\") at 
+- index [[2]][[\"b\"]]
+
++ Argument `x` should have `levels(x[[2]]$b)[[1]]` be \"a\" (is \"k\")
++ > str(x[[2]]$b)
++ List of 2
++ ...
+
++ Argument `x` should have `attr(x[[2]]$b, "levels")[[1]]` be \"a\" (is \"k\")
+```
+
+### Names
+
+Special case, particularly because we **could** use them to ascertain missingness, but what about rownames/colnames?  How comprehensive a view of the mismatch do we want to provide?  We can't realistically provide a full diff; under what circumstances do we want to point out exactly what's wrong?  Some scenarios:
+
+* Missing names
+* Names completely mismatched
+* One name missing
+* One name mismatch
+
+One of the annoyances with the existing mechanism is that it tells you about the first mismatch, which may be one of many, and it makes it seem like only one is wrong.  Ideally we would get a comprehensive diff of the mismatches with some logic to make the screen output manageable (i.e. don't necessarily show the diffs if names are completely wrong).
+
+```
+- Error in analyze(x = laps.1):
+-   Argument `x` should be "car" at index [[1]] for "names" (is "lap")
+
++ Error in analyze(x = laps.1):
++   Argument `x` should have `names(laps.1[["track"]][["curves"]])[[1]]` be 
++   "car" (is "lap"); here is a snapshot of the object as supplied:
++ > str(laps.1[["track"]][["curves"]])
++ | List of 2
++ |  $ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  $ time: num [1:10] 123 241 363 481 600 ...
++ |  - attr(*, "row.names")= int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  - attr(*, "class")= chr "laps"
+
++ Error in analyze(x = laps.1):
++   Argument `x` should have `names(laps.1$track$curves]])[[1]]` be 
++   "car" (is "lap"); here is a snapshot of the object as supplied:
++ > str(laps.1$track$curves)
++ | List of 2
++ |  $ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  $ time: num [1:10] 123 241 363 481 600 ...
++ |  - attr(*, "row.names")= int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  - attr(*, "class")= chr "laps"
+
+# OR:
+
++ Error in analyze(x = laps.1):
++   Argument `x` is missing element "car"
+
+# OR:
+
++   Argument `x` should have x[["car"]] defined (is missing)
+
+# -----------------------------------------------------------------------------
+
+- Error in analyze(x = laps.2):
+-   Argument `x` should be type "character" (is "NULL") for "names"
+
+```
+### Language objects
+
+Langauge object diffs actually provide a lot more information, so minor tweaks might be okay.
+
+```
+- should be a call to `+` (is "symbol") for `Sepal.Width` in:
+- > Sepal.Length ~ `{Sepal.Width}`
+- at index [["terms"]]
+
++ should have `x[["terms"]]` contain a call to `+` (is "symbol") at
++ `Sepal.Width` in:
++ > Sepal.Length ~ `{Sepal.Width}`
+```
+
+## Bugs to Report
+
+```
+> x <- 25
+> x <- integer()
+> attr(x, "special") <- list(1, 2, setNames(1:3, letters[1:3]))
+> y <- list(NULL, NULL, x)
+> z <- y
+> z[[1]] <- list(list(1, "a"), "hello")
+> z[[2]] <- 25
+> w <- x
+> attr(w, "special") <- list(1, 2, setNames(1:3, letters[2:4]))
+> z[[3]] <- w
+> alike(y, z)
+Error in alike(y, z) : 
+  Logic Error: unexpected index type 1661633088; contact maintainer.
+```
