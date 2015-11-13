@@ -452,7 +452,20 @@ One of the annoyances with the existing mechanism is that it tells you about the
 -   Argument `x` should be type "character" (is "NULL") for "names"
 
 ```
+Ideally would get a text representation of object with issues highlighted.  It seems like the most natural representation is an `str`, since it makes it fairly easy to show the stuff that is right and wrong.  We may need to use a pseudo 
+`str` so that we can highlight when class or length of a component is incorrect, and possibly color as well.  This is likely to be prohibitively complicated though.  Additionally, there are issues with integration in validate when we're comparing with both template and custom expressions or even when we're comparing against multiple possible templates.
+```
+List of 2
+ $ car : chr "corvette z06"
+ $ data:'data.frame':	10 obs. of  2 variables:
+  ..$ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
+  ..$ time: * num [1:10] 123 241 363 481 600 ... *
+  ..$ extra: * NULL *
+ - attr(*, "class")= chr "laps"
+
+```
 ### Language objects
+
 
 Langauge object diffs actually provide a lot more information, so minor tweaks might be okay.
 
