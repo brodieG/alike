@@ -302,7 +302,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
             "have `%%s[[%s]]` be \"%s\" (is \"%s\")",
-            CSR_len_as_chr((R_xlen_t)(i + 1)), ctar_name_val, ur_name_val, ""
+            CSR_len_as_chr((R_xlen_t)(i + 1)), tar_name_val, cur_name_val, ""
           );
     } } }
     return "";

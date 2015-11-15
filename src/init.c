@@ -11,6 +11,7 @@ R_CallMethodDef callMethods[] = {
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
   {"test", (DL_FUNC) &ALIKEC_test, 3},
   {"test2", (DL_FUNC) &ALIKEC_test2, 2},
+  {"is_valid_name_ext", (DL_FUNC) &ALIKEC_is_valid_name_ext, 1},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 2},
@@ -39,7 +40,8 @@ void R_init_alike(DllInfo *info)
 
   CSR_smprintf4 = (
     char *(*)(
-      size_t, const char *, const char *, const char *,  const char *,  const char *
+      size_t, const char *, const char *, const char *,  const char *,
+      const char *
     )
   ) R_GetCCallable("cstringr", "CSR_smprintf4");
   CSR_smprintf6 = (

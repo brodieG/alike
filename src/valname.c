@@ -1,8 +1,29 @@
+#include "alike.h"
 
+extern int R_Is_Running;
+extern Rboolean mbcslocale;
+/* A version that reports failure as an error */
+/*
+ * Taken and adapted from R 3.2.2 src/main/util.c@1324
+ */
+size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
+{
+  size_t used;
+
+  if(n <= 0 || !*s) return (size_t)0;
+  used = mbrtowc(wc, s, n, ps);
+  if((int) used < 0) {
+    /* This gets called from the menu setup in RGui */
+    if (!R_Is_Running) return (size_t)-1;
+    /* let's try to print out a readable version */
+    error("invalid multibyte string at");
+  }
+  return used;
+}
 /*
  * Taken and adapted from R 3.2.2 src/main/gram.c@4915
  */
-int isValidName(const char *name)
+int ALIKEC_is_valid_name(const char *name)
 {
   const char *p = name;
   int i;
@@ -12,16 +33,16 @@ int isValidName(const char *name)
        use the wchar variants */
     size_t n = strlen(name), used;
     wchar_t wc;
-    used = mbrtowc(&wc, p, n, NULL);
+    used = Mbrtowc(&wc, p, n, NULL);
+    if((int) used <= 0) return 0;
     p += used; n -= used;
-    if(used <= 0) return 0;
     if (wc != L'.' && !iswalpha(wc) ) return 0;
     if (wc == L'.') {
       /* We don't care about other than ASCII digits */
       if(isdigit(0xff & (int)*p)) return 0;
       /* Mbrtowc(&wc, p, n, NULL); if(iswdigit(wc)) return 0; */
     }
-    while((used = Mbrtowc(&wc, p, n, NULL))) {
+    while((int)(used = Mbrtowc(&wc, p, n, NULL)) > 0) {
       if (!(iswalnum(wc) || wc == L'.' || wc == L'_')) break;
       p += used; n -= used;
     }
@@ -45,4 +66,12 @@ int isValidName(const char *name)
     if (strcmp(keywords[i], name) == 0) return 0;
 
   return 1;
+}
+/*
+ * External version for testing
+ */
+SEXP ALIKEC_is_valid_name_ext(SEXP name) {
+  if(TYPEOF(name) != STRSXP || XLENGTH(name) != 1)
+    error("Argument `name` must be character(1L)");
+  return ScalarLogical(ALIKEC_is_valid_name(CHAR(asChar(name))));
 }

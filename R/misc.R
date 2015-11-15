@@ -43,6 +43,9 @@ match_call_alike <- function(call, env)
 env_track <- function(env, size_init = 32)
   .Call(ALIKEC_env_track, env, size_init)
 
+is_valid_name <- function(name)
+  .Call(ALIKEC_is_valid_name_ext, name)
+
 #' Used for testing C code
 #'
 #' @keywords internal

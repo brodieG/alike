@@ -1,4 +1,5 @@
 #include "pfhash.h"
+#include <wchar.h>
 
 #ifndef _ALIKEC_H
 #define _ALIKEC_H
@@ -117,6 +118,8 @@
   int ALIKEC_env_track(SEXP env, struct ALIKEC_settings_env * set);
   SEXP ALIKEC_env_track_test(SEXP env, SEXP stack_size_init);
   struct ALIKEC_settings_env * ALIKEC_env_set_create(int stack_size_init);
+  int ALIKEC_is_valid_name(const char *name);
+  SEXP ALIKEC_is_valid_name_ext(SEXP name);
 
   // - Imported Funs -------------------------------------------------------------
 

@@ -395,3 +395,14 @@ unitizer_sect("Env Track", {
   alike:::env_track(el.1, 1L)  # first env a freebie, so should be 1
   alike:::env_track(el.2, 1L)
 } )
+unitizer_sect("valid names", {
+  alike:::is_valid_name("hello")
+  alike:::is_valid_name(".hello")
+  alike:::is_valid_name("123")
+  alike:::is_valid_name("hello there")
+  alike:::is_valid_name("h1ello")
+  alike:::is_valid_name("_hello")
+  alike:::is_valid_name(".1fail")
+  alike:::is_valid_name("NULL")
+  alike:::is_valid_name("FALSE")
+} )
