@@ -109,7 +109,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
     if(!res_attr.success) {
-      if(res_attr.lvl <= 2) err = 1;   // If top level error (class), make sure not overriden by others
+      // If top level error (class), make sure not overriden by others
+      if(res_attr.lvl <= 2) err = 1;
       else err_attr = 1;
       err_base = res_attr.message;
     }
@@ -298,6 +299,12 @@ struct ALIKEC_res ALIKEC_alike_rec(
   Side note: probably don't need to generate full error report unless we're on
   outermost `ALIKEC_alike_internal` call since we don't display the inner
   reports anyway, so could be a bit more efficient there.
+
+  General logic here is to check object for alikeness; if not initialize index
+  and return error structure, if so then recurse using specialized logic for
+  each type of recursive structure.  After recursion, check if recursion
+  failed and if so record current index.  Since this happens at every level of
+  the recursion we can recreate the full index to the location of the error.
   */
   void R_CheckUserInterrupt(void);
 
@@ -437,7 +444,11 @@ const char * ALIKEC_alike_internal(
   char * err_base;
   int top_lvl = !set->rec_lvl;
   size_t rec_lvl_last_prev = set->rec_lvl_last;
-  set->rec_lvl_last = set->rec_lvl;          // Allows us to keep track of recursion depth between calls to ALIKEC_alike_internal
+
+  // Allows us to keep track of recursion depth between calls to
+  // ALIKEC_alike_internal
+
+  set->rec_lvl_last = set->rec_lvl;
 
   struct ALIKEC_res res;
 
@@ -487,18 +498,24 @@ const char * ALIKEC_alike_internal(
           ind_size = CSR_strmlen(res.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
-          error("Logic Error: unexpected index type %d; contact maintainer.", res.indices[i].type);
+          error(
+            "Logic Error: unexpected index type %d; contact maintainer.",
+            res.indices[i].type
+          );
         }
       }
       if(ind_size > ind_size_max) ind_size_max = ind_size;
       err_size += ind_size;
     }
-    err_chr_indeces = (char *) R_alloc(err_size + 4 * res.rec_lvl + 1, sizeof(char));
+    // Allways alloacate as if index will be in [[index]] form as that is
+    // worst case
+    err_chr_indeces = (char *) R_alloc(
+      err_size + 4 * res.rec_lvl + 1, sizeof(char)
+    );
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
     err_chr_indeces[0] = '\0';
 
     for(size_t i = 0; i < res.rec_lvl; i++) {
-
       const char * index_tpl = "[[%s]]";
       switch(res.indices[i].type) {
         case 0:
@@ -531,6 +548,8 @@ const char * ALIKEC_alike_internal(
         has_nl = 1;
         break;
     } }
+    // Special treatment for df/mx
+
     if(res.rec_lvl == 1) {
       if(res.df) {
         err_interim = CSR_smprintf4(
@@ -551,6 +570,11 @@ const char * ALIKEC_alike_internal(
         err_interim = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
     );} }
+    // top_lvl: true if no recursion occurred
+    // err_msg: error message produce by ALIKEC_alike_rec
+    // has_nl: whether `err_msg` contains a new line
+    // err_interim: the description of where in object error occurred
+
     err_final = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s%s%sat %s", top_lvl ? set->prepend : "",
       err_msg, has_nl ? "\n" : " ", err_interim
