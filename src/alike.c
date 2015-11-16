@@ -527,7 +527,11 @@ const char * ALIKEC_alike_internal(
         case 1:
           {
             err_chr_index_val = res.indices[i].ind.chr;
-            index_tpl = "[[\"%s\"]]";
+            if(!ALIKEC_is_valid_name(err_chr_index_val)){
+              index_tpl = "`$%s`";
+            } else {
+              index_tpl = "$%s";
+            }
           }
           break;
         default:
