@@ -265,10 +265,9 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
   return tar_type != cur_type || tar_type != STRSXP || tar_type != INTSXP ||
     ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
 }
-struct ALIKEC_res_attr_special ALIKEC_compare_special_char_attrs_internal(
+const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
-  struct ALIKEC_res_attr_special = {"", ""};
   const char * res = ALIKEC_alike_internal(target, current, set);
   // Special character attributes must be alike
   if(res[0]) {
@@ -313,15 +312,11 @@ struct ALIKEC_res_attr_special ALIKEC_compare_special_char_attrs_internal(
 // External version for unit testing
 
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
-  struct ALIKEC_res_attr_special res =
+  return mkString(
     ALIKEC_compare_special_char_attrs_internal(
       target, current, ALIKEC_set_def(""), 0
-    );
-  SEXP res_sxp = PROTECT(allocVector(STRSXP, 2));
-  SET_STRING_ELT(res_sxp, 0, mkChar(res.message));
-  SET_STRING_ELT(res_sxp, 1, mkChar(res.sub_ind));
-  UNPROTECT(1);
-  return(res_sxp);
+    )
+  );
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/

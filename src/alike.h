@@ -31,7 +31,6 @@
     const char * message;
     int df;
     int lvl;
-    const char * obj_wrap;                   // e.g. "attr(%s, \"levels\")"
   };
   // Used for special attributes that return an index in addition to an error
   // message
