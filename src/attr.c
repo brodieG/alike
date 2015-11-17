@@ -265,15 +265,29 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
   return tar_type != cur_type || tar_type != STRSXP || tar_type != INTSXP ||
     ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
 }
+/*
+Return value is a string of form:
+`%s(%%s)[[index]]` should <msg>
+where the index is optional.  This is used to compose messages such as
+`names(object[[1]]$a)[1]` should be "cat" (is "rat")
+an underlying assumption is that the only attributes that end up coming
+here are the special ones.
+DEVNOTE: how do we handle `names(dimnames(object))`?  do we really need to do
+`%s%s%%s%s[[index]]`? might have to. urgh
+*/
 const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  // Special character attributes must be alike
-  if(res[0]) {
-    return CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for `%%s`", res, "", "", "");
-  }
-  // But also have constrains on values
+  // Special character attributes must be alike;
+  // DEVNOTE: need to figure out how this should be returned; as is if we
+  // continue along current track `res` will be something like
+  // `%%s[[1]]$blah` should be x (is y)
+  // but we need to modify it so that it becomes
+  // `%s(%%s)[[1]]$blah` should be x (is y)
+  if(res[0]) return res;
+
+  // But also have contrains on values
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
@@ -285,7 +299,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268");
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
-      return "have identical values for `%%s`";
+      return "`%%s` should be identical to target"; // at same index?
     return "";
   } else if (tar_type == STRSXP) {
     // Only determine what name is wrong if we know there is a mismatch since we
@@ -301,7 +315,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
-            "have `%%s[[%s]]` be \"%s\" (is \"%s\")",
+            "`%%s[[%s]]` should be \"%s\" (is \"%s\")",
             CSR_len_as_chr((R_xlen_t)(i + 1)), tar_name_val, cur_name_val, ""
           );
     } } }
