@@ -13,11 +13,13 @@ const char * ALIKEC_alike_attr(
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
-    return (const char *) CSR_smprintf4(
+    CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "have alike attribute `%s` (check `alike(attr(<target>, \"%s\"), attr(<current>, \"%s\"))`)",
-      attr_name, attr_name, attr_name, ""
-  );}
+      "`attr(%%s, \"%s\")` should be %s",
+      attr_name,
+      "`alike` the corresponding element in target"
+    );
+  }
   return "";
 }
 /*
@@ -426,7 +428,7 @@ const char * ALIKEC_compare_dimnames(
     );
     if(strlen(dimnames_name_comp)) {
       return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, dimnames_name_comp, "\"dimnames\" _names_", "", "", ""
+        ALIKEC_MAX_CHAR, dimnames_name_comp, "names(dimnames(", "))", "", ""
       );
   } }
   // look at dimnames themselves
@@ -442,23 +444,25 @@ const char * ALIKEC_compare_dimnames(
         prim_obj, sec_obj, set, 0
       );
       if(strlen(dimnames_comp)) {
-        const char * err_msg;
+        const char * err_tok1, * err_tok2 = ")";
         if(prim_len == 2) { // matrix like
           switch(attr_i) {
-            case (R_xlen_t) 0: err_msg = "\"row.names\""; break;
-            case (R_xlen_t) 1: err_msg = "column names"; break;
+            case (R_xlen_t) 0: err_tok1 = "rownames("; break;
+            case (R_xlen_t) 1: err_msg = "colnames("; break;
             default:
              error(
                "Logic Error: dimnames dimension mismatch; contact maintainer."
              );
           }
         } else {
-          err_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "\"dimnames\" at dimension %s",
-            CSR_len_as_chr(attr_i + (R_xlen_t) 1), "", "", ""
-        );}
+          err_tok1 = "dimnames(";
+          err_tok2 = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, ")[[%s]]", CSR_len_as_chr(attr_i + (R_xlen_t) 1),
+            "", "", ""
+          );
+        }
         return CSR_smprintf4(
-          ALIKEC_MAX_CHAR, dimnames_comp, err_msg, "" , "", ""
+          ALIKEC_MAX_CHAR, dimnames_comp, err_tok1, err_tok2 , "", ""
         );
   } } }
   return "";
@@ -511,7 +515,7 @@ const char * ALIKEC_compare_levels(
       target, current, set, 0
     );
     if(res[0]) {
-      return CSR_smprintf4(ALIKEC_MAX_CHAR, res, "\"levels\"", "", "", "");
+      return CSR_smprintf4(ALIKEC_MAX_CHAR, res, "levels(", ")", "", "");
     }
     return "";
   }
@@ -755,12 +759,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
           tar_attr_el_val, cur_attr_el_val, set, 0
         );
         if(name_comp[0]) {
-          char * tx_name = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "\"%s\"", tx, "", "", ""
-          );
+          char * tx_name = tar_tag == R_NamesSymbol ? "names(" : "rownames("
           err_major[tar_tag == R_NamesSymbol ? 3 : 4] =
-            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, "", "", "");
-          err_major[tar_tag == R_NamesSymbol ? 3 : 4] = "names(%s)"
+            CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, ")", "", "");
         }
         continue;
       // - Dims ----------------------------------------------------------------
