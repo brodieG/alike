@@ -265,15 +265,16 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
   return tar_type != cur_type || tar_type != STRSXP || tar_type != INTSXP ||
     ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
 }
-const char * ALIKEC_compare_special_char_attrs_internal(
+struct ALIKEC_res_attr_special ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
+  struct ALIKEC_res_attr_special = {"", ""};
   const char * res = ALIKEC_alike_internal(target, current, set);
   // Special character attributes must be alike
   if(res[0]) {
     return CSR_smprintf4(ALIKEC_MAX_CHAR, "%s for `%%s`", res, "", "", "");
   }
-  // But also have contrains on values
+  // But also have constrains on values
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
@@ -312,11 +313,15 @@ const char * ALIKEC_compare_special_char_attrs_internal(
 // External version for unit testing
 
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
-  return mkString(
+  struct ALIKEC_res_attr_special res =
     ALIKEC_compare_special_char_attrs_internal(
       target, current, ALIKEC_set_def(""), 0
-    )
-  );
+    );
+  SEXP res_sxp = PROTECT(allocVector(STRSXP, 2));
+  SET_STRING_ELT(res_sxp, 0, mkChar(res.message));
+  SET_STRING_ELT(res_sxp, 1, mkChar(res.sub_ind));
+  UNPROTECT(1);
+  return(res_sxp);
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -428,7 +433,10 @@ const char * ALIKEC_compare_dimnames(
           switch(attr_i) {
             case (R_xlen_t) 0: err_msg = "\"row.names\""; break;
             case (R_xlen_t) 1: err_msg = "column names"; break;
-            default: error("Logic Error: dimnames dimension mismatch; contact maintainer.");
+            default:
+             error(
+               "Logic Error: dimnames dimension mismatch; contact maintainer."
+             );
           }
         } else {
           err_msg = CSR_smprintf4(
@@ -582,7 +590,8 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     7. missing*/
 
   const char * err_major[8] = {"", "", "", "", "", "", "", ""};
-  struct ALIKEC_res_attr res_attr = {1, "", 0, 0};
+  const char * obj_wrap[8] = {"", "", "", "", "", "", "", ""};
+  struct ALIKEC_res_attr res_attr = {1, "", 0, 0, ""};
 
   // Note we don't protect these because target and curent should come in
   // protected so every SEXP under them should also be protected
@@ -696,6 +705,9 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       err_major[6] = ALIKEC_compare_attributes_internal_simple(
         tar_attr_el_val, cur_attr_el_val, tx, set
       );
+      obj_wrap[6] = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "attr(%%s, %s)", tx, "", "", ""
+      );
     // = Custom Checks =========================================================
 
     /* see alike documentation for explanations of how the special
@@ -719,6 +731,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         UNPROTECT(2);
         if(class_comp[0]) {
           err_major[0] = class_comp;
+          obj_wrap[0] = "class(%s)";
           break;
         }
       // - Names ---------------------------------------------------------------
@@ -733,6 +746,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
           );
           err_major[tar_tag == R_NamesSymbol ? 3 : 4] =
             CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, "", "", "");
+          err_major[tar_tag == R_NamesSymbol ? 3 : 4] = "names(%s)"
         }
         continue;
       // - Dims ----------------------------------------------------------------
@@ -797,6 +811,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       res_attr.success = 0;
       res_attr.message = err_major[i];
       res_attr.lvl = i;
+      res_attr.obj_wrap = obj_wrap;
       return res_attr;
   } }
   // Passed

@@ -163,8 +163,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       if(
-        (!err || (is_df && err_lvl > 0))  &&   // if attribute error is not class, override with col count error
-        (tar_len = xlength(target)) > 0 &&       /* zero lengths match any length */
+        // if attribute error is not class, override with col count error
+        // zero lengths match any length
+        (!err || (is_df && err_lvl > 0))  &&
+        (tar_len = xlength(target)) > 0 &&
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;

@@ -391,7 +391,7 @@ would be better?
 + Error in analyze(x = laps.2):
 +   Argument `x` should have "names" ("names" attribute missing)
 
-- Argument `x` should be \"a\" at index [[1]] for \"levels\" (is \"k\") at 
+- Argument `x` should be \"a\" at index [[1]] for \"levels\" (is \"k\") at
 - index [[2]][[\"b\"]]
 
 + Argument `x` should have `levels(x[[2]]$b)[[1]]` be \"a\" (is \"k\")
@@ -418,7 +418,7 @@ One of the annoyances with the existing mechanism is that it tells you about the
 -   Argument `x` should be "car" at index [[1]] for "names" (is "lap")
 
 + Error in analyze(x = laps.1):
-+   Argument `x` should have `names(laps.1[["track"]][["curves"]])[[1]]` be 
++   Argument `x` should have `names(laps.1[["track"]][["curves"]])[[1]]` be
 +   "car" (is "lap"); here is a snapshot of the object as supplied:
 + > str(laps.1[["track"]][["curves"]])
 + | List of 2
@@ -428,7 +428,7 @@ One of the annoyances with the existing mechanism is that it tells you about the
 + |  - attr(*, "class")= chr "laps"
 
 + Error in analyze(x = laps.1):
-+   Argument `x` should have `names(laps.1$track$curves]])[[1]]` be 
++   Argument `x` should have `names(laps.1$track$curves]])[[1]]` be
 +   "car" (is "lap"); here is a snapshot of the object as supplied:
 + > str(laps.1$track$curves)
 + | List of 2
@@ -437,14 +437,28 @@ One of the annoyances with the existing mechanism is that it tells you about the
 + |  - attr(*, "row.names")= int [1:10] 1 2 3 4 5 6 7 8 9 10
 + |  - attr(*, "class")= chr "laps"
 
++ Error in analyze(x = laps.1):
++   Argument `x` should have names for `laps.1$track$curves` (does not)
+
 # OR:
+
 
 + Error in analyze(x = laps.1):
 +   Argument `x` is missing element "car"
 
 # OR:
 
-+   Argument `x` should have x[["car"]] defined (is missing)
++   Argument `x` should have `x[["car"]]` defined (is missing)
++   Argument `x` should have `laps.2[["car"]]` defined (is missing)
++   `laps.2[["car"]]` should evaluate to character (is integer) for argument `x`
+
++   In argument `x`, `laps.2[["car"]]` should evaluate to character (is integer)
++   For argument `x`, `laps.2[["car"]]` should evaluate to character (is integer)
++   Invalid argument `x`: `laps.2[["car"]]` should evaluate to character (is integer)
++   Invalid argument `x`: `laps.2[["car"]]` should be character (is integer)
+
+-   should be length 1 (is 2) at index [[2]][[2]]
++   `current[[2]][[2]]` should be length 1 (is 2)
 
 # -----------------------------------------------------------------------------
 
@@ -452,7 +466,7 @@ One of the annoyances with the existing mechanism is that it tells you about the
 -   Argument `x` should be type "character" (is "NULL") for "names"
 
 ```
-Ideally would get a text representation of object with issues highlighted.  It seems like the most natural representation is an `str`, since it makes it fairly easy to show the stuff that is right and wrong.  We may need to use a pseudo 
+Ideally would get a text representation of object with issues highlighted.  It seems like the most natural representation is an `str`, since it makes it fairly easy to show the stuff that is right and wrong.  We may need to use a pseudo
 `str` so that we can highlight when class or length of a component is incorrect, and possibly color as well.  This is likely to be prohibitively complicated though.  Additionally, there are issues with integration in validate when we're comparing with both template and custom expressions or even when we're comparing against multiple possible templates.
 ```
 List of 2
@@ -479,6 +493,38 @@ Langauge object diffs actually provide a lot more information, so minor tweaks m
 + > Sepal.Length ~ `{Sepal.Width}`
 ```
 
+### Message Construction Logistics
+
+Process right now is to recurse and collect indices when exiting recursion
+along with message.  So in:
+
+```
+`current[[2]][[2]]` should be length 1 (is 2)
+`attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
+
+msg: have `<exp>` be integer (is character)
+exp:
+  attr(<object><index>, "<attr.name>")<sub.ind>       attr(%%s, "%s")%s
+  <attr.name>(<object><index>)<sub.ind>               %s(%%s)%s
+  <object><index>
+
+have `attr(x$a$b$terms[[1]], "my_attr")[[1]]` be integer (is character)
+```
+
+Or some such would need to decompose into:
+```
+have `%%s` be integer (is character)
+```
+Where `%%s` could be:
+```
+object_name + index OR accessor(object_name + index)
+```
+on question is whether it makes sense to use the full object expression when there is no recursion or anything interesting:
+```
+Argument `x` should have `abc` be character (is integer)
+Argument `x` should be character (is integer)
+```
+
 ## Bugs to Report
 
 ```
@@ -493,6 +539,6 @@ Langauge object diffs actually provide a lot more information, so minor tweaks m
 > attr(w, "special") <- list(1, 2, setNames(1:3, letters[2:4]))
 > z[[3]] <- w
 > alike(y, z)
-Error in alike(y, z) : 
+Error in alike(y, z) :
   Logic Error: unexpected index type 1661633088; contact maintainer.
 ```

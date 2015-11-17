@@ -31,7 +31,14 @@
     const char * message;
     int df;
     int lvl;
+    const char * obj_wrap;                   // e.g. "attr(%s, \"levels\")"
   };
+  // Used for special attributes that return an index in addition to an error
+  // message
+  struct ALIKEC_res_attr_special {
+    const char * message;
+    const char * sub_ind;
+  }
   struct ALIKEC_settings_env {
     int stack_size;
     int stack_ind;
