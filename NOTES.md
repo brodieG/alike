@@ -502,14 +502,25 @@ along with message.  So in:
 `current[[2]][[2]]` should be length 1 (is 2)
 `attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
 
-msg: have `<exp>` be integer (is character)
+msg: `<exp>` should <err>
 exp:
   attr(<object><index>, "<attr.name>")<sub.ind>       attr(%%s, "%s")%s
   <attr.name>(<object><index>)<sub.ind>               %s(%%s)%s
   <object><index>
-
-have `attr(x$a$b$terms[[1]], "my_attr")[[1]]` be integer (is character)
 ```
+So, need to return index, what mode (`attr`, `attr.name`, or object).  So err
+message just needs to be simplified.
+
+Gah, but problem with ^^^ is we need some way of separating what the object should be from the object designation to allow stuff like:
+
+```
+Argument `x` must meet at least one of the following:
+  - `obj.1[[2]][[2]]` should be character (is logical):
+  - `attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
+  - `obj.1` should be length 1 (is 2)
+  - `obj.1 > 4` should evaluate to all TRUE values (contains non-TRUE values)
+```
+Actually, seems like this is fine.
 
 Or some such would need to decompose into:
 ```
