@@ -520,7 +520,7 @@ Argument `x` must meet at least one of the following:
   - `obj.1` should be length 1 (is 2)
   - `obj.1 > 4` should evaluate to all TRUE values (contains non-TRUE values)
 ```
-Actually, seems like this is fine.
+Actually, seems like this is fine so long as we are willing to tolerate a little repetitiousness.
 
 Or some such would need to decompose into:
 ```
