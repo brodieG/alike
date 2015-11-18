@@ -63,7 +63,6 @@
     SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
-  SEXP ALIKEC_alike_ext2(SEXP target, SEXP current, SEXP env);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
   SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
