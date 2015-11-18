@@ -54,7 +54,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
   int err = 0, err_attr = 0;
   const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_lang, * err_fun;
+    * err_type, * err_lang, * err_fun, * err_obj_wrap;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -113,6 +113,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(res_attr.lvl <= 2) err = 1;
       else err_attr = 1;
       err_base = res_attr.message;
+      err_obj_wrap = res_attr.obj_wrap;
     }
     // - Special Language Objects && Funs --------------------------------------
 
@@ -162,11 +163,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(!is_lang && !is_fun && tar_type != ENVSXP) {
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
+      // if attribute error is not class, override with col count error
+      // zero lengths match any length
       if(
-        // if attribute error is not class, override with col count error
-        // zero lengths match any length
-        (!err || (is_df && err_lvl > 0))  &&
-        (tar_len = xlength(target)) > 0 &&
+        (!err || (is_df && err_lvl > 0)) && (tar_len = xlength(target)) > 0 &&
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
