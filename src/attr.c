@@ -23,7 +23,7 @@ const char * ALIKEC_alike_attr(
     );
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR, "`%s` should be %s", attr_char,
-      "`alike` the corresponding element in target"
+      "`alike` the corresponding element in target", "", ""
     );
   }
   return "";
@@ -279,7 +279,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  const char * token =  "%%s%%%%s%%s"
+  const char * token =  "%%s%%%%s%%s";
   // Special character attributes must be alike;
   // Expectation is that `res` will be in format `%s<index>` should be ...
 
@@ -300,7 +300,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
       return CSR_smprintf4(  // at same index?
-        "`%s` should be identical to target", token, "", "", ""
+        ALIKEC_MAX_CHAR, "`%s` should be identical to target", token, "", "", ""
       );
     return "";
   } else if (tar_type == STRSXP) {
@@ -399,8 +399,8 @@ const char * ALIKEC_compare_dimnames(
         if(res[0])
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR, res,
-            "`attr(dimnames(%%s), \"%s\")` should be %s",
-            prim_tag, "`alike` the corresponding element in target"
+            "`attr(dimnames(%%s), \"%s\")` should be %s", prim_tag,
+            "`alike` the corresponding element in target", ""
           );
         do_continue = 1;
         break;
@@ -444,7 +444,7 @@ const char * ALIKEC_compare_dimnames(
         if(prim_len == 2) { // matrix like
           switch(attr_i) {
             case (R_xlen_t) 0: err_tok1 = "rownames("; break;
-            case (R_xlen_t) 1: err_msg = "colnames("; break;
+            case (R_xlen_t) 1: err_tok1 = "colnames("; break;
             default:
              error(
                "Logic Error: dimnames dimension mismatch; contact maintainer."
@@ -491,7 +491,7 @@ const char * ALIKEC_compare_ts(
         snprintf(cur_num, 20, "%g", cur_real[i]);
         return CSR_smprintf4(
           ALIKEC_MAX_CHAR, "`tsp(%%s)[%s]` should be %s (is %s)",
-          tag[i], tar_num, cur_num
+          tag[i], tar_num, cur_num, ""
     );} }
   } else {
     return ALIKEC_alike_attr(target, current, "tsp", set, 1, 0);
@@ -603,7 +603,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     7. missing*/
 
   const char * err_major[8] = {"", "", "", "", "", "", "", ""};
-  struct ALIKEC_res_attr res_attr = {1, "", 0, 0, ""};
+  struct ALIKEC_res_attr res_attr = {1, "", 0, 0};
 
   // Note we don't protect these because target and curent should come in
   // protected so every SEXP under them should also be protected
@@ -749,7 +749,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
           tar_attr_el_val, cur_attr_el_val, set, 0
         );
         if(name_comp[0]) {
-          char * tx_name = tar_tag == R_NamesSymbol ? "names(" : "rownames("
+          char * tx_name = tar_tag == R_NamesSymbol ? "names(" : "rownames(";
           err_major[tar_tag == R_NamesSymbol ? 3 : 4] =
             CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, ")", "", "");
         }
@@ -817,7 +817,6 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       res_attr.success = 0;
       res_attr.message = err_major[i];
       res_attr.lvl = i;
-      res_attr.obj_wrap = obj_wrap;
       return res_attr;
   } }
   // Passed
