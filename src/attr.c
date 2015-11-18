@@ -5,37 +5,27 @@ Runs alike on an attribute, really just like running alike, but since it is on
 an attribute and we don't want a massive nested error message, provide a
 different error message; this is not very efficient; in theory we could just
 stop recursion since we're not returning the nested error message.
+
+- `special` parameter indicates attributes that are known to have accessor
+  functions (e.g. `names`).
+- `attr_attr` indicates we are checking the attributes of an attribute
 */
 
 const char * ALIKEC_alike_attr(
   SEXP target, SEXP current, const char * attr_name,
-  struct ALIKEC_settings * set
+  struct ALIKEC_settings * set, int special, int attr_attr
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
   if(res[0]) {
-    CSR_smprintf4(
-      ALIKEC_MAX_CHAR,
-      "`attr(%%s, \"%s\")` should be %s",
-      attr_name,
+    const char * attr_char = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, special ? "%s%s(%%%%s)%s" : "%sattr(%%%%s, \"%s\")%s",
+      attr_attr ? "attributes(" : "", attr_name, attr_attr ? ")" : "", ""
+    );
+    return CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "`%s` should be %s", attr_char,
       "`alike` the corresponding element in target"
     );
   }
-  return "";
-}
-/*
-When the mismatch is on the attributes of the attribute, should probably just
-merge this into the above function
-*/
-const char * ALIKEC_alike_attr_attr(
-  SEXP target, SEXP current, const char * attr_name,
-  struct ALIKEC_settings * set
-) {
-  const char * res = ALIKEC_alike_internal(target, current, set);
-  if(res[0]) {
-    return (const char *) CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "have alike attributes for attribute `%s` (check `alike(attributes(attr(<target>, \"%s\")), attributes(attr(<current>, \"%s\")))`)",
-      attr_name, attr_name, attr_name, ""
-  );}
   return "";
 }
 
@@ -53,7 +43,7 @@ const char * ALIKEC_compare_class(
   SEXP target, SEXP current, int * tar_is_df, struct ALIKEC_settings * set
 ) {
   if(TYPEOF(current) != STRSXP || TYPEOF(target) != STRSXP)
-    return ALIKEC_alike_attr(target, current, "class", set);
+    return ALIKEC_alike_attr(target, current, "class", set, 1, 0);
 
   int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i;
   const char * cur_class;
@@ -83,21 +73,25 @@ const char * ALIKEC_compare_class(
         char * err_ind = CSR_len_as_chr((R_xlen_t)(cur_class_i + 1));
         err_msg =  CSR_smprintf4(
           ALIKEC_MAX_CHAR,
-          "have class \"%s\" at class vector index [[%s]] (is \"%s\", check `class(.)[[%s]]`)",
+          "`class(%%s)[%s]` should be \"%s\" (is \"%s\")",
           tar_class, err_ind, cur_class, err_ind
         );
       } else {
         err_msg =  CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be class \"%s\" (is \"%s\")",
+          ALIKEC_MAX_CHAR, "`%%s` should be class \"%s\" (is \"%s\")",
           tar_class, cur_class, "", ""
   );} } }
   if(err_found) return err_msg;
   if(tar_class_len > cur_class_len) {
     return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "inherit from class \"%s\"",
+      ALIKEC_MAX_CHAR, "`%%s` should inherit from class \"%s\"",
       CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
   );}
-  const char * res = ALIKEC_alike_attr_attr(ATTRIB(target), ATTRIB(current), "class", set);
+  // Check the class attributes
+
+  const char * res = ALIKEC_alike_attr(
+    ATTRIB(target), ATTRIB(current), "class", set, 1, 1
+  );
   if(res[0]) return res;
   return "";
 }
@@ -132,7 +126,7 @@ const char * ALIKEC_compare_dims(
     (TYPEOF(target) != INTSXP && target != R_NilValue) ||
     (TYPEOF(current) != INTSXP && current != R_NilValue)
   )
-    return ALIKEC_alike_attr(target, current, "dim", set);
+    return ALIKEC_alike_attr(target, current, "dim", set, 1, 0);
 
   // Dims -> implicit class
 
@@ -224,7 +218,7 @@ const char * ALIKEC_compare_dims(
         CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i]))
       );
   } }
-  const char * res = ALIKEC_alike_attr_attr(target, current, "dim", set);
+  const char * res = ALIKEC_alike_attr(target, current, "dim", set, 1, 1);
   if(res[0]) return res;
   return "";
 }
@@ -494,7 +488,7 @@ const char * ALIKEC_compare_ts(
           "", "", ""
     );} }
   } else {
-    return ALIKEC_alike_attr(target, current, "ts", set);
+    return ALIKEC_alike_attr(target, current, "ts", set, 1, 0);
   }
   return "";
 }
@@ -519,7 +513,7 @@ const char * ALIKEC_compare_levels(
     }
     return "";
   }
-  return ALIKEC_alike_attr(target, current, "levels", set);
+  return ALIKEC_alike_attr(target, current, "levels", set, 1, 0);
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -583,7 +577,7 @@ const char * ALIKEC_compare_attributes_internal_simple(
   } else if (!set->attr_mode && !tae_val_len) {
     return "";
   } else {
-    const char * res = ALIKEC_alike_attr(target, current, attr_name, set);
+    const char * res = ALIKEC_alike_attr(target, current, attr_name, set, 0, 0);
     if(res[0]) return res;
   }
   return "";
