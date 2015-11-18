@@ -481,7 +481,6 @@ const char * ALIKEC_compare_ts(
     XLENGTH(target) == 3 && XLENGTH(current) == 3
   ) {
     double * tar_real = REAL(target), * cur_real = REAL(current);
-    const char * tag[3] = {"start", "end", "frequency"};
 
     for(R_xlen_t i = 0; i < 3; i++) {
       if(tar_real[i] != 0 && tar_real[i] != cur_real[i]) {
@@ -491,7 +490,7 @@ const char * ALIKEC_compare_ts(
         snprintf(cur_num, 20, "%g", cur_real[i]);
         return CSR_smprintf4(
           ALIKEC_MAX_CHAR, "`tsp(%%s)[%s]` should be %s (is %s)",
-          tag[i], tar_num, cur_num, ""
+          CSR_len_as_char(i + 1), tar_num, cur_num, ""
     );} }
   } else {
     return ALIKEC_alike_attr(target, current, "tsp", set, 1, 0);
