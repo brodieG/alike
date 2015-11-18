@@ -54,7 +54,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
   int err = 0, err_attr = 0;
   const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_lang, * err_fun, * err_obj_wrap;
+    * err_type, * err_lang, * err_fun;
   err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
 
   tar_type = TYPEOF(target);
@@ -113,7 +113,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(res_attr.lvl <= 2) err = 1;
       else err_attr = 1;
       err_base = res_attr.message;
-      err_obj_wrap = res_attr.obj_wrap;
     }
     // - Special Language Objects && Funs --------------------------------------
 
