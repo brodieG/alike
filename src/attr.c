@@ -267,27 +267,29 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
 }
 /*
 Return value is a string of form:
-`%s(%%s)[[index]]` should <msg>
+`%s%%s%s<index>` should <msg>
 where the index is optional.  This is used to compose messages such as
 `names(object[[1]]$a)[1]` should be "cat" (is "rat")
 an underlying assumption is that the only attributes that end up coming
-here are the special ones.
-DEVNOTE: how do we handle `names(dimnames(object))`?  do we really need to do
-`%s%s%%s%s[[index]]`? might have to. urgh
+here are the special ones that have accessor functions.
+
+Note that the calling function is responsible for handling parens so as to
+allow for stuff like: `names(dimnames(object))` and of subbing in the attribute
+names.
 */
 const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
+  const char * token =  "%%s%%%%s%%s"
   // Special character attributes must be alike;
-  // DEVNOTE: need to figure out how this should be returned; as is if we
-  // continue along current track `res` will be something like
-  // `%%s[[1]]$blah` should be x (is y)
-  // but we need to modify it so that it becomes
-  // `%s(%%s)[[1]]$blah` should be x (is y)
-  if(res[0]) return res;
+  // Expectation is that `res` will be in format `%s<index>` should be ...
 
-  // But also have contrains on values
+  if(res[0]) {
+    return CSR_smprintf4(ALIKEC_MAX_CHAR, res, token, "", "", "");
+  }
+  // But also have contraints on values
+
   SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
   R_xlen_t cur_len, tar_len, i;
 
@@ -299,7 +301,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268");
   else if (tar_type == INTSXP) {
     if(!R_compute_identical(target, current, 16))
-      return "`%%s` should be identical to target"; // at same index?
+      return CSR_smprintf4(  // at same index?
+        "`%s` should be identical to target", token, "", "", ""
+      );
     return "";
   } else if (tar_type == STRSXP) {
     // Only determine what name is wrong if we know there is a mismatch since we
@@ -315,8 +319,9 @@ const char * ALIKEC_compare_special_char_attrs_internal(
         ) {
           return CSR_smprintf4(
             ALIKEC_MAX_CHAR,
-            "`%%s[[%s]]` should be \"%s\" (is \"%s\")",
-            CSR_len_as_chr((R_xlen_t)(i + 1)), tar_name_val, cur_name_val, ""
+            "`%s[%s]` should be \"%s\" (is \"%s\")",
+            token, CSR_len_as_chr((R_xlen_t)(i + 1)), tar_name_val,
+            cur_name_val
           );
     } } }
     return "";
