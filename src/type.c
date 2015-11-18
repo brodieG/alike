@@ -53,7 +53,8 @@ const char * ALIKEC_type_alike_internal(
   }
   return CSR_smprintf4(
     ALIKEC_MAX_CHAR,
-    "be type \"%s\" (is \"%s\")", what, type2char(cur_type), "", ""
+    "`%%s` should be type \"%s\" (is \"%s\")", what,
+    type2char(cur_type), "", ""
   );
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
