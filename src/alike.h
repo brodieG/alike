@@ -51,18 +51,18 @@
     size_t rec_lvl_last;                    // level of recursion last time ALIKEC_alike_internal was called
   };
 
-  // - Constants ---------------------------------------------------------------
+  // - Constants --------------------------------------------------------------
 
   #define ALIKEC_MAX_CHAR 10000
   #define ALIKEC_MAX_ENVS 65536
 
-  // - Main Funs ---------------------------------------------------------------
+  // - Main Funs --------------------------------------------------------------
 
   SEXP ALIKEC_alike (
     SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
     SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
   );
-  SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env);
+  SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env, SEXP cur_sub);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
   SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
   const char * ALIKEC_alike_internal(
@@ -72,7 +72,7 @@
   SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len);
   SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 
-  // - Internal Funs -------------------------------------------------------------
+  // - Internal Funs ----------------------------------------------------------
 
   SEXPTYPE ALIKEC_typeof_internal(SEXP object);
   const char *  ALIKEC_type_alike_internal(
@@ -121,7 +121,7 @@
   int ALIKEC_is_valid_name(const char *name);
   SEXP ALIKEC_is_valid_name_ext(SEXP name);
 
-  // - Imported Funs -------------------------------------------------------------
+  // - Imported Funs ----------------------------------------------------------
 
   char * (*CSR_smprintf4)(
     size_t, const char *, const char *, const char *, const char *, const char *
@@ -135,7 +135,7 @@
   size_t (*CSR_len_chr_len)(R_xlen_t);
   char * (*CSR_strmcpy)(const char * str, size_t maxlen);
 
-  // - Init and pre-install Symbols ----------------------------------------------
+  // - Init and pre-install Symbols -------------------------------------------
 
   SEXP ALIKEC_SYM_inherits;
   SEXP ALIKEC_SYM_package;

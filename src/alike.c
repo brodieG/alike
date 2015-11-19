@@ -617,12 +617,48 @@ SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
 /*
 Main external interface, no settings
 */
-SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env) {
+SEXP ALIKEC_alike_ext (SEXP target, SEXP current, SEXP env, SEXP curr_sub) {
   if(TYPEOF(env) != ENVSXP)
-    error("Logic Error; `env` argument should be environment; contact maintainer.");
+    error(
+      "Logic Error; `env` argument should be environment; contact maintainer."
+    );
+
+  if(
+    TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP && 
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
+  )
+    error(
+      "Logic Error; `curr_sub` must be language."
+    );
   struct ALIKEC_settings * set = ALIKEC_set_def("");
   set->env = env;
-  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
+  const char * res = ALIKEC_alike_internal(target, current, set);
+  // Have an error, need to populate the object by deparsing the relevant
+  // expression.  One thing we need to figure out is whether the expression
+  // needs to be wrapped in parens.  We also want to replace anonymous functions
+  // with <anonymous> to avoid a massive screen dump
+  if(res[0]) {
+    if(TYPEOF(curr_sub) == LANGSXP) {
+      SEXP call = CAR(curr_sub);
+      if(TYPEOF(curr_sub) == SYMSXP) {
+        const char * call_sym = CHAR(PRINTNAME(curr_sub));
+        int is_an_op = 0, i = 1;
+        if(
+          !strcmp("+", call_sym) || !strcmp("-", call_sym) || 
+          !strcmp("*", call_sym) || !strcmp("/", call_sym) || 
+          !strcmp("^", call_sym) 
+        ) is_an_op = 1;
+        if(!is_an_op && call_sym[0] == '%') {
+          // check for %xx% operators
+          while(call_sym[i] && i < 200) i++; 
+          if(i < 200 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
+        }
+        error("WORK IN PROGRESS");
+    } }
+    error("WORK IN PROGRESS");
+  }
+
+  //return ALIKEC_string_or_true();
 }
 /*
 Semi-internal interface; used to be the main external one but no longer as we
