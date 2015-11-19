@@ -388,6 +388,10 @@ unitizer_sect("Deparse", {
   alike:::dep_alike(l0, -1)
   alike:::dep_alike(l0, 1)
   alike:::dep_alike(l0, 2)
+
+  alike:::dep_oneline(quote(1 + 1 + 3 + 944254235), 10)
+  alike:::dep_oneline(quote(1 + 1 + 3), 10)
+  alike:::dep_oneline(quote(1 + 1 + 3), "hello")
 })
 unitizer_sect("Env Track", {
   el.1 <- replicate(5, new.env())

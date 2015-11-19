@@ -34,8 +34,11 @@ lang_alike <- function(target, current, match.call.env=parent.frame())
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
-dep_alike <- function(obj, lines)
-  .Call(ALIKEC_deparse, obj, lines)
+dep_alike <- function(obj, lines, chars=getOption("width"))
+  .Call(ALIKEC_deparse, obj, lines, chars)
+
+dep_oneline<- function(obj, max.chars=20L)
+  .Call(ALIKEC_deparse_oneline, obj, max.chars)
 
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
@@ -49,9 +52,9 @@ is_valid_name <- function(name)
 #' Used for testing C code
 #'
 #' @keywords internal
-
-alike_test <- function(target, current, settings=parent.frame())
-  .Call(ALIKEC_test, target, current, settings)
+#' @export
+alike_test <- function(obj)
+  .Call(ALIKEC_test, substitute(obj))
 
 #' @keywords internal
 

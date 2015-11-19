@@ -99,15 +99,16 @@
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
   SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current);
 
-  // - Utility Funs --------------------------------------------------------------
+  // - Utility Funs -----------------------------------------------------------
 
   struct ALIKEC_settings * ALIKEC_set_def();
   SEXP ALIKEC_mode(SEXP obj);
-  SEXP ALIKEC_test(SEXP mode, SEXP a, SEXP b);
+  SEXP ALIKEC_test(SEXP obj);
   SEXP ALIKEC_test2(
     SEXP target, SEXP current
   );
-  SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines);
+  SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines, SEXP chars);
+  SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars);
   const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
@@ -145,6 +146,7 @@
   SEXP ALIKEC_SYM_nlines;
   SEXP ALIKEC_SYM_getOption;
   SEXP ALIKEC_SYM_matchcall;
+  SEXP ALIKEC_SYM_widthcutoff;
   SEXP ALIKEC_CALL_matchcall;
   SEXP ALIKEC_CALL_matchcall_sub;
 

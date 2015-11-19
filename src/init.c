@@ -9,7 +9,7 @@ R_CallMethodDef callMethods[] = {
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
-  {"test", (DL_FUNC) &ALIKEC_test, 3},
+  {"test", (DL_FUNC) &ALIKEC_test, 1},
   {"test2", (DL_FUNC) &ALIKEC_test2, 2},
   {"is_valid_name_ext", (DL_FUNC) &ALIKEC_is_valid_name_ext, 1},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
@@ -19,7 +19,8 @@ R_CallMethodDef callMethods[] = {
   {"compare_ts", (DL_FUNC) &ALIKEC_compare_ts_ext, 2},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 3},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
-  {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
+  {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 3},
+  {"deparse_oneline", (DL_FUNC) &ALIKEC_deparse_oneline_ext, 2},
   {"match_call", (DL_FUNC) &ALIKEC_match_call, 3},
   {"abstract_ts", (DL_FUNC) &ALIKEC_abstract_ts, 2},
   {"env_track", (DL_FUNC) &ALIKEC_env_track_test, 2},
@@ -35,6 +36,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_args = install("args");
   ALIKEC_SYM_deparse = install("deparse");
   ALIKEC_SYM_nlines = install("nlines");
+  ALIKEC_SYM_widthcutoff = install("width.cutoff");
   ALIKEC_SYM_getOption = install("getOption");
   ALIKEC_SYM_matchcall = install("match.call");
 
