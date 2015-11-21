@@ -29,6 +29,16 @@ SEXP ALIKEC_class(SEXP obj, SEXP class) {
   if(class == R_NilValue) return(ALIKEC_mode(obj));
   return class;
 }
+/*
+run `getOption` from C
+*/
+SEXP ALIKEC_getopt(const char * opt) {
+  SEXP opt_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString(opt)));
+  SET_TYPEOF(opt_call, LANGSXP);
+  SEXP opt_val = PROTECT(eval(opt_call, R_BaseEnv));
+  UNPROTECT(2);
+  return opt_val;
+}
 // - Abstraction ---------------------------------------------------------------
 /*
 sets the select `tsp` values to zero
@@ -57,7 +67,7 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
 }
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test(SEXP obj) {
-  return R_NilValue;
+  return mkString(CHAR(asChar(obj)));
 }
 SEXP ALIKEC_test2(
     SEXP target, SEXP current
@@ -87,73 +97,121 @@ SEXP ALIKEC_deparse_core(SEXP obj, int width_cutoff) {
   return eval(dep_call, R_BaseEnv);
 }
 /*
-Do a one line deparse
+Do a one line deparse, optionally replacing characters in excess of `max_chars`
+by `..` to keep deparse short; `keep_at_end` indicates how many characters to
+keep at end of deparsed when shortening (e.g. `i_m_deparsed(xyz..)` is keeping
+the last parenthesis
 */
-const char * ALIKEC_deparse_oneline(SEXP obj, size_t max_chars) {
+const char * ALIKEC_deparse_oneline(
+    SEXP obj, size_t max_chars, size_t keep_at_end
+) {
   if(max_chars < 8)
     error("Logic Error: argument `max_chars` must be >= 8");
+  if(keep_at_end > max_chars - 2)
+    error("Logic Error: arg `keep_at_end` too large");
+
   const char * res, * dep_line = CHAR(asChar(ALIKEC_deparse_core(obj, 500)));
   size_t dep_len = CSR_strmlen(dep_line, ALIKEC_MAX_CHAR);
   if(dep_len > max_chars) {
     // truncate string and use '..' at the end
 
     char * res_tmp = R_alloc(dep_len + 1, sizeof(char));
-    size_t i;
-    for(i = 0; i < max_chars - 2; i++) res_tmp[i] = dep_line[i];
+    size_t i, j;
+    for(i = 0; i < max_chars - keep_at_end - 2; i++) res_tmp[i] = dep_line[i];
     res_tmp[i] = res_tmp[i + 1] = '.';
-    res_tmp[i + 2] = '\0';
+    i += 2;
+    for(j = dep_len - keep_at_end; j < dep_len && i < dep_len; j++, i++) {
+      res_tmp[i] = dep_line[j];
+    }
+    res_tmp[i] = '\0';
     res = (const char *) res_tmp;
   } else res = dep_line;
 
   return res;
 }
-SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars) {
+SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars, SEXP keep_at_end) {
   int char_int = asInteger(max_chars);
-  if(char_int < 0) error("Logic Error: arg max_chars must be positive");
-  return mkString(ALIKEC_deparse_oneline(obj, (size_t) char_int));
+  int keep_int = asInteger(keep_at_end);
+  if(char_int < 0 || keep_int < 0)
+    error("Logic Error: arg max_chars and keep_at_end must be positive");
+  return mkString(
+    ALIKEC_deparse_oneline(obj, (size_t) char_int, (size_t) keep_int)
+  );
 }
-
-
 /*
 deparse into character
 
-@param max_chars determines how many characters before we try to turn into
-  multi-line deparse; set to -1 to ignore
-@param lines how many lines to show, if it deparses to more than lines append
-  `...` a end; set to -1 to ignore
+@param width_cutoff to use as `width.cutoff` param to `deparse`
 */
-const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars) {
-  SEXP quot_call = PROTECT(list2(R_QuoteSymbol, obj));
-  SET_TYPEOF(quot_call, LANGSXP);
+SEXP ALIKEC_deparse(SEXP obj, int width_cutoff) {
+  return ALIKEC_deparse_core(obj, width_cutoff);
+}
+SEXP ALIKEC_deparse_ext(SEXP obj, SEXP width_cutoff) {
+  return ALIKEC_deparse(obj, asInteger(width_cutoff));
+}
+/*
+Pad a character vector
 
-  SEXP dep_call = PROTECT(list2(ALIKEC_SYM_deparse, quot_call));
-  SET_TYPEOF(dep_call, LANGSXP);
-
-  SEXP obj_dep = PROTECT(eval(dep_call, R_BaseEnv));
-  //PrintValue(obj_dep);
-  R_xlen_t line_max = XLENGTH(obj_dep), i;
+@param obj character vector to pad
+@param pad how to pad the character vector
+  - -1, use the R prompt and continue symbols
+  - 0-n pad with that many spaces
+@param lines how many lines to show, append `...` a end; set to -1 to ignore
+*/
+const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
+  if(TYPEOF(obj) != STRSXP)
+    error("Logic Error: argument `obj` should be STRSXP");
+  R_xlen_t line_max = XLENGTH(obj), i;
   if(!line_max) return "";
+  for(i = 0; i < line_max; i++)
+    if(STRING_ELT(obj, i) == NA_STRING)
+      error("Logic Error: argument `obj` contains NAs");
+
   if(lines < 0) lines = line_max;
-  char * res = "", * dep_pad = "";
-  int nl = 0;
+
+  char * res = "";
+  const char * dep_prompt = "", * dep_continue = "";
+
+  // Figure out what to use as prompt and continue
+
+  if(pad < 0) {
+    SEXP prompt_val = PROTECT(ALIKEC_getopt("prompt"));
+    SEXP prompt_continue = PROTECT(ALIKEC_getopt("continue"));
+
+    if(
+      !TYPEOF(prompt_val) == STRSXP || !TYPEOF(prompt_continue) == STRSXP ||
+      asChar(prompt_val) == NA_STRING || asChar(prompt_continue) == NA_STRING
+    ) {
+      dep_prompt = "> ";
+      dep_continue = "+ ";
+    } else {
+      dep_prompt = CHAR(asChar(prompt_val));
+      dep_continue = CHAR(asChar(prompt_continue));
+    }
+    UNPROTECT(2);
+  } else if (pad > 0) {
+    char * pad_chr = R_alloc(pad + 1, sizeof(char));
+    int i;
+    for(i = 0; i < pad; i++) pad_chr[i] = ' ';
+    pad_chr[i] = '\0';
+    dep_prompt = dep_continue = (const char *) pad_chr;
+  }
+  // Cycle through lines
 
   for(i = 0; i < lines; i++) {
-    const char * dep_err = CHAR(STRING_ELT(obj_dep, i));
-    if(!i) {
-      nl = lines > 1 || (max_chars > 0 && strlen(dep_err) > max_chars);
-      if(nl) dep_pad = "> ";
-    } else if(nl) dep_pad ="+ ";
+    const char * dep_pad = "";
+    const char * dep_err = CHAR(STRING_ELT(obj, i));
+    if(!i) dep_pad = dep_prompt;
+    else dep_pad = dep_continue;
     res = CSR_smprintf6(
       ALIKEC_MAX_CHAR, "%s%s%s%s%s", res, dep_pad, dep_err,
       i == lines - 1 && lines < line_max ? "..." : "",
-      nl && i < lines - 1 ? "\n" : "", ""
+      lines > 1 && line_max > 1 ? "\n" : "", ""
   );}
-  UNPROTECT(3);
   return res;
 }
-
-SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines, SEXP chars) {
-  return mkString(ALIKEC_deparse(obj, asInteger(lines), asInteger(chars)));
+SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
+  return mkString(ALIKEC_pad(obj, asInteger(lines), asInteger(pad)));
 }
 
 /*

@@ -385,9 +385,18 @@ unitizer_sect("Deparse", {
           match(letter, LETTERS),
           c("hello there")
   ) } ) )
-  alike:::dep_alike(l0, -1)
-  alike:::dep_alike(l0, 1)
-  alike:::dep_alike(l0, 2)
+  # simple deparse
+
+  (dep.txt <- alike:::dep_alike(l0))
+  alike:::dep_alike(l0, 30)
+
+  # manip the deparse
+
+  alike:::pad(dep.txt)
+  alike:::pad(dep.txt, pad=4)
+  alike:::pad(dep.txt, pad=4, lines=2)
+
+  # oneline
 
   alike:::dep_oneline(quote(1 + 1 + 3 + 944254235), 10)
   alike:::dep_oneline(quote(1 + 1 + 3), 10)

@@ -107,9 +107,13 @@
   SEXP ALIKEC_test2(
     SEXP target, SEXP current
   );
-  SEXP ALIKEC_deparse_ext(SEXP obj, SEXP lines, SEXP chars);
-  SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars);
-  const char * ALIKEC_deparse(SEXP obj, R_xlen_t lines, int max_chars);
+  SEXP ALIKEC_getopt(const char * opt);
+  SEXP ALIKEC_deparse_ext(SEXP obj, SEXP width_cutoff);
+  SEXP ALIKEC_deparse_oneline_ext(
+    SEXP obj, SEXP max_chars, SEXP keep_at_end
+  );
+  SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
+  SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(const char * var);

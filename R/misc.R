@@ -34,11 +34,14 @@ lang_alike <- function(target, current, match.call.env=parent.frame())
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
-dep_alike <- function(obj, lines, chars=getOption("width"))
-  .Call(ALIKEC_deparse, obj, lines, chars)
+dep_alike <- function(obj, width.cutoff=60L)
+  .Call(ALIKEC_deparse, obj, width.cutoff)
 
-dep_oneline<- function(obj, max.chars=20L)
-  .Call(ALIKEC_deparse_oneline, obj, max.chars)
+dep_oneline<- function(obj, max.chars=20L, keep.at.end=0L)
+  .Call(ALIKEC_deparse_oneline, obj, max.chars, keep.at.end)
+
+pad <- function(obj, lines=-1, pad=-1)
+  .Call(ALIKEC_pad, obj, lines, pad)
 
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
