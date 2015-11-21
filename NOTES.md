@@ -552,9 +552,10 @@ Argument `x` failure; must meet at least one of the following:
 
 Error in analyze(x = laps.1):
   Argument `x`: `obj.1[[2]][[2]]` should be character (is logical)
-
+  Argument `x`: `this_is_a_really_long_call(with_some_really_long_arguments, and_another_long_argument)[[1]][[2]]$blah_blah_blah` should be character (is logical)
   Argument `x` must meet at least one of the following:
     - `obj.1[[2]][[2]]` should be character (is logical):
+    - `this_is_a_really_long_call(with_some_really_long_arguments, and_another_long argument)[[1]][[2]]$blah_blah_blah` should be charater (is logical)
     - `attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
 
   In argument `x`: `obj.1[[2]][[2]]` should be character (is logical)
