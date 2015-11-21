@@ -529,14 +529,16 @@ const char * ALIKEC_alike_internal(
           {
             err_chr_index_val = res.indices[i].ind.chr;
             if(!ALIKEC_is_valid_name(err_chr_index_val)){
-              index_tpl = "`$%s`";
+              index_tpl = "$`%s`";
             } else {
               index_tpl = "$%s";
             }
           }
           break;
         default:
-          error("Logic Error: unexpected index type (2) %d", res.indices[i].type);
+          error(
+            "Logic Error: unexpected index type (2) %d", res.indices[i].type
+          );
       }
       // leave off last index as treated differently if it is a DF column vs not
       // that will be dealt in the next step

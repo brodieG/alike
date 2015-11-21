@@ -490,7 +490,7 @@ const char * ALIKEC_compare_ts(
         snprintf(cur_num, 20, "%g", cur_real[i]);
         return CSR_smprintf4(
           ALIKEC_MAX_CHAR, "`tsp(%%s)[%s]` should be %s (is %s)",
-          CSR_len_as_char(i + 1), tar_num, cur_num, ""
+          CSR_len_as_chr(i + 1), tar_num, cur_num, ""
     );} }
   } else {
     return ALIKEC_alike_attr(target, current, "tsp", set, 1, 0);
