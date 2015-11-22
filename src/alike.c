@@ -65,7 +65,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
     if(s4_tar + s4_cur == 1) {
       err = 1;
-      err_base = "`%%s` should %sbe S4";
+      err_base = "%%s%%s%%s should %sbe S4";
       err_tok1 = (s4_tar ? "" : "not ");
     } else {
       SEXP klass, klass_attrib;
@@ -89,7 +89,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SETCAR(t, klass);
       if(!asLogical(eval(s, R_BaseEnv))) {
         err = 1;
-        err_base = "`%%s` should inherit from S4 class \"%s\" (package: %s)";
+        err_base = "%%s%%s%%s should inherit from S4 class \"%s\" (package: %s)";
         err_tok1 = CHAR(asChar(klass));
         err_tok2 = CHAR(asChar(klass_attrib));
       }
@@ -175,7 +175,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
-          err_base = "`%%s` should be length %s (is %s)";
+          err_base = "%%s%%s%%s should be length %s (is %s)";
         }
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
@@ -190,7 +190,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "`%%s` should have %s row%s (has %s)";
+        err_base = "%%s%%s%%s should have %s row%s (has %s)";
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
