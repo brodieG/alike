@@ -171,7 +171,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err = 1;
         if(is_df) {
           err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "`%%%%s` should have %%s column%s (has %%s)",
+            ALIKEC_MAX_CHAR, "%%%%s%%%%s%%%%s should have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
@@ -631,7 +631,7 @@ const char * ALIKEC_alike_wrap(
     if(TYPEOF(curr_sub) == LANGSXP) {
       SEXP call = CAR(curr_sub);
       if(TYPEOF(call) == SYMSXP) {
-        const char * call_sym = CHAR(PRINTNAME(curr_sub));
+        const char * call_sym = CHAR(PRINTNAME(call));
         int is_an_op = 0, i = 1;
         if(
           !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
@@ -654,13 +654,13 @@ const char * ALIKEC_alike_wrap(
     if(width < 0) width = asInteger(ALIKEC_getopt("width"));
     if(width < 10 || width > 1000) width = 80;
 
-    int dep.cutoff;
+    int dep_cutoff;
 
-    if(width < 62) dep.cutoff = width - 2;
-    else dep.cutoff = 60;
-    if(dep.cutoff < 20) dep.cutoff = 60;
+    if(width < 62) dep_cutoff = width - 2;
+    else dep_cutoff = 60;
+    if(dep_cutoff < 20) dep_cutoff = 60;
 
-    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse(curr_fin, dep.cutoff));
+    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse(curr_fin, dep_cutoff));
 
     // Handle the different deparse scenarios
 

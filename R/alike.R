@@ -141,7 +141,7 @@
 #' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 
 alike <- function(target, current)
-  .Call(ALIKEC_alike_ext, target, current, parent.frame(), substitute(current))
+  .Call(ALIKEC_alike_ext, target, current, substitute(current), parent.frame())
 
 #' @rdname alike
 #' @export

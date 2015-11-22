@@ -113,6 +113,7 @@
     SEXP obj, SEXP max_chars, SEXP keep_at_end
   );
   SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
+  const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad);
   SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);

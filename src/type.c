@@ -53,7 +53,7 @@ const char * ALIKEC_type_alike_internal(
   }
   return CSR_smprintf4(
     ALIKEC_MAX_CHAR,
-    "`%%s` should be type \"%s\" (is \"%s\")", what,
+    "%%%%s%%%%s%%%%s should be type \"%s\" (is \"%s\")", what,
     type2char(cur_type), "", ""
   );
 }
