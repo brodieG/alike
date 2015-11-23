@@ -279,7 +279,7 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  const char * token =  "%%s%%%%s%%s";
+  const char * token =  "%%%%s%s%%%%s%s%%%%s";
   // Special character attributes must be alike;
   // Expectation is that `res` will be in format `%s<index>` should be ...
 

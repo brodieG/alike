@@ -240,7 +240,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   return res;
 }
 /*
-Utility functions for updating index list for error reporting.  General logic
+Utility functions for updating index lest for error reporting.  General logic
 is to track depth of recursion, and when an error occurs, allocate enough
 space for as many ALIKEC_index structs as there is recursion depth.
 */
@@ -460,7 +460,7 @@ const char * ALIKEC_alike_internal(
     // Handle NULL special case at top level
 
     err_base = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be type \"NULL\" (is \"%s\")",
+      ALIKEC_MAX_CHAR, "%%s%%s%%s should be \"NULL\" (is \"%s\")",
       type2char(TYPEOF(current)), "", "", ""
     );
   } else {
