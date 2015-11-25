@@ -171,8 +171,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err = 1;
         if(is_df) {
           err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, 
-            "%%%%%%s%%%%%%s%%%%s%%%%%%s should have %%s column%s (has %%s)",
+            ALIKEC_MAX_CHAR,
+            "%%%%%%%%s%%%%%%%%s%%%%s%%%%%%%%s should have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
@@ -354,7 +354,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
     }
     if(!set->no_rec) set->no_rec = !ALIKEC_env_track(target, set->env_set);
     if(set->no_rec < 0 && !set->suppress_warnings) {
-      warning("`alike` environment stack exhausted; unable to recurse any further into environments");
+      warning(
+        "`alike` environment stack exhausted; %s.",
+        "unable to recurse any further into environments"
+      );
       set->no_rec = 1; // so we only get warning once
     }
     if(set->no_rec || target == current) {
@@ -380,7 +383,9 @@ struct ALIKEC_res ALIKEC_alike_rec(
             ALIKEC_MAX_CHAR, "contain variable `%s`",
             CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
           );
-          res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking since this is not a recursion error
+          // Initialize index tracking since this is not a recursion error
+
+          res1 = ALIKEC_res_ind_init(res1, set);
           UNPROTECT(2);
           return(res1);
         }
@@ -447,7 +452,6 @@ const char * ALIKEC_alike_internal(
   if(set->attr_mode < 0 || set->attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
   char * err_base;
-  int top_lvl = !set->rec_lvl;
   size_t rec_lvl_last_prev = set->rec_lvl_last;
 
   // Allows us to keep track of recursion depth between calls to
@@ -483,10 +487,7 @@ const char * ALIKEC_alike_internal(
   occurred.
   */
   if(!res.rec_lvl) {  // No recursion occurred
-    err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", top_lvl ? set->prepend : "", err_msg,
-      "", ""
-    );
+    err_final = CSR_smprintf4(ALIKEC_MAX_CHAR, err_msg, "", "", "", "");
   } else {
     // Scan through all indices to calculate size of required vector
 

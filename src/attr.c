@@ -279,11 +279,14 @@ const char * ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
 ) {
   const char * res = ALIKEC_alike_internal(target, current, set);
-  const char * token =  "%%%%s%s%%%%s%s%%%%s";
+  const char * token =  "%%%%%%%%s%s%%%%%%%%s%s%%%%s%%%%%%%%s";
   // Special character attributes must be alike;
   // Expectation is that `res` will be in format `%s<index>` should be ...
 
   if(res[0]) {
+    Rprintf("%s\n", res);
+    Rprintf("%s\n", token);
+    Rprintf("%s\n", CSR_smprintf4(ALIKEC_MAX_CHAR, res, token, "", "", ""));
     return CSR_smprintf4(ALIKEC_MAX_CHAR, res, token, "", "", "");
   }
   // But also have contraints on values
@@ -749,6 +752,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
         );
         if(name_comp[0]) {
           char * tx_name = tar_tag == R_NamesSymbol ? "names(" : "rownames(";
+          Rprintf("post process:\n%s\n", CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, ")", "", ""));
           err_major[tar_tag == R_NamesSymbol ? 3 : 4] =
             CSR_smprintf4(ALIKEC_MAX_CHAR, name_comp, tx_name, ")", "", "");
         }

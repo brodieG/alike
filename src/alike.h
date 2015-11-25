@@ -45,11 +45,12 @@
     const char * prepend;     // no longer in use
     SEXP env;                 // what envto look for functions to match call in
     // Used to track whether we've encountered an environment before
-    struct ALIKEC_settings_env * env_set;   
+    struct ALIKEC_settings_env * env_set;
     int no_rec;               // block futher recursion into environments
     size_t in_attr;           // whether we're recursing through attributes
     size_t rec_lvl;           // level of recursion
-    size_t rec_lvl_last;      // level of recursion last time ALIKEC_alike_internal was called
+    // level of recursion last time ALIKEC_alike_internal was called
+    size_t rec_lvl_last;
   };
 
   // - Constants --------------------------------------------------------------
