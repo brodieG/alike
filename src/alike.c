@@ -65,7 +65,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
     if(s4_tar + s4_cur == 1) {
       err = 1;
-      err_base = "%%s%%s%%s should %sbe S4";
+      err_base = "%%%%s%%%%s%%s%%%%s should %sbe S4";
       err_tok1 = (s4_tar ? "" : "not ");
     } else {
       SEXP klass, klass_attrib;
@@ -89,7 +89,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SETCAR(t, klass);
       if(!asLogical(eval(s, R_BaseEnv))) {
         err = 1;
-        err_base = "%%s%%s%%s should inherit from S4 class \"%s\" (package: %s)";
+        err_base = "%%%%s%%%%s%%s%%%%s should inherit from S4 class \"%s\" (package: %s)";
         err_tok1 = CHAR(asChar(klass));
         err_tok2 = CHAR(asChar(klass_attrib));
       }
@@ -171,11 +171,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err = 1;
         if(is_df) {
           err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "%%%%s%%%%s%%%%s should have %%s column%s (has %%s)",
+            ALIKEC_MAX_CHAR, 
+            "%%%%%%s%%%%%%s%%%%s%%%%%%s should have %%s column%s (has %%s)",
             err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
           );
         } else {
-          err_base = "%%s%%s%%s should be length %s (is %s)";
+          err_base = "%%%%s%%%%s%%s%%%%s should be length %s (is %s)";
         }
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
@@ -190,7 +191,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "%%s%%s%%s should have %s row%s (has %s)";
+        err_base = "%%%%s%%%%s%%s%%%%s should have %s row%s (has %s)";
         err_tok1 = CSR_len_as_chr(tar_first_el_len);
         err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
         err_tok3 = CSR_len_as_chr(cur_first_el_len);
@@ -249,7 +250,7 @@ space for as many ALIKEC_index structs as there is recursion depth.
 /*
 Recursion functions
 
-The first set here manages tracking the indeces during recursion
+The first set here manages tracking the indices during recursion
 */
 void ALIKEC_res_ind_set(
   struct ALIKEC_res res, struct ALIKEC_index ind, size_t lvl
@@ -460,7 +461,7 @@ const char * ALIKEC_alike_internal(
     // Handle NULL special case at top level
 
     err_base = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%%s%%s%%s should be \"NULL\" (is \"%s\")",
+      ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should be \"NULL\" (is \"%s\")",
       type2char(TYPEOF(current)), "", "", ""
     );
   } else {
@@ -489,7 +490,7 @@ const char * ALIKEC_alike_internal(
   } else {
     // Scan through all indices to calculate size of required vector
 
-    char * err_chr_index, * err_chr_indeces;
+    char * err_chr_index, * err_chr_indices;
     const char * err_chr_index_val;
     size_t err_size = 0, ind_size_max = 0, ind_size;
 
@@ -513,11 +514,11 @@ const char * ALIKEC_alike_internal(
     }
     // Allways alloacate as if index will be in [[index]] form as that is
     // worst case
-    err_chr_indeces = (char *) R_alloc(
+    err_chr_indices = (char *) R_alloc(
       err_size + 4 * res.rec_lvl + 1, sizeof(char)
     );
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
-    err_chr_indeces[0] = '\0';
+    err_chr_indices[0] = '\0';
 
     for(size_t i = 0; i < res.rec_lvl; i++) {
       const char * index_tpl = "[[%s]]";
@@ -543,51 +544,26 @@ const char * ALIKEC_alike_internal(
             "Logic Error: unexpected index type (2) %d", res.indices[i].type
           );
       }
-      // leave off last index as treated differently if it is a DF column vs not
-      // that will be dealt in the next step
+      // Used to leave off last index for possible different treatment if
+      // dealing with a DF, but giving that up for now
 
       sprintf(err_chr_index, index_tpl, err_chr_index_val);
-      if(i < res.rec_lvl - 1) {  // all these chrs should be terminated...
-        strcat(err_chr_indeces, err_chr_index);
+      if(i < res.rec_lvl) {  // all these chrs should be terminated...
+        strcat(err_chr_indices, err_chr_index);
       }
     }
-    char * err_interim;
     int has_nl = 0;
     for(int i = 0; err_msg[i] && i < ALIKEC_MAX_CHAR; i++) {
       if(err_msg[i] == '\n') {
         has_nl = 1;
         break;
     } }
-    // Special treatment for df/mx
-
-    if(res.rec_lvl == 1) {
-      if(res.df) {
-        err_interim = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "column `%s`", err_chr_index_val, "", "", ""
-        );
-      } else {
-        err_interim = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "index %s", err_chr_index, "", "", ""
-        );
-      }
-    } else {
-      if(res.df) {
-        err_interim = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "column `%s` at index %s", err_chr_index_val,
-          err_chr_indeces, "", ""
-        );
-      } else {
-        err_interim = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "index %s%s", err_chr_indeces, err_chr_index, "", ""
-    );} }
-    // top_lvl: true if no recursion occurred
     // err_msg: error message produce by ALIKEC_alike_rec
     // has_nl: whether `err_msg` contains a new line
-    // err_interim: the description of where in object error occurred
+    // %s used to preserve the %s for use in _wrap
 
     err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%sat %s", top_lvl ? set->prepend : "",
-      err_msg, has_nl ? "\n" : " ", err_interim
+      ALIKEC_MAX_CHAR, err_msg, err_chr_indices, "", "", ""
     );
   }
   set->rec_lvl_last = rec_lvl_last_prev;
@@ -620,7 +596,7 @@ const char * ALIKEC_alike_wrap(
 
   if(res[0]) {
     // Handle case where expression is a binary operator; in these cases we need
-    // to wrap calls in parens so that any subsequent indeces we use make sense,
+    // to wrap calls in parens so that any subsequent indices we use make sense,
     // though in reality we need to improve this so that we only use parens when
     // strictly needed
 

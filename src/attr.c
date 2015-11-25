@@ -78,13 +78,13 @@ const char * ALIKEC_compare_class(
         );
       } else {
         err_msg =  CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "%%s%%s%%s should be class \"%s\" (is \"%s\")",
+          ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should be class \"%s\" (is \"%s\")",
           tar_class, cur_class, "", ""
   );} } }
   if(err_found) return err_msg;
   if(tar_class_len > cur_class_len) {
     return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%%s%%s%%s should inherit from class \"%s\"",
+      ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should inherit from class \"%s\"",
       CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
   );}
   // Check the class attributes
@@ -136,7 +136,7 @@ const char * ALIKEC_compare_dims(
   current_len_cap = current_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : current_len;
 
   const char * class_err_string = "";
-  const char * class_err_base = "%%s%%s%%s should be %s (is %s)";
+  const char * class_err_base = "%%%%s%%%%s%%s%%%%s should be %s (is %s)";
 
   if(target_len_cap > 1 && isVectorAtomic(tar_obj)) {
     if(current == R_NilValue) {  // current is matrix/array
@@ -175,11 +175,11 @@ const char * ALIKEC_compare_dims(
   // Normal dim checking
 
   if(current == R_NilValue)
-    return "%%s%%s%%s should have a \"dim\" attribute";
+    return "%%%%s%%%%s%%s%%%%s should have a \"dim\" attribute";
 
   if(target_len != current_len)
     return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%%s%%s%%s should have %s dimension%s (has %s)",
+      ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should have %s dimension%s (has %s)",
       CSR_len_as_chr(target_len), target_len == (R_xlen_t) 1 ? "" : "s",
       CSR_len_as_chr(current_len), ""
     );
@@ -215,7 +215,7 @@ const char * ALIKEC_compare_dims(
           CSR_len_as_chr((R_xlen_t)(attr_i + 1)), "", "", ""
       );}
       return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%%s%%s%%s should have %s%s %s (has %s)",
+        ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should have %s%s %s (has %s)",
         (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2,
         CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i]))
       );
@@ -343,7 +343,7 @@ Compare dimnames
 const char * ALIKEC_compare_dimnames(
   SEXP prim, SEXP sec, struct ALIKEC_settings * set
 ) {
-  if(sec == R_NilValue) return "%%s%%s%%s should have a \"dimnames\" attribute";
+  if(sec == R_NilValue) return "%%%%s%%%%s%%s%%%%s should have a \"dimnames\" attribute";
 
   SEXP prim_names = getAttrib(prim, R_NamesSymbol);
   SEXP sec_names = getAttrib(sec, R_NamesSymbol);
@@ -542,7 +542,7 @@ const char * ALIKEC_compare_attributes_internal_simple(
   else if(tae_type == NILSXP || cae_type == NILSXP)
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "%%s%%s%%s should %shave attribute \"%s\"",
+      "%%%%s%%%%s%%s%%%%s should %shave attribute \"%s\"",
       attr_name, tae_type == NILSXP ? "not" : "", "", ""
     );
   else if(tae_type != cae_type) {
@@ -571,7 +571,7 @@ const char * ALIKEC_compare_attributes_internal_simple(
   ) {
     if(set->attr_mode || tae_val_len) {
       return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%%slength(attr(%%s, \"%s\"))%%s be %s (is %s)",
+        ALIKEC_MAX_CHAR, "%%%%slength(attr(%%%%s%%s, \"%s\"))%%%%s be %s (is %s)",
         attr_name, CSR_len_as_chr(tae_val_len), CSR_len_as_chr(cae_val_len), ""
     );}
   } else if (!set->attr_mode && !tae_val_len) {
@@ -627,14 +627,14 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
     prim_attr = cur_attr;
     sec_attr = tar_attr;
     if(set->attr_mode == 2) {
-      err_major[7] = "%%s%%s%%s should have attributes";
+      err_major[7] = "%%%%s%%%%s%%s%%%%s should have attributes";
     }
   } else {
     prim_attr = tar_attr;
     sec_attr = cur_attr;
     if(cur_attr == R_NilValue) {
       err_major[7] = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%%s%%s%%s should not have attributes (has %s attributes)",
+        ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should not have attributes (has %s attributes)",
         CSR_len_as_chr(xlength(cur_attr)), "", "", ""
   );} }
   /*
@@ -703,7 +703,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
       ) && !err_major[7][0]
     ) {
       err_major[7] = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%%s%%s%%s should %shave attribute \"%s\"",
+        ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should %shave attribute \"%s\"",
         (cur_attr_el == R_NilValue ? "" : "not "), tx, "", ""
       );
     }
@@ -799,7 +799,7 @@ struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
   if(set->attr_mode == 2 && prim_attr_count != sec_attr_count) {
     err_major[7] = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "%%s%%s%%s should have %s attribute%s (has %s)",
+      "%%%%s%%%%s%%s%%%%s should have %s attribute%s (has %s)",
       CSR_len_as_chr(prim_attr_count),
       prim_attr_count != 1 ? "s" : "", CSR_len_as_chr(sec_attr_count), ""
   );}
