@@ -17,20 +17,30 @@
     union ALIKEC_index_raw ind;
     int type;               // 0 is numeric, 1 is character
   };
+  struct ALIKEC_res_msg {
+    int success;
+    const char * message;
+    const char * indices;
+    const char * wrap;
+  }
   struct ALIKEC_res {
     int success;
-    char * message;
+    ALIKEC_res_msg message;
     int df;
     // track indices of error, this will be allocated with as many items as
     // there are recursion levels.
     struct ALIKEC_index * indices;
-    size_t rec_lvl;                 // max recursion depth
+    size_t rec_lvl;        // max recursion depth
   };
-  struct ALIKEC_res_attr {
+  // Structure used for functions called by 'alike_obj', main difference with
+  // the return value of 'alike_obj' is 'indices', since that is a more complex
+  // object that requires initialization
+
+  struct ALIKEC_res_sub {
     int success;
-    const char * message;
-    int df;
-    int lvl;
+    ALIKEC_res_dat message;
+    int df;      // whether df or not, not use by all functions
+    int lvl;     // Type of error used for prioritizing
   };
   struct ALIKEC_settings_env {
     int stack_size;
