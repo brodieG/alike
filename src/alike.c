@@ -33,6 +33,26 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
 
   return ALIKEC_set_tmp_val;
 }
+/*
+Other struct initialization functions
+*/
+struct ALIKEC_res_msg ALIKEC_res_msg_def(const char * msg)
+   return (ALIKEC_res_msg) {.message=msg .indices="", .wrap="%s"};
+struct ALIKEC_res_sub ALIKEC_res_sub_def()
+  return (ALIKEC_res_sub) = {
+    .success=1,
+    .message=ALIKEC_res_msg_def(""),
+    .df=0,
+    .lvl=0
+  }
+struct ALIKEC_res ALIKEC_res_def()
+  return (ALIKEC_res) {
+    .success=1,
+    .message=ALIKEC_res_msg_def(""),
+    .df=0,
+    .indices=0,  // NULL pointer
+    .rec_lvl=0
+  }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
@@ -53,30 +73,41 @@ struct ALIKEC_res ALIKEC_alike_obj(
   SEXPTYPE tar_type, cur_type;
 
   int err = 0, err_attr = 0;
-  const char * err_base = "", * err_tok1, * err_tok2, * err_tok3, * err_tok4,
-    * err_type, * err_lang, * err_fun;
-  err_tok1 = err_tok2 = err_tok3 = err_tok4 = "";
+  const char * err_tok1, * err_tok2, * err_type, * err_fun, * msg_tmp;
+  err_tok1 = err_tok2 = err_type = err_fun = msg_tmp = "";
+
+  struct ALIKEC_res res = ALIKEC_res_def();
 
   tar_type = TYPEOF(target);
   cur_type = TYPEOF(current);
   int s4_cur, s4_tar;
   s4_tar = ((IS_S4_OBJECT)(target) != 0);
   s4_cur = ((IS_S4_OBJECT)(current) != 0);
+
   if(!err && (s4_cur || s4_tar)) {  // don't run length or attribute checks on S4
     if(s4_tar + s4_cur == 1) {
       err = 1;
-      err_base = "%%%%s%%%%s%%s%%%%s should %sbe S4";
-      err_tok1 = (s4_tar ? "" : "not ");
+      const char * msg_tmp = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "%sbe S4", (s4_tar ? "" : "not ")
+      );
+      res.message = ALIKEC_res_msg_def(msg_tmp);
     } else {
       SEXP klass, klass_attrib;
       SEXP s, t;
 
       klass = getAttrib(target, R_ClassSymbol);
       if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP)
-        error("Logic Error: unexpected S4 class \"class\" attribute of length != 1 or type not character vector; contact package maintainer");
+        error(
+          "Logic Error: unexpected S4 class \"class\" attribute %s%s",
+          "of length != 1 or type not character vector; ",
+          "contact package maintainer"
+        );
       klass_attrib = getAttrib(klass, ALIKEC_SYM_package);
       if(xlength(klass_attrib) != 1 || TYPEOF(klass_attrib) != STRSXP)
-        error("Logic Error: unexpected S4 class \"class\" attribute does not have `package` attribute in expected structure");
+        error(
+          "Logic Error: unexpected S4 class \"class\" %s",
+          "attribute does not have `package` attribute in expected structure"
+        );
 
       // Construct call to `inherits`; we evaluate in base env since class
       // definitions should still be visible and this way unlikely that
@@ -89,9 +120,11 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SETCAR(t, klass);
       if(!asLogical(eval(s, R_BaseEnv))) {
         err = 1;
-        err_base = "%%%%s%%%%s%%s%%%%s should inherit from S4 class \"%s\" (package: %s)";
-        err_tok1 = CHAR(asChar(klass));
-        err_tok2 = CHAR(asChar(klass_attrib));
+        const char * msg_tmp = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "inherit from S4 class \"%s\" (package: %s)",
+          CHAR(asChar(klass)), CHAR(asChar(klass_attrib))
+        );
+        res.message = ALIKEC_res_msg_def(msg_tmp);
       }
       UNPROTECT(1);
     }
@@ -103,7 +136,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     it is a class error any attribute error will get over-written by subsequent
     errors (except class errors)
     */
-    struct ALIKEC_res_attr res_attr = ALIKEC_compare_attributes_internal(
+    struct ALIKEC_res_sub res_attr = ALIKEC_compare_attributes_internal(
       target, current, set
     );
     is_df = res_attr.df;
@@ -112,12 +145,11 @@ struct ALIKEC_res ALIKEC_alike_obj(
       // If top level error (class), make sure not overriden by others
       if(res_attr.lvl <= 2) err = 1;
       else err_attr = 1;
-      err_base = res_attr.message;
+      res.message = res_attr.message;
     }
     // - Special Language Objects && Funs --------------------------------------
 
     int is_lang = 0;
-
     if(
       !err &&
       (
@@ -127,29 +159,31 @@ struct ALIKEC_res ALIKEC_alike_obj(
       ) )
     ) {
       err_lang = ALIKEC_lang_alike_internal(target, current, set);
-      if(strlen(err_lang)) {
+      if(err_lang[0]) {
         err = 1;
-        err_base = err_lang;
+        res.message = ALIKEC_res_msg_def(err_lang);
     } }
     int is_fun = 0;
 
     if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
       err_fun = ALIKEC_fun_alike_internal(target, current);
-      if(strlen(err_fun)) {
+      if(err_fun[0]) {
         err = 1;
-        err_base = err_fun;
+        res.message = ALIKEC_res_msg_def(err_fun);
     } }
     // - Type ------------------------------------------------------------------
 
+    // lang excluded because we can have symbol-lang comparisons that resolve
+    //  to symbol symbol
     if(
-      !err && !is_lang && // lang excluded because we can have symbol-lang comparisons that resolve to symbol symbol
+      !err && !is_lang &&
       strlen(
         err_type = ALIKEC_type_alike_internal(
           target, current, set->type_mode, set->fuzzy_int_max_len
       ) )
     ) {
       err = 1;
-      err_base = err_type;
+      res.message = ALIKEC_res_msg_def(err_type);
     }
     // - Length ----------------------------------------------------------------
 
@@ -169,17 +203,20 @@ struct ALIKEC_res ALIKEC_alike_obj(
         tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
-        if(is_df) {
-          err_base = CSR_smprintf4(
-            ALIKEC_MAX_CHAR,
-            "%%%%%%%%s%%%%%%%%s%%%%s%%%%%%%%s should have %%s column%s (has %%s)",
-            err_tok2 = tar_len == (R_xlen_t) 1 ? "" : "s", "", "", ""
-          );
-        } else {
-          err_base = "%%%%s%%%%s%%s%%%%s should be length %s (is %s)";
-        }
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
+        if(is_df) {
+          msg_tmp = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "have %s column%s (has %s)",
+            tar_len == err_tok1, (R_xlen_t) 1 ? "" : "s", err_tok2,  ""
+          );
+        } else {
+          msg_tmp = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "be length %s (is %s)",
+            err_tok1,  err_tok2,  "", ""
+          );
+        }
+        res.message = ALIKEC_res_msg_def(msg_tmp);
       } else if (
         is_df && err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
         TYPEOF(current) == VECSXP && XLENGTH(current) &&
@@ -191,10 +228,14 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check for row count error, note this isn't a perfect check since we
         // check the first column only
 
-        err_base = "%%%%s%%%%s%%s%%%%s should have %s row%s (has %s)";
-        err_tok1 = CSR_len_as_chr(tar_first_el_len);
-        err_tok2 = tar_first_el_len == (R_xlen_t) 1 ? "" : "s";
-        err_tok3 = CSR_len_as_chr(cur_first_el_len);
+        err = 1;
+        msg_tmp = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have %s row%s (has %s)",
+          CSR_len_as_chr(tar_first_el_len),
+          tar_first_el_len == (R_xlen_t) 1 ? "" : "s",
+          CSR_len_as_chr(cur_first_el_len), ""
+        );
+        res.message = ALIKEC_res_msg_def(msg_tmp);
     } }
   }
   // - Known Limitations -------------------------------------------------------
@@ -222,22 +263,19 @@ struct ALIKEC_res ALIKEC_alike_obj(
         break;
       default:
         warning(
-          "`alike` behavior for objects of type \"%s\" is not well defined and may change in the future",
-          type2char(tar_type)
+          "`alike` behavior for objects of type \"%s\" is not well defined %s",
+          type2char(tar_type),
+          "and may change in the future"
         );
     }
   }
-  struct ALIKEC_res res;
   res.df = is_df;
-  if(err || err_attr) {
-    res.success = 0;
-    res.message = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, err_base, err_tok1, err_tok2, err_tok3, err_tok4
-    );
+  if(err || err_attr) res.success = 0;
+  error("THIS IS MISSING");
+    
   } else {
     res.success = 1;
   }
-  res.indices = 0; // initialize to null pointer
   return res;
 }
 /*
@@ -323,7 +361,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
     res0 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
     return res0;
   }
-  struct ALIKEC_res res1 = {1, "", res0.df, 0};
+  struct ALIKEC_res res1 = {1, {"", "", ""}, res0.df, 0};
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 
@@ -444,7 +482,7 @@ Run alike calculation, and in particular, compose error message if relevant.
 Return value is a character value that starts with %s and follows with
 something like "should be ...".
 */
-const char * ALIKEC_alike_internal(
+struct ALIKEC_res ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
   if(set->type_mode < 0 || set->type_mode > 2)
@@ -459,13 +497,14 @@ const char * ALIKEC_alike_internal(
 
   set->rec_lvl_last = set->rec_lvl;
 
-  struct ALIKEC_res res;
+  struct ALIKEC_res res = ALIKEC_res_def();
 
   if(TYPEOF(target) == NILSXP && TYPEOF(current) != NILSXP) {
     // Handle NULL special case at top level
 
-    err_base = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%%%%s%%%%s%%s%%%%s should be \"NULL\" (is \"%s\")",
+    res.success = 0;
+    res.messgae.message = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
       type2char(TYPEOF(current)), "", "", ""
     );
   } else {
@@ -474,21 +513,16 @@ const char * ALIKEC_alike_internal(
     res = ALIKEC_alike_rec(target, current, set);
     if(res.success) {
       set->rec_lvl_last = rec_lvl_last_prev;
-      return "";
+      return res;
     }
-    err_base = res.message;
   }
   // - Contruct Error ----------------------------------------------------------
 
-  char * err_final, * err_msg;
-  err_msg = err_base;
   /*
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(!res.rec_lvl) {  // No recursion occurred
-    err_final = CSR_smprintf4(ALIKEC_MAX_CHAR, err_msg, "", "", "", "");
-  } else {
+  if(res.rec_lv) {  // Recursion occurred
     // Scan through all indices to calculate size of required vector
 
     char * err_chr_index, * err_chr_indices;
@@ -553,22 +587,14 @@ const char * ALIKEC_alike_internal(
         strcat(err_chr_indices, err_chr_index);
       }
     }
-    int has_nl = 0;
-    for(int i = 0; err_msg[i] && i < ALIKEC_MAX_CHAR; i++) {
-      if(err_msg[i] == '\n') {
-        has_nl = 1;
-        break;
-    } }
     // err_msg: error message produce by ALIKEC_alike_rec
     // has_nl: whether `err_msg` contains a new line
     // %s used to preserve the %s for use in _wrap
 
-    err_final = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, err_msg, err_chr_indices, "", "", ""
-    );
+    res.message.indices = err_chr_indices;
   }
   set->rec_lvl_last = rec_lvl_last_prev;
-  return (const char *) err_final;
+  return res;
 }
 /*
 Outermost alike function, handles full rendering including the leading
