@@ -1,5 +1,42 @@
 #include "alike.h"
 
+SEXP ALIKEC_res_msg_as_sxp(ALIKEC_res_msg msg) {
+  SEXP out = PROTECT(allocVector(VECSXP, 3));
+  SEXP out_names = PROTECT(allocVector(STRSXP, 3));
+  const char * names[3] = {"message", "indices", "wrap"};
+  int i;
+
+  for(i = 0; i < 3; i++) SET_STRING_ELT(out_names, i, mkChar(names[i]));
+
+  SET_VECTOR_ELT(out, 0, mkString(res.message.message));
+  SET_VECTOR_ELT(out, 1, mkString(res.message.indices));
+  SET_VECTOR_ELT(out, 2, mkString(res.message.wrap));
+  SET_NAMES(out, out_names);
+  UNPROTECT(2);
+
+  return out;
+}
+SEXP ALIKEC_res_sub_as_sxp(ALIKEC_res_sub sub) {
+  SEXP out = PROTECT(allocVector(VECSXP, 4));
+  struct ALIKEC_res_sub res = ALIKEC_compare_class(
+    target, current, ALIKEC_set_def("")
+  );
+  SEXP out_names = PROTECT(allocVector(STRSXP, 4));
+  const char * names[4] = {"success", "message", "df", "lvl"};
+  int i;
+
+  for(i = 0; i < 4; i++) SET_STRING_ELT(out_names, i, mkChar(names[i]));
+
+  SET_VECTOR_ELT(out, 0, ScalarInteger(res.success));
+  SET_VECTOR_ELT(out, 1, ALIKEC_res_msg_as_sxp(res.message));
+  SET_VECTOR_ELT(out, 2, ScalarInteger(res.df));
+  SET_VECTOR_ELT(out, 3, ScalarInteger(res.lvl));
+  SET_NAMES(out, out_names);
+  UNPROTECT(2);
+
+  return out;
+}
+
 /*
 Runs alike on an attribute, really just like running alike, but since it is on
 an attribute and we don't want a massive nested error message, provide a
