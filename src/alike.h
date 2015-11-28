@@ -22,10 +22,10 @@
     const char * message;
     const char * indices;
     const char * wrap;
-  }
+  };
   struct ALIKEC_res {
     int success;
-    ALIKEC_res_msg message;
+    struct ALIKEC_res_msg message;
     int df;
     // track indices of error, this will be allocated with as many items as
     // there are recursion levels.
@@ -38,7 +38,7 @@
 
   struct ALIKEC_res_sub {
     int success;
-    ALIKEC_res_dat message;
+    struct ALIKEC_res_msg message;
     int df;      // whether df or not, not use by all functions
     int lvl;     // Type of error used for prioritizing
   };
@@ -77,7 +77,7 @@
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env, SEXP cur_sub);
   SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
   SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
-  const char * ALIKEC_alike_internal(
+  struct ALIKEC_res ALIKEC_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_typeof(SEXP object);
@@ -87,12 +87,12 @@
   // - Internal Funs ----------------------------------------------------------
 
   SEXPTYPE ALIKEC_typeof_internal(SEXP object);
-  const char *  ALIKEC_type_alike_internal(
+  const char * ALIKEC_type_alike_internal(
     SEXP target, SEXP current, int mode, R_xlen_t max_len
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  struct ALIKEC_res_attr ALIKEC_compare_attributes_internal(
+  struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
@@ -102,7 +102,7 @@
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
-  const char * ALIKEC_lang_alike_rec(
+  struct ALIKEC_res_sub ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
     int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
