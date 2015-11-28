@@ -430,7 +430,11 @@ would be better?
 
 + Argument `x` should have `attr(x[[2]]$b, "levels")[[1]]` be \"a\" (is \"k\")
 ```
-
+Latest versions:
+```
+"`lst.6.1[[2]]$`c d`$d` should be type \"numeric\" (is \"character\")"
+"{lst.6.1[[2]]$`c d`$d} should be type \"numeric\" (is \"character\")"
+```
 ### Names
 
 Special case, particularly because we **could** use them to ascertain missingness, but what about rownames/colnames?  How comprehensive a view of the mismatch do we want to provide?  We can't realistically provide a full diff; under what circumstances do we want to point out exactly what's wrong?  Some scenarios:

@@ -605,7 +605,7 @@ substituted expression
 Note that width is only really used to control the deparse wrapping; rest of
 text is not wrapped.  Negative width will use the getOption("width");
 */
-const char * ALIKEC_alike_wrap(
+struct ALIKEC_res_fin ALIKEC_alike_wrap(
   SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings * set,
   int width
 ) {
@@ -613,10 +613,10 @@ const char * ALIKEC_alike_wrap(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
     !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
   )
-    error(
-      "Logic Error; `curr_sub` must be language."
-    );
+    error("Logic Error; `curr_sub` must be language.");
+
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
+  struct ALIKEC_res_fin res_out = {.message = res.message.mesasge, .call = ""};
 
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
@@ -688,13 +688,13 @@ const char * ALIKEC_alike_wrap(
       ALIKEC_MAX_CHAR, res.message.wrap, call_char, "", "", ""
     );
     UNPROTECT(2);
-    return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s should %s", call_pre, tmp_call, call_post,
-      res.message.message
+    res_out.call = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s%s%s", call_pre, tmp_call, call_post, ""
     );
   }
-  return "";
+  return res_out;
 }
+
 
 /*
 "fast" version doesn't allow messing with optional parameters to avoid arg
@@ -754,17 +754,19 @@ Semi-internal interface; used to be the main external one but no longer as we
 changed the interface
 */
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
-  SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
+  SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode, 
+  SEXP env, SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode,
+  SEXP width
 ) {
-  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type, lang_mod_type;
-  int supp_warn = 0, type_int = 0, attr_int = 0, lang_int = 0;
+  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type, lang_mod_type, width_type;
+  int supp_warn = 0, type_int = 0, attr_int = 0, lang_int = 0, width_int = -1;
   R_xlen_t fuzzy_int_max_len_int;
 
   int_mod_type = TYPEOF(type_mode);
   attr_mod_type = TYPEOF(attr_mode);
   lang_mod_type = TYPEOF(lang_mode);
   fuzzy_type = TYPEOF(fuzzy_int_max_len);
+  width_type = TYPEOF(width);
 
   if(
     (int_mod_type != INTSXP && int_mod_type != REALSXP) ||
@@ -797,14 +799,22 @@ SEXP ALIKEC_alike (
     error("Argument `suppress.warnings` must be TRUE or FALSE");
   if(env != R_NilValue && TYPEOF(env) != ENVSXP)
     error("Argument `env` must be NULL or an environment");
+  if(
+    (width_type != INTSXP && width_type != REALSXP) ||
+    XLENGTH(width) != 1 || (width_int = asInteger(width)) == NA_INTEGER
+  )
+    error("Argument `width` must be an integer one length vector");
 
-  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
   set->type_mode = type_int;
   set->attr_mode = attr_int;
   set->lang_mode = lang_int;
   set->fuzzy_int_max_len = fuzzy_int_max_len_int;
   set->suppress_warnings = supp_warn;
   set->env = env;
+  set->width = width_int;
 
-  return ALIKEC_string_or_true(ALIKEC_alike_internal(target, current, set));
+  return ALIKEC_string_or_true(
+    ALIKEC_alike_wrap(target, current, curr_sub, set)
+  );
 }

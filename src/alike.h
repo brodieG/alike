@@ -17,6 +17,10 @@
     union ALIKEC_index_raw ind;
     int type;               // 0 is numeric, 1 is character
   };
+  struct ALIKEC_res_fin {
+    const char * message;
+    const char * call;
+  };
   struct ALIKEC_res_msg {
     int success;
     const char * message;

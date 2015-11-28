@@ -252,7 +252,12 @@ SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
 Convert convention of zero length string == TRUE to SEXP
 */
 
-SEXP ALIKEC_string_or_true(const char * var) {
-  if(var[0]) return(mkString(var));
+SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
+  if(res.message[0]) {
+    const char * res_str = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s should %s", res.call, res.message, "", ""
+    );
+    return(mkString(var));
+  }
   return(ScalarLogical(1));
 }
