@@ -30,6 +30,7 @@ struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
   ALIKEC_set_tmp_val->in_attr = 0;
   ALIKEC_set_tmp_val->rec_lvl = 0;
   ALIKEC_set_tmp_val->rec_lvl_last = 0;
+  ALIKEC_set_tmp_val->width = -1;
 
   return ALIKEC_set_tmp_val;
 }
@@ -694,17 +695,15 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
   }
   return res_out;
 }
-
-
 /*
 "fast" version doesn't allow messing with optional parameters to avoid arg
 evaluations in R; this is basically deprecated now though still accessible
 through the non-exported `.alike2` R function
 */
 SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
-  struct ALIKEC_settings * set = ALIKEC_set_def("should ");
+  struct ALIKEC_settings * set = ALIKEC_set_def("");
   return ALIKEC_string_or_true(
-    ALIKEC_alike_internal(target, current, set).message.message
+    ALIKEC_alike_wrap(target, current, set)
   );
 }
 /*
@@ -714,14 +713,14 @@ settings
 SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
   if(settings == R_NilValue) {
     return ALIKEC_alike_fast2(target, current);
-  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 6) {
+  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 7) {
     return ALIKEC_alike(
       target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
       VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4),
       VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6)
     );
   }
-  error("Argument `settings` is not a length 5 list as expected");
+  error("Argument `settings` is not a length 6 list as expected");
   return R_NilValue;
 }
 /*
@@ -744,9 +743,8 @@ SEXP ALIKEC_alike_ext(
     );
   struct ALIKEC_settings * set = ALIKEC_set_def("");
   set->env = env;
-  int width = -1;
   return ALIKEC_string_or_true(
-    ALIKEC_alike_wrap(target, current, curr_sub, set, width)
+    ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
 }
 /*
