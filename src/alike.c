@@ -718,7 +718,7 @@ SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
     return ALIKEC_alike(
       target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
       VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4),
-      VECTOR_ELT(settings, 5)
+      VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6)
     );
   }
   error("Argument `settings` is not a length 5 list as expected");
@@ -751,7 +751,7 @@ SEXP ALIKEC_alike_ext(
 }
 /*
 Semi-internal interface; used to be the main external one but no longer as we
-changed the interface
+changed the interface, we now access this function via ALIKEC_alike_fast
 */
 SEXP ALIKEC_alike (
   SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode, 

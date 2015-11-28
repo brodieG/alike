@@ -65,6 +65,7 @@
     size_t rec_lvl;           // level of recursion
     // level of recursion last time ALIKEC_alike_internal was called
     size_t rec_lvl_last;
+    int width;                // Tell alike what screen width to assume 
   };
 
   // - Constants --------------------------------------------------------------
