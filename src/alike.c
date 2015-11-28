@@ -606,8 +606,7 @@ Note that width is only really used to control the deparse wrapping; rest of
 text is not wrapped.  Negative width will use the getOption("width");
 */
 struct ALIKEC_res_fin ALIKEC_alike_wrap(
-  SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings * set,
-  int width
+  SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings * set
 ) {
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
@@ -656,6 +655,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     } } }
     // Now deparse
 
+    int width = set->width;
     if(width < 0) width = asInteger(ALIKEC_getopt("width"));
     if(width < 10 || width > 1000) width = 80;
 
