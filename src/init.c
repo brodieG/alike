@@ -40,6 +40,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_widthcutoff = install("width.cutoff");
   ALIKEC_SYM_getOption = install("getOption");
   ALIKEC_SYM_matchcall = install("match.call");
+  ALIKEC_SYM_current = install("current");
 
   CSR_smprintf4 = (
     char *(*)(

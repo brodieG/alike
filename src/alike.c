@@ -616,7 +616,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     error("Logic Error; `curr_sub` must be language.");
 
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
-  struct ALIKEC_res_fin res_out = {.message = res.message.mesasge, .call = ""};
+  struct ALIKEC_res_fin res_out = {.message = res.message.message, .call = ""};
 
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
@@ -703,21 +703,23 @@ through the non-exported `.alike2` R function
 SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
   struct ALIKEC_settings * set = ALIKEC_set_def("");
   return ALIKEC_string_or_true(
-    ALIKEC_alike_wrap(target, current, set)
+    ALIKEC_alike_wrap(target, current, ALIKEC_SYM_current, set)
   );
 }
 /*
 Originally the "fast" version, but is now the version that allows us to specify
 settings
 */
-SEXP ALIKEC_alike_fast1(SEXP target, SEXP current, SEXP settings) {
+SEXP ALIKEC_alike_fast1(
+  SEXP target, SEXP current, SEXP curr_sub, SEXP settings
+) {
   if(settings == R_NilValue) {
     return ALIKEC_alike_fast2(target, current);
   } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 7) {
     return ALIKEC_alike(
-      target, current, VECTOR_ELT(settings, 0), VECTOR_ELT(settings, 1),
-      VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3), VECTOR_ELT(settings, 4),
-      VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6)
+      target, current, curr_sub, VECTOR_ELT(settings, 0),
+      VECTOR_ELT(settings, 1), VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3),
+      VECTOR_ELT(settings, 4), VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6)
     );
   }
   error("Argument `settings` is not a length 6 list as expected");

@@ -257,7 +257,7 @@ SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
     const char * res_str = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s should %s", res.call, res.message, "", ""
     );
-    return(mkString(var));
+    return(mkString(res_str));
   }
   return(ScalarLogical(1));
 }

@@ -65,7 +65,7 @@
     size_t rec_lvl;           // level of recursion
     // level of recursion last time ALIKEC_alike_internal was called
     size_t rec_lvl_last;
-    int width;                // Tell alike what screen width to assume 
+    int width;                // Tell alike what screen width to assume
   };
 
   // - Constants --------------------------------------------------------------
@@ -76,12 +76,15 @@
   // - Main Funs --------------------------------------------------------------
 
   SEXP ALIKEC_alike (
-    SEXP target, SEXP current, SEXP type_mode, SEXP attr_mode, SEXP env,
-    SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode
+    SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode,
+    SEXP env, SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode,
+    SEXP width
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP env, SEXP cur_sub);
-  SEXP ALIKEC_alike_fast1 (SEXP target, SEXP current, SEXP settings);
-  SEXP ALIKEC_alike_fast2 (SEXP target, SEXP current);
+  SEXP ALIKEC_alike_fast1(
+    SEXP target, SEXP current, SEXP curr_sub, SEXP settings
+  );
+  SEXP ALIKEC_alike_fast2(SEXP target, SEXP current);
   struct ALIKEC_res ALIKEC_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
@@ -119,6 +122,7 @@
   // - Utility Funs -----------------------------------------------------------
 
   struct ALIKEC_settings * ALIKEC_set_def();
+  struct ALIKEC_res_sub ALIKEC_res_sub_def();
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP obj);
   SEXP ALIKEC_test2(
@@ -134,7 +138,7 @@
   SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
-  SEXP ALIKEC_string_or_true(const char * var);
+  SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
   int ALIKEC_env_track(SEXP env, struct ALIKEC_settings_env * set);
@@ -171,5 +175,6 @@
   SEXP ALIKEC_SYM_widthcutoff;
   SEXP ALIKEC_CALL_matchcall;
   SEXP ALIKEC_CALL_matchcall_sub;
+  SEXP ALIKEC_SYM_current;
 
 #endif

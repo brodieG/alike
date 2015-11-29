@@ -147,7 +147,7 @@ alike <- function(target, current)
 #' @export
 
 .alike <- function(target, current, settings=alike_settings(env=parent.frame()))
-  .Call(ALIKEC_alike_fast1, target, current, settings)
+  .Call(ALIKEC_alike_fast1, target, current, substitute(current), settings)
 
 #' @keywords internal
 
