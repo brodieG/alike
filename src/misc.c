@@ -264,6 +264,8 @@ SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
 /*
 Basic checks that `obj` could be a data frame; does not check class, only that
 object is list and that contents are all same length
+unfortunately, may not be actually used due to how compare_class is structured
+tbd
 */
 int ALIKEC_is_dfish(SEXP obj) {
   int res = 1;
