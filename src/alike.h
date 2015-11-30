@@ -146,6 +146,8 @@
   struct ALIKEC_settings_env * ALIKEC_env_set_create(int stack_size_init);
   int ALIKEC_is_valid_name(const char *name);
   SEXP ALIKEC_is_valid_name_ext(SEXP name);
+  int ALIKEC_is_dfish(SEXP obj);
+  SEXP ALIKEC_is_dfish_ext(SEXP obj);
 
   // - Imported Funs ----------------------------------------------------------
 

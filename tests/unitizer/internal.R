@@ -419,3 +419,9 @@ unitizer_sect("valid names", {
   alike:::is_valid_name("NULL")
   alike:::is_valid_name("FALSE")
 } )
+unitizer_sect("Is dfish", {
+  df1 <- list(a=1:10, b=letters[1:10])
+  df2 <- list(a=1:10, b=letters[1:9])
+  alike:::is_dfish(df1)
+  alike:::is_dfish(df2)
+} )

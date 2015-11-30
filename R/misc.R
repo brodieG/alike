@@ -52,6 +52,9 @@ env_track <- function(env, size_init = 32)
 is_valid_name <- function(name)
   .Call(ALIKEC_is_valid_name_ext, name)
 
+is_dfish <- function(obj)
+  .Call(ALIKEC_is_dfish, obj)
+
 #' Used for testing C code
 #'
 #' @keywords internal

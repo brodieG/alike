@@ -261,3 +261,26 @@ SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
   }
   return(ScalarLogical(1));
 }
+/*
+Basic checks that `obj` could be a data frame; does not check class, only that
+object is list and that contents are all same length
+*/
+int ALIKEC_is_dfish(SEXP obj) {
+  int res = 1;
+  R_xlen_t vec_len, col_num, col_count;
+  if(TYPEOF(obj) == VECSXP) {
+    col_count = XLENGTH(obj);
+    if(col_count) {
+      vec_len = XLENGTH(VECTOR_ELT(obj, 0));
+      for(col_num = 1; col_num < col_count; col_num++) {
+        if(XLENGTH(VECTOR_ELT(obj, col_num)) != vec_len) {
+          res = 0;
+          break;
+    } } }
+  } else res = 0;
+  return res;
+}
+SEXP ALIKEC_is_dfish_ext(SEXP obj) {
+  ScalarLogical(ALIKEC_is_dfish(obj));
+}
+
