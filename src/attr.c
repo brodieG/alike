@@ -54,7 +54,7 @@ struct ALIKEC_res_sub ALIKEC_alike_attr(
   if(!res.success) {
     res_sub.success = 0;
     res_sub.message.wrap = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, special ? "%s%s(%%%%s)%s" : "%sattr(%%%%s, \"%s\")%s",
+      ALIKEC_MAX_CHAR, special ? "%s%s(%%s)%s" : "%sattr(%%s, \"%s\")%s",
       attr_attr ? "attributes(" : "", attr_name, attr_attr ? ")" : "", ""
     );
     res_sub.message.message = "be `alike` the corresponding element in target";
@@ -495,7 +495,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
         ALIKEC_compare_special_char_attrs_internal(
           prim_obj, sec_obj, set, 0
         );
-      if(dimnames_comp.success) {
+      if(!dimnames_comp.success) {
         const char * err_tok;
         if(prim_len == 2) { // matrix like
           switch(attr_i) {
@@ -512,7 +512,9 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
             CSR_len_as_chr(attr_i + (R_xlen_t) 1), "", "", ""
           );
         }
-        dimnames_comp.message.wrap = err_tok;
+        dimnames_comp.message.wrap = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, dimnames_comp.message.wrap, err_tok, "", "", ""
+        );
         return dimnames_comp;
   } } }
   return res;
