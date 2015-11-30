@@ -87,7 +87,6 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   cur_class_len = XLENGTH(current);
   R_xlen_t class_stop =
     tar_class_len > cur_class_len ? cur_class_len : tar_class_len;
-  int err_found = 0;
 
   len_delta = cur_class_len - class_stop;
 
@@ -100,7 +99,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
     tar_class = CHAR(STRING_ELT(target, tar_class_i));
     if(!res.df && !strcmp(tar_class, "data.frame")) res.df = 1;
 
-    if(!err_found && strcmp(cur_class, tar_class)) { // class mismatch
+    if(res.success && strcmp(cur_class, tar_class)) { // class mismatch
       res.success = 0;
       if(cur_class_len > 1) {
         char * err_ind = CSR_len_as_chr((R_xlen_t)(cur_class_i + 1));
@@ -359,6 +358,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
             ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
             tar_name_val, cur_name_val, "", ""
           );
+          break;
     } } }
     return res_sub;
   }
@@ -634,7 +634,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
     res.success = 0;
     res.message.message = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%shave attribute \"%s\"",
-      attr_name, tae_type == NILSXP ? "not" : "", "", ""
+      tae_type == NILSXP ? "not " : "", attr_name, "", ""
     );
   } else if(tae_type != cae_type) {
     res.success = 0;
