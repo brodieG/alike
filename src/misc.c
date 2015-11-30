@@ -281,6 +281,6 @@ int ALIKEC_is_dfish(SEXP obj) {
   return res;
 }
 SEXP ALIKEC_is_dfish_ext(SEXP obj) {
-  ScalarLogical(ALIKEC_is_dfish(obj));
+  return ScalarLogical(ALIKEC_is_dfish(obj));
 }
 
