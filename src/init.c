@@ -12,7 +12,7 @@ R_CallMethodDef callMethods[] = {
   {"test", (DL_FUNC) &ALIKEC_test, 1},
   {"test2", (DL_FUNC) &ALIKEC_test2, 2},
   {"is_valid_name_ext", (DL_FUNC) &ALIKEC_is_valid_name_ext, 1},
-  {"is_valid_dfish", (DL_FUNC) &ALIKEC_is_dfish_ext, 1},
+  {"is_dfish", (DL_FUNC) &ALIKEC_is_dfish_ext, 1},
   {"compare_names", (DL_FUNC) &ALIKEC_compare_special_char_attrs, 2},
   {"compare_dimnames", (DL_FUNC) &ALIKEC_compare_dimnames_ext, 2},
   {"compare_class", (DL_FUNC) &ALIKEC_compare_class_ext, 2},
