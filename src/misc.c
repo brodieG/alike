@@ -215,7 +215,7 @@ deparse into character
 @param lines to use as `lines` arg to ALIKEC_pad
 */
 const char * ALIKEC_deparse_chr(SEXP obj, int width_cutoff) {
-  ALIKEC_pad(ALIKEC_deparse_core(obj, width_cutoff), -1, 0);
+  return ALIKEC_pad(ALIKEC_deparse_core(obj, width_cutoff), -1, 0);
 }
 
 /*
