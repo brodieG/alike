@@ -110,7 +110,7 @@
     SEXP target, SEXP current, struct ALIKEC_settings * set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
-  struct ALIKEC_res_sub ALIKEC_lang_alike_rec(
+  const char * ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
     int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
@@ -136,6 +136,7 @@
   SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
   const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad);
   SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad);
+  const char * ALIKEC_deparse_chr(SEXP obj, int width_cutoff);
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin);

@@ -138,11 +138,6 @@ SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars, SEXP keep_at_end) {
     ALIKEC_deparse_oneline(obj, (size_t) char_int, (size_t) keep_int)
   );
 }
-/*
-deparse into character
-
-@param width_cutoff to use as `width.cutoff` param to `deparse`
-*/
 SEXP ALIKEC_deparse(SEXP obj, int width_cutoff) {
   return ALIKEC_deparse_core(obj, width_cutoff);
 }
@@ -212,6 +207,15 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
 }
 SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
   return mkString(ALIKEC_pad(obj, asInteger(lines), asInteger(pad)));
+}
+/*
+deparse into character
+
+@param width_cutoff to use as `width.cutoff` param to `deparse`
+@param lines to use as `lines` arg to ALIKEC_pad
+*/
+const char * ALIKEC_deparse_chr(SEXP obj, int width_cutoff) {
+  ALIKEC_pad(ALIKEC_deparse_core(obj, width_cutoff), -1, 0);
 }
 
 /*

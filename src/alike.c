@@ -165,6 +165,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       const char * err_lang = ALIKEC_lang_alike_internal(target, current, set);
       if(err_lang[0]) {
         err = 1;
+        res.success = 0;
         res.message = ALIKEC_res_msg_def(err_lang);
     } }
     int is_fun = 0;

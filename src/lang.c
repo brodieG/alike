@@ -42,7 +42,7 @@ void ALIKEC_symb_mark(SEXP obj) {
     SEXPTYPE obj_type = TYPEOF(obj);
     if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
 
-    const char * car_dep = ALIKEC_deparse(CAR(obj), 1, -1);
+    const char * car_dep = ALIKEC_deparse(CAR(obj), -1);
     SETCAR(
       obj,
       install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
@@ -130,14 +130,14 @@ const char * ALIKEC_lang_obj_compare(
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\") for `%s`",
-      ALIKEC_deparse(CAR(target), 1, -1), type2char(csc_type),
-      ALIKEC_deparse(current, 1, -1), ""
+      ALIKEC_deparse(CAR(target), -1), type2char(csc_type),
+      ALIKEC_deparse(current, -1), ""
     );
   } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
     ALIKEC_symb_mark(cur_par);
     return CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\") for `%s`",
-      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse(current, 1, -1), ""
+      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse(current, -1), ""
     );
   } else if (tsc_type == LANGSXP) {
     const char * res;
@@ -157,7 +157,7 @@ const char * ALIKEC_lang_obj_compare(
       ALIKEC_MAX_CHAR,
       "be \"%s\" (is \"%s\") for token `%s`",
       type2char(tsc_type), type2char(csc_type),
-      ALIKEC_deparse(current, 1, -1), ""
+      ALIKEC_deparse(current, -1), ""
     );
   } else if (formula && !R_compute_identical(target, current, 16)) {
     // Maybe this shouldn't be "identical", but too much of a pain in the butt
@@ -202,7 +202,7 @@ const char * ALIKEC_lang_alike_rec(
   if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
     char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), 1, -1),
+      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse(CAR(target), -1),
       ALIKEC_deparse(CAR(current), 1, -1), "", ""
     );
     ALIKEC_symb_mark(current);
@@ -300,7 +300,8 @@ const char * ALIKEC_lang_alike_internal(
   size_t * tar_varnum = &tartmp;
   size_t * cur_varnum = &curtmp;
 
-  SEXP match_call = PROTECT(  // Can't figure out how to do this on init; cost ~60ns
+  // Can't figure out how to do this on init; cost ~60ns
+  SEXP match_call = PROTECT(
     list3(
       ALIKEC_SYM_matchcall, R_NilValue,
       list2(R_QuoteSymbol, R_NilValue)
@@ -354,7 +355,7 @@ const char * ALIKEC_lang_alike_internal(
         max_chars - (strlen(res) + strlen(set->prepend) + 4 + 1);
       int err_dep_len, has_nl = 0;
       const char * err_dep =
-        ALIKEC_deparse(CAR(curr_cpy_par), -1, max_chars_net);
+        ALIKEC_deparse(CAR(curr_cpy_par), -1);
       for(err_dep_len = 0; err_dep[err_dep_len]; err_dep_len++) // calc dep length
         if(err_dep[err_dep_len] == '\n') has_nl++;
 
