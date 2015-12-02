@@ -199,10 +199,13 @@ const char * ALIKEC_lang_alike_rec(
       cur_varnum, formula, match_call, match_env, set
   );}
   SEXP tar_fun = CAR(target), cur_fun = CAR(current);
-  if(tar_fun != R_NilValue && tar_fun != cur_fun) {  // Actual fun call must match exactly, unless NULL
+
+  // Actual fun call must match exactly, unless NULL
+  if(tar_fun != R_NilValue && tar_fun != cur_fun) {
     char * res = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "be a call to `%s` (is a call to `%s`)", ALIKEC_deparse_chr(CAR(target), -1),
+      "be a call to `%s` (is a call to `%s`)",
+      ALIKEC_deparse_chr(CAR(target), -1),
       ALIKEC_deparse_chr(CAR(current), -1), "", ""
     );
     ALIKEC_symb_mark(current);
@@ -218,7 +221,8 @@ const char * ALIKEC_lang_alike_rec(
 
   if(match_env != R_NilValue && set->lang_mode != 1) {
     target = ALIKEC_match_call(target, match_call, match_env);
-    SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));  // want this change to persist back to calling fun
+    // want this change to persist back to calling fun
+    SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));
     current = CAR(cur_par);
   }
   SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
@@ -263,7 +267,8 @@ const char * ALIKEC_lang_alike_rec(
     if(res[0]) return(res);
   }
   if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
-    SETCAR(cur_par, R_NilValue);  // Unorthodox way of signaling that we don't wan to show function call
+    // Unorthodox way of signaling that we don't wan to show function call
+    SETCAR(cur_par, R_NilValue);
     return (const char *) CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be the same length (is %s)",
       tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
