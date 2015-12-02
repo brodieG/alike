@@ -288,52 +288,12 @@ Utility functions for updating index lest for error reporting.  General logic
 is to track depth of recursion, and when an error occurs, allocate enough
 space for as many ALIKEC_index structs as there is recursion depth.
 */
-/*-----------------------------------------------------------------------------\
-\-----------------------------------------------------------------------------*/
-/*
-Recursion functions
-
-The first set here manages tracking the indices during recursion
-*/
-void ALIKEC_res_ind_set(
-  struct ALIKEC_res res, struct ALIKEC_index ind, size_t lvl
-) {
-  // Find correct spot in previously allocated indices spaces, clearly relies on
-  // lvl being exactly correct...
-
-  struct ALIKEC_index * cur_ind = res.indices + lvl - 1;
-  *cur_ind = ind;
-}
-void ALIKEC_res_ind_chr(struct ALIKEC_res res, const char * ind, size_t lvl) {
-  union ALIKEC_index_raw ind_u = {.chr = ind};
-  ALIKEC_res_ind_set(res, (struct ALIKEC_index) {ind_u, 1}, lvl);
-}
-void ALIKEC_res_ind_num(struct ALIKEC_res res, R_xlen_t ind, size_t lvl) {
-  union ALIKEC_index_raw ind_u = {.num = ind};
-  ALIKEC_res_ind_set(res, (struct ALIKEC_index) {ind_u, 0}, lvl);
-}
-struct ALIKEC_res ALIKEC_res_ind_init(
-  struct ALIKEC_res res, struct ALIKEC_settings * set
-) {
-  if(set->rec_lvl <= set->rec_lvl_last)
-    error(
-      "Logic Error: negative recursion level detected %d %d",
-      set->rec_lvl, set->rec_lvl_last
-    );
-  set->rec_lvl--;
-  size_t rec_off = set->rec_lvl - set->rec_lvl_last;
-  res.rec_lvl = rec_off;
-  if(rec_off) {
-    res.indices = (struct ALIKEC_index *)
-      R_alloc(rec_off, sizeof(struct ALIKEC_index));
-  }
-  return res;
-}
 /*
 Handle recursive types; these include VECSXP, environments, and pair lists.
 */
 struct ALIKEC_res ALIKEC_alike_rec(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_rec_track rec,
+  struct ALIKEC_settings * set
 ) {
   /*
   Recurse through various types of recursive structures.
@@ -353,20 +313,18 @@ struct ALIKEC_res ALIKEC_alike_rec(
   */
   void R_CheckUserInterrupt(void);
 
-  size_t rec_lvl_old = set->rec_lvl;
-  set->rec_lvl++;  //Mark recursion depth
+  // normal logic, which will have checked length and attributes, etc.
+
+  struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+  if(!res.success) return res;
+
+  // Increase recursion
+
+  size_t rec_lvl_old = rec.lvl;
+  rec.lvl++;
   if(rec_lvl_old >= set->rec_lvl)
     error("Logic Error: recursion stack depth exceeded 264 - shouldn't happen");
 
-  // normal logic, which will have checked length and attributes, etc.
-
-  struct ALIKEC_res res0 = ALIKEC_alike_obj(target, current, set);
-
-  if(!res0.success) {
-    res0 = ALIKEC_res_ind_init(res0, set);  // Initialize index tracking
-    return res0;
-  }
-  struct ALIKEC_res res1 = ALIKEC_res_def();
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
 
@@ -374,19 +332,19 @@ struct ALIKEC_res ALIKEC_alike_rec(
     R_xlen_t i;
 
     for(i = 0; i < tar_len; i++) {
-      res1 = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), set
+      res = ALIKEC_alike_rec(
+        VECTOR_ELT(target, i), VECTOR_ELT(current, i), rec, set
       );
-      if(!res1.success) {
+      if(!res.success) {
         SEXP vec_names = getAttrib(target, R_NamesSymbol);
         const char * ind_name;
         if(
           vec_names == R_NilValue ||
           !((ind_name = CHAR(STRING_ELT(vec_names, i))))[0]
         )
-          ALIKEC_res_ind_num(res1, i + 1, set->rec_lvl);
+          res.rec = ALIKEC_res_ind_num(res.rec, i + 1);
         else
-          ALIKEC_res_ind_chr(res1, ind_name, set->rec_lvl);
+          res.rec = ALIKEC_res_ind_chr(res.rec, ind_name);
         break;
       }
     }
@@ -395,6 +353,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
     if(!set->env_set) {
       set->env_set = ALIKEC_env_set_create(16);
     }
+    error("Looks like no_rec is specifically for environments");
     if(!set->no_rec) set->no_rec = !ALIKEC_env_track(target, set->env_set);
     if(set->no_rec < 0 && !set->suppress_warnings) {
       warning(
@@ -404,12 +363,12 @@ struct ALIKEC_res ALIKEC_alike_rec(
       set->no_rec = 1; // so we only get warning once
     }
     if(set->no_rec || target == current) {
-      res1.success = 1;
+      res.success = 1;
     } else {
       if(target == R_GlobalEnv && current != R_GlobalEnv) {
-        res1.success = 0;
-        res1.message.message = "be the global environment";
-        return(res1);
+        res.success = 0;
+        res.message.message = "be the global environment";
+        return(res);
       }
       SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
       R_xlen_t tar_name_len = XLENGTH(tar_names), i;
@@ -421,23 +380,23 @@ struct ALIKEC_res ALIKEC_alike_rec(
         SEXP var_name = PROTECT(install(var_name_chr));
         SEXP var_cur_val = findVarInFrame(current, var_name);
         if(var_cur_val == R_UnboundValue) {
-          res1.success = 0;
-          res1.message.message = CSR_smprintf4(
+          res.success = 0;
+          res.message.message = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "contain variable `%s`",
             CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
           );
           // Initialize index tracking since this is not a recursion error
 
-          res1 = ALIKEC_res_ind_init(res1, set);
+          res = ALIKEC_res_ind_init(res, set);
           UNPROTECT(2);
-          return(res1);
+          return(res);
         }
-        res1 = ALIKEC_alike_rec(
+        res = ALIKEC_alike_rec(
           findVarInFrame(target, var_name), var_cur_val, set
         );
         UNPROTECT(1);
-        if(!res1.success) {
-          ALIKEC_res_ind_chr(res1, var_name_chr, set->rec_lvl);
+        if(!res.success) {
+          ALIKEC_res_ind_chr(res, var_name_chr, set->rec_lvl);
           break;
         }
       }
@@ -455,29 +414,31 @@ struct ALIKEC_res ALIKEC_alike_rec(
       SEXP tar_tag = TAG(tar_sub);
       SEXP tar_tag_chr = PRINTNAME(tar_tag);
       if(tar_tag != R_NilValue && tar_tag != TAG(cur_sub)) {
-        res1.message.message = CSR_smprintf4(
+        res.message.message = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
           CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
         );
-        res1.success = 0;
-        res1 = ALIKEC_res_ind_init(res1, set);  // Initialize index tracking
-        return res1;
+        res.success = 0;
+        res = ALIKEC_res_ind_init(res, set);  // Initialize index tracking
+        return res;
       }
-      res1 = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), set);
-      if(!res1.success) {
+      res = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), set);
+      if(!res.success) {
         if(tar_tag != R_NilValue)
-          ALIKEC_res_ind_chr(res1, CHAR(asChar(tar_tag_chr)), set->rec_lvl);
+          res.rec =
+            ALIKEC_res_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)), set->rec_lvl);
         else
-          ALIKEC_res_ind_num(res1, i + 1, set->rec_lvl);
+          res.rec =
+            ALIKEC_res_ind_num(res.rec, i + 1, set->rec_lvl);
         break;
       }
     }
   } else {
-    res1 = res0;
+    res = res;
   }
-  res1.df = res0.df;
+  res.df = res.df;
   set->rec_lvl--;
-  return res1;
+  return res;
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -755,7 +716,7 @@ Semi-internal interface; used to be the main external one but no longer as we
 changed the interface, we now access this function via ALIKEC_alike_fast
 */
 SEXP ALIKEC_alike (
-  SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode, 
+  SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode,
   SEXP env, SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode,
   SEXP width
 ) {

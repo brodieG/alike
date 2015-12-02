@@ -27,14 +27,18 @@
     const char * indices;
     const char * wrap;
   };
+  // track indices of error, this will be allocated with as many items as
+  // there are recursion levels.
+
+  struct ALIKEC_rec_track {
+    struct ALIKEC_index * indices;
+    size_t rec_lvl;        // max recursion depth
+  };
   struct ALIKEC_res {
     int success;
     struct ALIKEC_res_msg message;
     int df;
-    // track indices of error, this will be allocated with as many items as
-    // there are recursion levels.
-    struct ALIKEC_index * indices;
-    size_t rec_lvl;        // max recursion depth
+    struct ALIKEC_rec_track rec;
   };
   // Structure used for functions called by 'alike_obj', main difference with
   // the return value of 'alike_obj' is 'indices', since that is a more complex
