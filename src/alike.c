@@ -290,6 +290,9 @@ space for as many ALIKEC_index structs as there is recursion depth.
 */
 /*
 Handle recursive types; these include VECSXP, environments, and pair lists.
+
+NOTE: do not recurse into environments that are part of attributes as otherwise
+this setup may not prevent infinite recursion.
 */
 struct ALIKEC_res ALIKEC_alike_rec(
   SEXP target, SEXP current, struct ALIKEC_rec_track rec,
@@ -312,7 +315,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
 
   // Increase recursion level
 
-  rec <- ALIKEC_rec_inc(rec);
+  res.rec <- ALIKEC_rec_inc(rec);
 
   // normal logic, which will have checked length and attributes, etc.
 
@@ -327,7 +330,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
 
     for(i = 0; i < tar_len; i++) {
       res = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), rec, set
+        VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
       );
       if(!res.success) {
         SEXP vec_names = getAttrib(target, R_NamesSymbol);
@@ -342,12 +345,15 @@ struct ALIKEC_res ALIKEC_alike_rec(
         break;
       }
     }
-  } else if (tar_type == ENVSXP && !set->in_attr) {
+  } else if (tar_type == ENVSXP && !set.in_attr) {
     // Need to guard against possible circular reference in the environments
+    // Note it is important that we cannot recurse when checking environments
+    // in attributes as othrewise we could get inifinite recursion since
+    // rec tracking is specific to each call to ALIKEC_alike_internal
+
     if(res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
 
-    error("Looks like no_rec is specifically for environments");
-    if(!res.rec.envs.no_rec) 
+    if(!res.rec.envs.no_rec)
       res.rec.envs.no_rec = !ALIKEC_env_track(target, res.rec.envs);
     if(res.rec.envs.no_rec < 0 && !set.suppress_warnings) {
       warning(
@@ -362,39 +368,35 @@ struct ALIKEC_res ALIKEC_alike_rec(
       if(target == R_GlobalEnv && current != R_GlobalEnv) {
         res.success = 0;
         res.message.message = "be the global environment";
-        return(res);
-      }
-      SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
-      R_xlen_t tar_name_len = XLENGTH(tar_names), i;
+      } else {
+        SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
+        R_xlen_t tar_name_len = XLENGTH(tar_names), i;
 
-      if(tar_name_len != tar_len)
-        error("Logic Error: mismatching name-env lengths; contact maintainer");
-      for(i = 0; i < tar_len; i++) {
-        const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
-        SEXP var_name = PROTECT(install(var_name_chr));
-        SEXP var_cur_val = findVarInFrame(current, var_name);
-        if(var_cur_val == R_UnboundValue) {
-          res.success = 0;
-          res.message.message = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "contain variable `%s`",
-            CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
-          );
-          // Initialize index tracking since this is not a recursion error
-
-          res = ALIKEC_res_ind_init(res, set);
-          UNPROTECT(2);
-          return(res);
-        }
-        res = ALIKEC_alike_rec(
-          findVarInFrame(target, var_name), var_cur_val, set
-        );
+        if(tar_name_len != tar_len)
+          error("Logic Error: mismatching name-env lengths; contact maintainer");
+        for(i = 0; i < tar_len; i++) {
+          const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
+          SEXP var_name = PROTECT(install(var_name_chr));
+          SEXP var_cur_val = findVarInFrame(current, var_name);
+          if(var_cur_val == R_UnboundValue) {
+            res.success = 0;
+            res.message.message = CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "contain variable `%s`",
+              CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
+            );
+            UNPROTECT(1);
+            break;
+          } else {
+            res = ALIKEC_alike_rec(
+              findVarInFrame(target, var_name), var_cur_val, res.rec, set
+            );
+            UNPROTECT(1);
+            if(!res.success) {
+              res.rec = ALIKEC_res_ind_chr(res.rec, var_name_chr);
+              break;
+        } } }
         UNPROTECT(1);
-        if(!res.success) {
-          ALIKEC_res_ind_chr(res, var_name_chr, set->rec_lvl);
-          break;
-        }
       }
-      UNPROTECT(1);
     }
   } else if (tar_type == LISTSXP) {
     SEXP tar_sub, cur_sub;
@@ -413,25 +415,19 @@ struct ALIKEC_res ALIKEC_alike_rec(
           CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
         );
         res.success = 0;
-        res = ALIKEC_res_ind_init(res, set);  // Initialize index tracking
-        return res;
-      }
-      res = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), set);
-      if(!res.success) {
-        if(tar_tag != R_NilValue)
-          res.rec =
-            ALIKEC_res_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)), set->rec_lvl);
-        else
-          res.rec =
-            ALIKEC_res_ind_num(res.rec, i + 1, set->rec_lvl);
         break;
-      }
-    }
-  } else {
-    res = res;
-  }
-  res.df = res.df;
-  set->rec_lvl--;
+      } else {
+        res = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), res.rec, set);
+        if(!res.success) {
+          if(tar_tag != R_NilValue)
+            res.rec =
+              ALIKEC_res_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)));
+          else
+            res.rec =
+              ALIKEC_res_ind_num(res.rec, i + 1);
+          break;
+  } } } }
+  res.rec.lvl--;
   return res;
 }
 /*-----------------------------------------------------------------------------\
