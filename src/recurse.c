@@ -46,19 +46,42 @@ Allocate the storage for the indices; should be done at first error, then
 as we unwind recursion we record the values of the indices for each level
 prior to the error
 
-rec.lvl is always greater than rec.lvl_start if there is recursion; if there
-is no recursion then the two values are the same.
+By design the rec.lvl should be 0 if there is no recursion.
 */
 struct ALIKEC_rec_track ALIKEC_rec_ind_init(struct ALIKEC_rec_track rec) {
-  if(rec.lvl < rec.lvl_start)
-    error(
-      "Logic Error: negative recursion level detected %d %d",
-      rec.lvl, rec.lvl_start
-    );
-  size_t rec_off = rec.lvl - rec.lvl_start;
-  if(rec_off) {
+  if(rec.lvl) {
     rec.indices = (struct ALIKEC_index *)
-      R_alloc(rec_off, sizeof(struct ALIKEC_index));
+      R_alloc(rec.lvl, sizeof(struct ALIKEC_index));
+  }
+  return rec;
+}
+struct ALIKEC_rec_track ALIKEC_rec_init() {
+  return struct ALIKEC_rec_track rec_track = {
+    .init = 0;     // will be set to 1 on first recursion
+    .lvl = 0;
+    .indices = 0;  // NULL pointer
+    .envs = 0;     // NULL pointer
+    .gp = 0;
+  };
+}
+/*
+increment recursion
+*/
+struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track rec) {
+  if(!rec.init) {
+    if(rec.lvl)
+      error(
+        "Logic Error: lvl should be zero in rec tracker; contact maintainer."
+      );
+    rec.init = 1;
+  } else {
+    size_t lvl_old = rec.lvl;
+    rec.lvl++;
+    if(rec.lvl < lvl_old)
+      error(
+        "Logic Error: %s; contact maintainer.",
+        "max recursion depth exceeded, this really shouldn't happen"
+      );
   }
   return rec;
 }

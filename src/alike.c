@@ -293,13 +293,10 @@ Handle recursive types; these include VECSXP, environments, and pair lists.
 */
 struct ALIKEC_res ALIKEC_alike_rec(
   SEXP target, SEXP current, struct ALIKEC_rec_track rec,
-  struct ALIKEC_settings * set
+  struct ALIKEC_settings set
 ) {
   /*
   Recurse through various types of recursive structures.
-  VERY IMPORTANT: there are several return points throughout here that don't
-  actually imply recursion; make sure to initialize the index tracking when
-  that happens.  Note that exit points to ALIKEC_alike_rec don't require this.
 
   Side note: probably don't need to generate full error report unless we're on
   outermost `ALIKEC_alike_internal` call since we don't display the inner
@@ -313,17 +310,14 @@ struct ALIKEC_res ALIKEC_alike_rec(
   */
   void R_CheckUserInterrupt(void);
 
+  // Increase recursion level
+
+  rec <- ALIKEC_rec_inc(rec);
+
   // normal logic, which will have checked length and attributes, etc.
 
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
   if(!res.success) return res;
-
-  // Increase recursion
-
-  size_t rec_lvl_old = rec.lvl;
-  rec.lvl++;
-  if(rec_lvl_old >= set->rec_lvl)
-    error("Logic Error: recursion stack depth exceeded 264 - shouldn't happen");
 
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
@@ -350,19 +344,19 @@ struct ALIKEC_res ALIKEC_alike_rec(
     }
   } else if (tar_type == ENVSXP && !set->in_attr) {
     // Need to guard against possible circular reference in the environments
-    if(!set->env_set) {
-      set->env_set = ALIKEC_env_set_create(16);
-    }
+    if(res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
+
     error("Looks like no_rec is specifically for environments");
-    if(!set->no_rec) set->no_rec = !ALIKEC_env_track(target, set->env_set);
-    if(set->no_rec < 0 && !set->suppress_warnings) {
+    if(!res.rec.envs.no_rec) 
+      res.rec.envs.no_rec = !ALIKEC_env_track(target, res.rec.envs);
+    if(res.rec.envs.no_rec < 0 && !set.suppress_warnings) {
       warning(
         "`alike` environment stack exhausted; %s.",
         "unable to recurse any further into environments"
       );
-      set->no_rec = 1; // so we only get warning once
+      res.rec.envs.no_rec = 1; // so we only get warning once
     }
-    if(set->no_rec || target == current) {
+    if(res.rec.envs.no_rec || target == current) {
       res.success = 1;
     } else {
       if(target == R_GlobalEnv && current != R_GlobalEnv) {
@@ -779,4 +773,4 @@ SEXP ALIKEC_alike (
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
-}
+

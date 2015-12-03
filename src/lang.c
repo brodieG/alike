@@ -3,7 +3,6 @@
 // Moves pointer on language object to skip any `(` calls since those are
 // already accounted for in parsing and as such don't add anything
 
-
 SEXP ALIKEC_skip_paren(SEXP lang) {
   if(TYPEOF(lang) != LANGSXP) return(lang);
   while(

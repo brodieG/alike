@@ -27,12 +27,27 @@
     const char * indices;
     const char * wrap;
   };
+  // Keep track of environments in recursion to make sure we don't get into a
+  // infinite recursion loop
+
+  struct ALIKEC_env_track {
+    int stack_size;
+    int stack_ind;
+    int stack_mult;
+    int stack_size_init;
+    int no_rec;       // prevent further recursion into environments
+    SEXP * env_stack;
+    int debug;
+  };
   // track indices of error, this will be allocated with as many items as
   // there are recursion levels.
 
   struct ALIKEC_rec_track {
+    int init;          // whether there has actually been recursion
+    size_t lvl;        // max recursion depth so far
     struct ALIKEC_index * indices;
-    size_t rec_lvl;        // max recursion depth
+    struct ALIKEC_env_track * envs;
+    int gp;            // general purpose flag
   };
   struct ALIKEC_res {
     int success;
@@ -50,25 +65,10 @@
     int df;      // whether df or not, not use by all functions
     int lvl;     // Type of error used for prioritizing
   };
-  struct ALIKEC_settings_env {
-    int stack_size;
-    int stack_ind;
-    int stack_mult;
-    int stack_size_init;
-    SEXP * env_stack;
-    int debug;
-  };
   struct ALIKEC_settings {
     int type_mode, attr_mode, lang_mode, fuzzy_int_max_len, suppress_warnings;
     const char * prepend;     // no longer in use
     SEXP env;                 // what envto look for functions to match call in
-    // Used to track whether we've encountered an environment before
-    struct ALIKEC_settings_env * env_set;
-    int no_rec;               // block futher recursion into environments
-    size_t in_attr;           // whether we're recursing through attributes
-    size_t rec_lvl;           // level of recursion
-    // level of recursion last time ALIKEC_alike_internal was called
-    size_t rec_lvl_last;
     int width;                // Tell alike what screen width to assume
   };
 
@@ -153,6 +153,7 @@
   SEXP ALIKEC_is_valid_name_ext(SEXP name);
   int ALIKEC_is_dfish(SEXP obj);
   SEXP ALIKEC_is_dfish_ext(SEXP obj);
+  struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track);
 
   // - Imported Funs ----------------------------------------------------------
 
