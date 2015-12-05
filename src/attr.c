@@ -47,7 +47,7 @@ stop recursion since we're not returning the nested error message.
 
 struct ALIKEC_res_sub ALIKEC_alike_attr(
   SEXP target, SEXP current, const char * attr_name,
-  struct ALIKEC_settings * set, int special, int attr_attr
+  struct ALIKEC_settings set, int special, int attr_attr
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
@@ -73,7 +73,7 @@ implicit class defined by ALIKEC_mode.
 Will set tar_is_df to 1 if prim is data frame
 */
 struct ALIKEC_res_sub ALIKEC_compare_class(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   if(TYPEOF(current) != STRSXP || TYPEOF(target) != STRSXP)
     return ALIKEC_alike_attr(target, current, "class", set, 1, 0);
@@ -149,7 +149,7 @@ tar_obj and cur_obj are the objects the dimensions are the attributes off.
 */
 struct ALIKEC_res_sub ALIKEC_compare_dims(
   SEXP target, SEXP current, SEXP tar_obj, SEXP cur_obj,
-  struct ALIKEC_settings * set
+  struct ALIKEC_settings set
 ) {
   // Invalid dims
 
@@ -307,7 +307,7 @@ allow for stuff like: `names(dimnames(object))` and of subbing in the attribute
 names.
 */
 struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set, int strict
+  SEXP target, SEXP current, struct ALIKEC_settings set, int strict
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
@@ -379,7 +379,7 @@ SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
 Compare dimnames
 */
 struct ALIKEC_res_sub ALIKEC_compare_dimnames(
-  SEXP prim, SEXP sec, struct ALIKEC_settings * set
+  SEXP prim, SEXP sec, struct ALIKEC_settings set
 ) {
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
   if(sec == R_NilValue) {
@@ -532,7 +532,7 @@ Compare time series attribute; some day will have to actually get an error
 display that can handle floats
 */
 struct ALIKEC_res_sub ALIKEC_compare_ts(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   SEXPTYPE tar_type = TYPEOF(target);
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
@@ -574,7 +574,7 @@ SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current) {
 \-----------------------------------------------------------------------------*/
 
 struct ALIKEC_res_sub  ALIKEC_compare_levels(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   if(TYPEOF(target) == STRSXP && TYPEOF(current) == STRSXP) {
     struct ALIKEC_res_sub res = ALIKEC_compare_special_char_attrs_internal(
@@ -609,7 +609,7 @@ would cause a mismatch seem pretty rare
 
 struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
   SEXP target, SEXP current, const char * attr_name,
-  struct ALIKEC_settings * set
+  struct ALIKEC_settings set
 ) {
   R_xlen_t tae_val_len, cae_val_len;
   SEXPTYPE tae_type = TYPEOF(target), cae_type = TYPEOF(current);
@@ -670,7 +670,7 @@ Code originally inspired by `R_compute_identical` (thanks R CORE)
 */
 
 struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   /*
   Array to store major errors from, in order:
@@ -945,7 +945,7 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
   )
     error("Argument `mode` must be a one length integer like vector");
 
-  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  struct ALIKEC_settings set = ALIKEC_set_def("");
   set->attr_mode = asInteger(attr_mode);
 
   struct ALIKEC_res_sub comp_res =

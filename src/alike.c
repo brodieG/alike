@@ -15,24 +15,21 @@ in memory) so we have to think carefully when modifying them.
 An alternative would have been to just instantiate new settings objects for each
 recursion, but that seems potentially wasteful (though we haven't tested).
 */
-struct ALIKEC_settings * ALIKEC_set_def(const char * prepend) {
-  struct ALIKEC_settings * ALIKEC_set_tmp_val =
-    (struct ALIKEC_settings *) R_alloc(1, sizeof(struct ALIKEC_settings));
-
-  ALIKEC_set_tmp_val->type_mode = 0;
-  ALIKEC_set_tmp_val->attr_mode = 0;
-  ALIKEC_set_tmp_val->lang_mode = 0;
-  ALIKEC_set_tmp_val->fuzzy_int_max_len = 100;
-  ALIKEC_set_tmp_val->env = R_NilValue;
-  ALIKEC_set_tmp_val->prepend = prepend;
-  ALIKEC_set_tmp_val->env_set = 0;
-  ALIKEC_set_tmp_val->no_rec = 0;
-  ALIKEC_set_tmp_val->in_attr = 0;
-  ALIKEC_set_tmp_val->rec_lvl = 0;
-  ALIKEC_set_tmp_val->rec_lvl_last = 0;
-  ALIKEC_set_tmp_val->width = -1;
-
-  return ALIKEC_set_tmp_val;
+struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
+  return struct ALIKEC_settings {
+    .type_mode = 0;
+    .attr_mode = 0;
+    .lang_mode = 0;
+    .fuzzy_int_max_len = 100;
+    .env = R_NilValue;
+    .prepend = prepend;
+    .env_set = 0;
+    .no_rec = 0;
+    .in_attr = 0;
+    .rec_lvl = 0;
+    .rec_lvl_last = 0;
+    .width = -1;
+  };
 }
 /*
 Other struct initialization functions
@@ -183,7 +180,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     //  to symbol symbol
 
     err_type = ALIKEC_type_alike_internal(
-      target, current, set->type_mode, set->fuzzy_int_max_len
+      target, current, set.type_mode, set.fuzzy_int_max_len
     );
     if(!err && !is_lang && err_type[0]) {
       err = 1;
@@ -246,7 +243,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   }
   // - Known Limitations -------------------------------------------------------
 
-  if(!set->suppress_warnings) {
+  if(!set.suppress_warnings) {
     switch(tar_type) {
       case NILSXP:
       case LGLSXP:
@@ -427,7 +424,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
               ALIKEC_res_ind_num(res.rec, i + 1);
           break;
   } } } }
-  res.rec.lvl--;
   return res;
 }
 /*-----------------------------------------------------------------------------\
@@ -441,16 +437,16 @@ something like "should be ...".
 struct ALIKEC_res ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings * set
 ) {
-  if(set->type_mode < 0 || set->type_mode > 2)
+  if(set.type_mode < 0 || set.type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
-  if(set->attr_mode < 0 || set->attr_mode > 2)
+  if(set.attr_mode < 0 || set.attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
-  size_t rec_lvl_last_prev = set->rec_lvl_last;
+  size_t rec_lvl_last_prev = set.rec_lvl_last;
 
   // Allows us to keep track of recursion depth between calls to
   // ALIKEC_alike_internal
 
-  set->rec_lvl_last = set->rec_lvl;
+  set.rec_lvl_last = set.rec_lvl;
 
   struct ALIKEC_res res = ALIKEC_res_def();
 
@@ -467,7 +463,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
 
     res = ALIKEC_alike_rec(target, current, set);
     if(res.success) {
-      set->rec_lvl_last = rec_lvl_last_prev;
+      set.rec_lvl_last = rec_lvl_last_prev;
       return res;
     }
   }
@@ -477,25 +473,26 @@ struct ALIKEC_res ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(res.rec_lvl) {  // Recursion occurred
+  if(res.rec.lvl) {  // Recursion occurred
+    error("make sure recursion levels are correct given new structure");
     // Scan through all indices to calculate size of required vector
 
     char * err_chr_index, * err_chr_indices;
     const char * err_chr_index_val;
     size_t err_size = 0, ind_size_max = 0, ind_size;
 
-    for(size_t i = 0; i < res.rec_lvl; i++) {
-      switch(res.indices[i].type) {
+    for(size_t i = 0; i < res.rec.lvl; i++) {
+      switch(res.rec.indices[i].type) {
         case 0:
-          ind_size = CSR_len_chr_len(res.indices[i].ind.num);
+          ind_size = CSR_len_chr_len(res.rec.indices[i].ind.num);
           break;
         case 1:
-          ind_size = CSR_strmlen(res.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
+          ind_size = CSR_strmlen(res.rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
           error(
             "Logic Error: unexpected index type %d; contact maintainer.",
-            res.indices[i].type
+            res.rec.indices[i].type
           );
         }
       }
@@ -505,23 +502,23 @@ struct ALIKEC_res ALIKEC_alike_internal(
     // Allways alloacate as if index will be in [[index]] form as that is
     // worst case
     err_chr_indices = (char *) R_alloc(
-      err_size + 4 * res.rec_lvl + 1, sizeof(char)
+      err_size + 4 * res.rec.lvl + 1, sizeof(char)
     );
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
     err_chr_indices[0] = '\0';
 
-    for(size_t i = 0; i < res.rec_lvl; i++) {
+    for(size_t i = 0; i < res.rec.lvl; i++) {
       const char * index_tpl = "[[%s]]";
-      switch(res.indices[i].type) {
+      switch(res.rec.indices[i].type) {
         case 0:
           {
             err_chr_index_val =
-              (const char *) CSR_len_as_chr(res.indices[i].ind.num);
+              (const char *) CSR_len_as_chr(res.rec.indices[i].ind.num);
           }
           break;
         case 1:
           {
-            err_chr_index_val = res.indices[i].ind.chr;
+            err_chr_index_val = res.rec.indices[i].ind.chr;
             if(!ALIKEC_is_valid_name(err_chr_index_val)){
               index_tpl = "$`%s`";
             } else {
@@ -531,14 +528,14 @@ struct ALIKEC_res ALIKEC_alike_internal(
           break;
         default:
           error(
-            "Logic Error: unexpected index type (2) %d", res.indices[i].type
+            "Logic Error: unexpected index type (2) %d", res.rec.indices[i].type
           );
       }
       // Used to leave off last index for possible different treatment if
       // dealing with a DF, but giving that up for now
 
       sprintf(err_chr_index, index_tpl, err_chr_index_val);
-      if(i < res.rec_lvl) {  // all these chrs should be terminated...
+      if(i < res.rec.lvl) {  // all these chrs should be terminated...
         strcat(err_chr_indices, err_chr_index);
       }
     }
@@ -548,7 +545,6 @@ struct ALIKEC_res ALIKEC_alike_internal(
 
     res.message.indices = err_chr_indices;
   }
-  set->rec_lvl_last = rec_lvl_last_prev;
   return res;
 }
 /*
@@ -608,7 +604,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     } } }
     // Now deparse
 
-    int width = set->width;
+    int width = set.width;
     if(width < 0) width = asInteger(ALIKEC_getopt("width"));
     if(width < 10 || width > 1000) width = 80;
 
@@ -696,7 +692,7 @@ SEXP ALIKEC_alike_ext(
       "Logic Error; `curr_sub` must be language."
     );
   struct ALIKEC_settings * set = ALIKEC_set_def("");
-  set->env = env;
+  set.env = env;
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
@@ -757,16 +753,16 @@ SEXP ALIKEC_alike (
   )
     error("Argument `width` must be an integer one length vector");
 
-  struct ALIKEC_settings * set = ALIKEC_set_def("");
-  set->type_mode = type_int;
-  set->attr_mode = attr_int;
-  set->lang_mode = lang_int;
-  set->fuzzy_int_max_len = fuzzy_int_max_len_int;
-  set->suppress_warnings = supp_warn;
-  set->env = env;
-  set->width = width_int;
+  struct ALIKEC_settings set = ALIKEC_set_def("");
+  set.type_mode = type_int;
+  set.attr_mode = attr_int;
+  set.lang_mode = lang_int;
+  set.fuzzy_int_max_len = fuzzy_int_max_len_int;
+  set.suppress_warnings = supp_warn;
+  set.env = env;
+  set.width = width_int;
 
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
-
+}

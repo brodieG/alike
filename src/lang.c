@@ -98,7 +98,7 @@ const char * ALIKEC_lang_obj_compare(
   SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
   size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
-  struct ALIKEC_settings * set
+  struct ALIKEC_settings set
 ) {
   if(target == R_NilValue) return ""; // NULL matches anything
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
@@ -188,7 +188,7 @@ call).
 const char * ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
+  SEXP match_call, SEXP match_env, struct ALIKEC_settings set
 ) {
   SEXP current = ALIKEC_skip_paren(CAR(cur_par));
   target = ALIKEC_skip_paren(target);
@@ -281,7 +281,7 @@ that for calls constants need not be the same
 */
 
 const char * ALIKEC_lang_alike_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   SEXP match_env = set->env;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
@@ -384,7 +384,7 @@ const char * ALIKEC_lang_alike_internal(
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
-  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  struct ALIKEC_settings set = ALIKEC_set_def("");
   set->env = match_env;
   const char * res = ALIKEC_lang_alike_internal(target, current, set);
   if(strlen(res)) return mkString(res);

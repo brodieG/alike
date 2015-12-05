@@ -90,7 +90,7 @@
   );
   SEXP ALIKEC_alike_fast2(SEXP target, SEXP current);
   struct ALIKEC_res ALIKEC_alike_internal(
-    SEXP target, SEXP current, struct ALIKEC_settings * set
+    SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_typeof(SEXP object);
   SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len);
@@ -105,19 +105,19 @@
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
   struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
-    SEXP target, SEXP current, struct ALIKEC_settings * set
+    SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current);
   const char * ALIKEC_lang_alike_internal(
-    SEXP target, SEXP current, struct ALIKEC_settings * set
+    SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
   const char * ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
-    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings * set
+    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings set
   );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
