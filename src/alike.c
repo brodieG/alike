@@ -16,19 +16,15 @@ An alternative would have been to just instantiate new settings objects for each
 recursion, but that seems potentially wasteful (though we haven't tested).
 */
 struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
-  return struct ALIKEC_settings {
-    .type_mode = 0;
-    .attr_mode = 0;
-    .lang_mode = 0;
-    .fuzzy_int_max_len = 100;
-    .env = R_NilValue;
-    .prepend = prepend;
-    .env_set = 0;
-    .no_rec = 0;
-    .in_attr = 0;
-    .rec_lvl = 0;
-    .rec_lvl_last = 0;
-    .width = -1;
+  return (struct ALIKEC_settings) {
+    .type_mode = 0,
+    .attr_mode = 0,
+    .lang_mode = 0,
+    .fuzzy_int_max_len = 100,
+    .env = R_NilValue,
+    .prepend = prepend,
+    .width = -1,
+    .in_attr = 0
   };
 }
 /*
@@ -41,8 +37,7 @@ struct ALIKEC_res_sub ALIKEC_res_sub_def() {
   return (struct ALIKEC_res_sub) {
     .success=1,
     .message=ALIKEC_res_msg_def(""),
-    .df=0,
-    .lvl=0
+    .df=0
   };
 }
 struct ALIKEC_res ALIKEC_res_def() {
@@ -50,8 +45,7 @@ struct ALIKEC_res ALIKEC_res_def() {
     .success=1,
     .message=ALIKEC_res_msg_def(""),
     .df=0,
-    .indices=0,  // NULL pointer
-    .rec_lvl=0
+    .rec=ALIKEC_rec_def()
   };
 }
 /*-----------------------------------------------------------------------------\
@@ -68,7 +62,7 @@ Check:
 - attributes
 */
 struct ALIKEC_res ALIKEC_alike_obj(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   int is_df = 0, err_lvl = 6;
   SEXPTYPE tar_type, cur_type;
@@ -310,13 +304,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
   */
   void R_CheckUserInterrupt(void);
 
-  // Increase recursion level
-
-  res.rec <- ALIKEC_rec_inc(rec);
-
   // normal logic, which will have checked length and attributes, etc.
 
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+  res.rec = ALIKEC_rec_inc(rec);  // Increase recursion level
   if(!res.success) return res;
 
   R_xlen_t tar_len = xlength(target);
@@ -336,9 +327,9 @@ struct ALIKEC_res ALIKEC_alike_rec(
           vec_names == R_NilValue ||
           !((ind_name = CHAR(STRING_ELT(vec_names, i))))[0]
         )
-          res.rec = ALIKEC_res_ind_num(res.rec, i + 1);
+          res.rec = ALIKEC_rec_ind_num(res.rec, i + 1);
         else
-          res.rec = ALIKEC_res_ind_chr(res.rec, ind_name);
+          res.rec = ALIKEC_rec_ind_chr(res.rec, ind_name);
         break;
       }
     }
@@ -389,7 +380,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
             );
             UNPROTECT(1);
             if(!res.success) {
-              res.rec = ALIKEC_res_ind_chr(res.rec, var_name_chr);
+              res.rec = ALIKEC_rec_ind_chr(res.rec, var_name_chr);
               break;
         } } }
         UNPROTECT(1);
@@ -418,10 +409,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
         if(!res.success) {
           if(tar_tag != R_NilValue)
             res.rec =
-              ALIKEC_res_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)));
+              ALIKEC_rec_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)));
           else
             res.rec =
-              ALIKEC_res_ind_num(res.rec, i + 1);
+              ALIKEC_rec_ind_num(res.rec, i + 1);
           break;
   } } } }
   return res;
@@ -435,7 +426,7 @@ Return value is a character value that starts with %s and follows with
 something like "should be ...".
 */
 struct ALIKEC_res ALIKEC_alike_internal(
-  SEXP target, SEXP current, struct ALIKEC_settings * set
+  SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   if(set.type_mode < 0 || set.type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
@@ -555,7 +546,7 @@ Note that width is only really used to control the deparse wrapping; rest of
 text is not wrapped.  Negative width will use the getOption("width");
 */
 struct ALIKEC_res_fin ALIKEC_alike_wrap(
-  SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings * set
+  SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings set
 ) {
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
@@ -649,7 +640,7 @@ evaluations in R; this is basically deprecated now though still accessible
 through the non-exported `.alike2` R function
 */
 SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
-  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  struct ALIKEC_settings set = ALIKEC_set_def("");
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, ALIKEC_SYM_current, set)
   );
@@ -691,7 +682,7 @@ SEXP ALIKEC_alike_ext(
     error(
       "Logic Error; `curr_sub` must be language."
     );
-  struct ALIKEC_settings * set = ALIKEC_set_def("");
+  struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
@@ -764,5 +755,5 @@ SEXP ALIKEC_alike (
 
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
-  );
+  )
 }

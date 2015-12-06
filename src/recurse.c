@@ -1,8 +1,7 @@
+#include "alike.h"
 /*
 Functions used to manage tracking recursion into list like objects
 */
-
-
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
 /*
@@ -57,11 +56,11 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_init(struct ALIKEC_rec_track rec) {
 }
 struct ALIKEC_rec_track ALIKEC_rec_init() {
   return struct ALIKEC_rec_track rec_track = {
-    .init = 0;     // will be set to 1 on first recursion
-    .lvl = 0;
-    .indices = 0;  // NULL pointer
-    .envs = 0;     // NULL pointer
-    .gp = 0;
+    .init = 0,     // will be set to 1 on first recursion
+    .lvl = 0,
+    .indices = 0,  // NULL pointer
+    .envs = 0,     // NULL pointer
+    .gp = 0
   };
 }
 /*
