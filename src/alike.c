@@ -306,7 +306,9 @@ struct ALIKEC_res ALIKEC_alike_rec(
 
   // normal logic, which will have checked length and attributes, etc.
 
+  Rprintf("Check object\n");
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+  Rprintf("done check object\n");
   res.rec = ALIKEC_rec_inc(rec);  // Increase recursion level
   if(!res.success) return res;
 
@@ -321,6 +323,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
       );
       if(!res.success) {
+        Rprintf("Failure\n");
         SEXP vec_names = getAttrib(target, R_NamesSymbol);
         const char * ind_name;
         if(
@@ -333,6 +336,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
         break;
       }
     }
+    Rprintf("Exited loop\n");
   } else if (tar_type == ENVSXP && !set.in_attr) {
     // Need to guard against possible circular reference in the environments
     // Note it is important that we cannot recurse when checking environments
@@ -428,6 +432,7 @@ something like "should be ...".
 struct ALIKEC_res ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
+  Rprintf("Starting internal\n");
   if(set.type_mode < 0 || set.type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
   if(set.attr_mode < 0 || set.attr_mode > 2)
@@ -446,7 +451,9 @@ struct ALIKEC_res ALIKEC_alike_internal(
   } else {
     // Recursively check object
 
+    Rprintf("Call Recursion\n");
     res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
+    Rprintf("Done  Recursion\n");
     if(res.success) return res;
   }
   // - Contruct Error ----------------------------------------------------------
@@ -673,8 +680,10 @@ SEXP ALIKEC_alike_ext(
     error(
       "Logic Error; `curr_sub` must be language."
     );
+  Rprintf("set defaults\n");
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
+  Rprintf("Call wrap\n");
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
