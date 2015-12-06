@@ -339,18 +339,18 @@ struct ALIKEC_res ALIKEC_alike_rec(
     // in attributes as othrewise we could get inifinite recursion since
     // rec tracking is specific to each call to ALIKEC_alike_internal
 
-    if(res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
+    if(!res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
 
-    if(!res.rec.envs.no_rec)
-      res.rec.envs.no_rec = !ALIKEC_env_track(target, res.rec.envs);
-    if(res.rec.envs.no_rec < 0 && !set.suppress_warnings) {
+    if(!res.rec.envs->no_rec)
+      res.rec.envs->no_rec = !ALIKEC_env_track(target, res.rec.envs);
+    if(res.rec.envs->no_rec < 0 && !set.suppress_warnings) {
       warning(
         "`alike` environment stack exhausted; %s.",
         "unable to recurse any further into environments"
       );
-      res.rec.envs.no_rec = 1; // so we only get warning once
+      res.rec.envs->no_rec = 1; // so we only get warning once
     }
-    if(res.rec.envs.no_rec || target == current) {
+    if(res.rec.envs->no_rec || target == current) {
       res.success = 1;
     } else {
       if(target == R_GlobalEnv && current != R_GlobalEnv) {
@@ -432,12 +432,6 @@ struct ALIKEC_res ALIKEC_alike_internal(
     error("Argument `type.mode` must be in 0:2");
   if(set.attr_mode < 0 || set.attr_mode > 2)
     error("Argument `attr.mode` must be in 0:2");
-  size_t rec_lvl_last_prev = set.rec_lvl_last;
-
-  // Allows us to keep track of recursion depth between calls to
-  // ALIKEC_alike_internal
-
-  set.rec_lvl_last = set.rec_lvl;
 
   struct ALIKEC_res res = ALIKEC_res_def();
 
@@ -452,11 +446,8 @@ struct ALIKEC_res ALIKEC_alike_internal(
   } else {
     // Recursively check object
 
-    res = ALIKEC_alike_rec(target, current, set);
-    if(res.success) {
-      set.rec_lvl_last = rec_lvl_last_prev;
-      return res;
-    }
+    res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
+    if(res.success) return res;
   }
   // - Contruct Error ----------------------------------------------------------
 
@@ -755,5 +746,5 @@ SEXP ALIKEC_alike (
 
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
-  )
+  );
 }

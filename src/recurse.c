@@ -10,17 +10,13 @@ structure, AND decrement the index level.
 
 See ALIKEC_rec_ind_init for details on index structure
 */
-ALIKEC_rec_track ALIKEC_rec_ind_set(
+struct ALIKEC_rec_track ALIKEC_rec_ind_set(
   struct ALIKEC_rec_track rec, struct ALIKEC_index ind
 ) {
   // Find correct spot in previously allocated indices spaces, clearly relies on
   // lvl being exactly correct...
 
-  if(rec.lvl <= rec.lvl_start)
-    error("Logic Error: unwound too many recursion levels; contact maintainer");
-
-  size_t offset = rec.lvl - rec.lvl_start;
-  struct ALIKEC_index * cur_ind = rec.indices + offset;
+  struct ALIKEC_index * cur_ind = rec.indices + rec.lvl;
   *cur_ind = ind;
   rec.lvl--;
   return rec;
@@ -54,8 +50,8 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_init(struct ALIKEC_rec_track rec) {
   }
   return rec;
 }
-struct ALIKEC_rec_track ALIKEC_rec_init() {
-  return struct ALIKEC_rec_track rec_track = {
+struct ALIKEC_rec_track ALIKEC_rec_def() {
+  return (struct ALIKEC_rec_track) {
     .init = 0,     // will be set to 1 on first recursion
     .lvl = 0,
     .indices = 0,  // NULL pointer
@@ -65,6 +61,8 @@ struct ALIKEC_rec_track ALIKEC_rec_init() {
 }
 /*
 increment recursion
+
+decrementing happens via ALIKEC_rec_ind_set
 */
 struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track rec) {
   if(!rec.init) {

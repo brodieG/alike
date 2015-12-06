@@ -218,7 +218,7 @@ const char * ALIKEC_lang_alike_rec(
   // that target and current must be the same fun; we shouldn't need to retrieve
   // it twice as we do now
 
-  if(match_env != R_NilValue && set->lang_mode != 1) {
+  if(match_env != R_NilValue && set.lang_mode != 1) {
     target = ALIKEC_match_call(target, match_call, match_env);
     // want this change to persist back to calling fun
     SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));
@@ -283,7 +283,7 @@ that for calls constants need not be the same
 const char * ALIKEC_lang_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
-  SEXP match_env = set->env;
+  SEXP match_env = set.env;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
   if(
     !
@@ -356,7 +356,7 @@ const char * ALIKEC_lang_alike_internal(
     int use_in = CAR(curr_cpy_par) != R_NilValue;
     if(use_in) {
       int max_chars_net =
-        max_chars - (strlen(res) + strlen(set->prepend) + 4 + 1);
+        max_chars - (strlen(res) + strlen(set.prepend) + 4 + 1);
       int err_dep_len, has_nl = 0;
       const char * err_dep =
         ALIKEC_deparse_chr(CAR(curr_cpy_par), -1);
@@ -385,7 +385,7 @@ SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
   struct ALIKEC_settings set = ALIKEC_set_def("");
-  set->env = match_env;
+  set.env = match_env;
   const char * res = ALIKEC_lang_alike_internal(target, current, set);
   if(strlen(res)) return mkString(res);
   return ScalarLogical(1);

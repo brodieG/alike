@@ -620,9 +620,9 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
 
   // Start with all cases that don't produce errors
 
-  int dont_check = !set->attr_mode && !tae_val_len;
+  int dont_check = !set.attr_mode && !tae_val_len;
   int both_null = tae_type == NILSXP && cae_type == NILSXP;
-  int ref_obj = set->attr_mode && (
+  int ref_obj = set.attr_mode && (
     tae_type == EXTPTRSXP || tae_type == WEAKREFSXP ||
     tae_type == BCODESXP || tae_type == ENVSXP
   );
@@ -649,7 +649,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
   } else if (
     (tae_val_len = xlength(target)) != (cae_val_len = xlength(current))
   ) {
-    if(set->attr_mode || tae_val_len) {
+    if(set.attr_mode || tae_val_len) {
       res.success = 0;
       res.message.message = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "be %s (is %s)", CSR_len_as_chr(tae_val_len),
@@ -708,7 +708,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     rev = 1;
     prim_attr = cur_attr;
     sec_attr = tar_attr;
-    if(set->attr_mode == 2) {
+    if(set.attr_mode == 2) {
       err_major[7] = "have attributes";
     }
   } else {
@@ -723,7 +723,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   Mark that we're in attribute checking so we can handle recursions within
   attributes properly
   */
-  set->in_attr++;
+  set.in_attr++;
 
   /*
   Loop through all attr combinations; maybe could be made faster by
@@ -780,7 +780,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     // No match only matters if target has attrs or in strict mode
     if(
       (
-        (tar_attr_el == R_NilValue && set->attr_mode == 2) ||
+        (tar_attr_el == R_NilValue && set.attr_mode == 2) ||
         cur_attr_el == R_NilValue
       ) && !err_major[7][0]
     ) {
@@ -794,7 +794,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
 
     // = Baseline Check ========================================================
 
-    if(set->attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[6])) {
+    if(set.attr_mode && cur_attr_el_val != R_NilValue && !strlen(err_major[6])) {
       res_sub = ALIKEC_compare_attributes_internal_simple(
         tar_attr_el_val, cur_attr_el_val, tx, set
       );
@@ -851,7 +851,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
         continue;
       // - Dims ----------------------------------------------------------------
 
-      } else if (tar_tag == R_DimSymbol && set->attr_mode == 0) {
+      } else if (tar_tag == R_DimSymbol && set.attr_mode == 0) {
         int err_ind = 2;
 
         struct ALIKEC_res_sub dim_comp = ALIKEC_compare_dims(
@@ -905,7 +905,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   } }
   // If in strict mode, must have the same number of attributes
 
-  if(set->attr_mode == 2 && prim_attr_count != sec_attr_count) {
+  if(set.attr_mode == 2 && prim_attr_count != sec_attr_count) {
     err_major[7] = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "have %s attribute%s (has %s)",
       CSR_len_as_chr(prim_attr_count), prim_attr_count != 1 ? "s" : "",
@@ -913,14 +913,14 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   );}
   // Now determine which error to throw, if any
 
-  if(!set->in_attr)
+  if(!set.in_attr)
     error("Logic Error: attribute depth counter corrupted; contact maintainer");
-  set->in_attr--;
+  set.in_attr--;
 
   res_attr.df = is_df;
   int i;
   for(i = 0; i < 8; i++) {
-    if(err_major[i][0] && (!rev || (rev && set->attr_mode == 2))) {
+    if(err_major[i][0] && (!rev || (rev && set.attr_mode == 2))) {
       res_attr.success = 0;
       res_attr.message.message = err_major[i];
       res_attr.message.wrap = err_wrap[i];
@@ -946,7 +946,7 @@ SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode) {
     error("Argument `mode` must be a one length integer like vector");
 
   struct ALIKEC_settings set = ALIKEC_set_def("");
-  set->attr_mode = asInteger(attr_mode);
+  set.attr_mode = asInteger(attr_mode);
 
   struct ALIKEC_res_sub comp_res =
     ALIKEC_compare_attributes_internal(target, current, set);

@@ -126,6 +126,7 @@
 
   // - Utility Funs -----------------------------------------------------------
 
+  struct ALIKEC_rec_track ALIKEC_rec_def();
   struct ALIKEC_settings ALIKEC_set_def();
   struct ALIKEC_rec_track ALIKEC_rec_ind_chr(
     struct ALIKEC_rec_track res, const char * ind
@@ -134,7 +135,6 @@
     struct ALIKEC_rec_track res, R_xlen_t ind
   );
   struct ALIKEC_res_sub ALIKEC_res_sub_def();
-  struct ALIKEC_rec_track ALIKEC_rec_def();
   SEXP ALIKEC_mode(SEXP obj);
   SEXP ALIKEC_test(SEXP obj);
   SEXP ALIKEC_test2(
@@ -156,7 +156,7 @@
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
   int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs);
   SEXP ALIKEC_env_track_test(SEXP env, SEXP stack_size_init);
-  struct ALIKEC_settings_env * ALIKEC_env_set_create(int stack_size_init);
+  struct ALIKEC_env_track * ALIKEC_env_set_create(int stack_size_init);
   int ALIKEC_is_valid_name(const char *name);
   SEXP ALIKEC_is_valid_name_ext(SEXP name);
   int ALIKEC_is_dfish(SEXP obj);
