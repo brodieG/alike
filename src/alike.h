@@ -43,8 +43,8 @@
   // there are recursion levels.
 
   struct ALIKEC_rec_track {
-    int init;          // whether there has actually been recursion
-    size_t lvl;        // max recursion depth so far
+    size_t lvl;        // recursion depth
+    size_t lvl_max;    // max recursion depth so far
     struct ALIKEC_index * indices;
     struct ALIKEC_env_track * envs;
     int gp;            // general purpose flag

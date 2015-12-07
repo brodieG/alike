@@ -1,6 +1,12 @@
 #include "alike.h"
 /*
 Functions used to manage tracking recursion into list like objects
+
+To track recursion you must:
+- initalize the rec track object first,
+- increment each time you recurse,
+- decrement each time you recurse,
+- mark lvl_max when you hit an error
 */
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -12,7 +18,6 @@ prior to the error
 By design the rec.lvl should be 0 if there is no recursion.
 */
 struct ALIKEC_rec_track ALIKEC_rec_ind_init(struct ALIKEC_rec_track rec) {
-  Rprintf("Initializing rec ind to %d\n", rec.lvl);
   if(rec.lvl) {
     rec.indices = (struct ALIKEC_index *)
       R_alloc(rec.lvl, sizeof(struct ALIKEC_index));
@@ -35,7 +40,6 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_set(
   // Find correct spot in previously allocated indices spaces, clearly relies on
   // lvl being exactly correct...
 
-  Rprintf("Setting index lvl: %d with indices %d\n", rec.lvl, rec.indices);
   struct ALIKEC_index * cur_ind = rec.indices + rec.lvl - 1;
   *cur_ind = ind;
   return rec;
@@ -58,6 +62,7 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_num(
 struct ALIKEC_rec_track ALIKEC_rec_def() {
   return (struct ALIKEC_rec_track) {
     .lvl = 0,
+    .lvl_max = 0,
     .indices = 0,  // NULL pointer
     .envs = 0,     // NULL pointer
     .gp = 0

@@ -311,7 +311,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
   res.rec = rec;
   Rprintf("done check object\n");
   if(!res.success) {
-    Rprintf("Object comp failed\n");
+    Rprintf("Object comp failed at level %d\n", res.rec.lvl);
+    res.rec.lvl_max = res.rec.lvl;
     return res;
   }
   res.rec = ALIKEC_rec_inc(res.rec);  // Increase recursion level
@@ -328,7 +329,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
       );
       if(!res.success) {
-        Rprintf("Failure at level %d\n", res.rec.lvl);
         SEXP vec_names = getAttrib(target, R_NamesSymbol);
         const char * ind_name;
         if(
@@ -341,7 +341,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
         break;
       }
     }
-    Rprintf("Exited loop\n");
   } else if (tar_type == ENVSXP && !set.in_attr) {
     // Need to guard against possible circular reference in the environments
     // Note it is important that we cannot recurse when checking environments
@@ -438,7 +437,6 @@ something like "should be ...".
 struct ALIKEC_res ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
-  Rprintf("Starting internal\n");
   if(set.type_mode < 0 || set.type_mode > 2)
     error("Argument `type.mode` must be in 0:2");
   if(set.attr_mode < 0 || set.attr_mode > 2)
@@ -457,9 +455,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
   } else {
     // Recursively check object
 
-    Rprintf("Call Recursion\n");
     res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
-    Rprintf("Done  Recursion\n");
     if(res.success) return res;
   }
   // - Contruct Error ----------------------------------------------------------
@@ -468,22 +464,22 @@ struct ALIKEC_res ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(res.rec.lvl) {  // Recursion occurred
-    Rprintf("Create output string\n");
+  if(res.rec.lvl_max) {  // Recursion occurred
     // Scan through all indices to calculate size of required vector
 
     char * err_chr_index, * err_chr_indices;
     const char * err_chr_index_val;
     size_t err_size = 0, ind_size_max = 0, ind_size;
 
-    for(size_t i = 0; i < res.rec.lvl; i++) {
-      Rprintf("  Allocating for index %d of %d\n", i, res.rec.lvl);
+    for(size_t i = 0; i < res.rec.lvl_max; i++) {
+      Rprintf("  Allocating for index %d of %d\n", i, res.rec.lvl_max);
       switch(res.rec.indices[i].type) {
         case 0:
           ind_size = CSR_len_chr_len(res.rec.indices[i].ind.num);
           break;
         case 1:
-          ind_size = CSR_strmlen(res.rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
+          ind_size =
+            CSR_strmlen(res.rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
           error(
@@ -499,12 +495,12 @@ struct ALIKEC_res ALIKEC_alike_internal(
     // worst case
     Rprintf("Now allocate character\n");
     err_chr_indices = (char *) R_alloc(
-      err_size + 4 * res.rec.lvl + 1, sizeof(char)
+      err_size + 4 * res.rec.lvl_max + 1, sizeof(char)
     );
     err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
     err_chr_indices[0] = '\0';
 
-    for(size_t i = 0; i < res.rec.lvl; i++) {
+    for(size_t i = 0; i < res.rec.lvl_max; i++) {
       Rprintf("writing for index %d\n", i);
       const char * index_tpl = "[[%s]]";
       switch(res.rec.indices[i].type) {
@@ -533,7 +529,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
       // dealing with a DF, but giving that up for now
 
       sprintf(err_chr_index, index_tpl, err_chr_index_val);
-      if(i < res.rec.lvl) {  // all these chrs should be terminated...
+      if(i < res.rec.lvl_max) {  // all these chrs should be terminated...
         strcat(err_chr_indices, err_chr_index);
       }
     }
