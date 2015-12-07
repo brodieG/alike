@@ -308,9 +308,14 @@ struct ALIKEC_res ALIKEC_alike_rec(
 
   Rprintf("Check object\n");
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+  res.rec = rec;
   Rprintf("done check object\n");
-  res.rec = ALIKEC_rec_inc(rec);  // Increase recursion level
-  if(!res.success) return res;
+  if(!res.success) {
+    Rprintf("Object comp failed\n");
+    return res;
+  }
+  res.rec = ALIKEC_rec_inc(res.rec);  // Increase recursion level
+  Rprintf("Incremented to %d\n", res.rec.lvl);
 
   R_xlen_t tar_len = xlength(target);
   SEXPTYPE tar_type = TYPEOF(target);
@@ -323,7 +328,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
         VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
       );
       if(!res.success) {
-        Rprintf("Failure\n");
+        Rprintf("Failure at level %d\n", res.rec.lvl);
         SEXP vec_names = getAttrib(target, R_NamesSymbol);
         const char * ind_name;
         if(
@@ -419,6 +424,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
               ALIKEC_rec_ind_num(res.rec, i + 1);
           break;
   } } } }
+  res.rec = ALIKEC_rec_dec(res.rec); // decrement recursion tracker
   return res;
 }
 /*-----------------------------------------------------------------------------\
@@ -463,7 +469,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
   occurred.
   */
   if(res.rec.lvl) {  // Recursion occurred
-    error("make sure recursion levels are correct given new structure");
+    Rprintf("Create output string\n");
     // Scan through all indices to calculate size of required vector
 
     char * err_chr_index, * err_chr_indices;
@@ -471,6 +477,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
     size_t err_size = 0, ind_size_max = 0, ind_size;
 
     for(size_t i = 0; i < res.rec.lvl; i++) {
+      Rprintf("  Allocating for index %d of %d\n", i, res.rec.lvl);
       switch(res.rec.indices[i].type) {
         case 0:
           ind_size = CSR_len_chr_len(res.rec.indices[i].ind.num);
@@ -490,6 +497,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
     }
     // Allways alloacate as if index will be in [[index]] form as that is
     // worst case
+    Rprintf("Now allocate character\n");
     err_chr_indices = (char *) R_alloc(
       err_size + 4 * res.rec.lvl + 1, sizeof(char)
     );
@@ -497,6 +505,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
     err_chr_indices[0] = '\0';
 
     for(size_t i = 0; i < res.rec.lvl; i++) {
+      Rprintf("writing for index %d\n", i);
       const char * index_tpl = "[[%s]]";
       switch(res.rec.indices[i].type) {
         case 0:

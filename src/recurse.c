@@ -15,7 +15,7 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_init(struct ALIKEC_rec_track rec) {
   Rprintf("Initializing rec ind to %d\n", rec.lvl);
   if(rec.lvl) {
     rec.indices = (struct ALIKEC_index *)
-      R_alloc(rec.lvl, sizeof(struct ALIKEC_index));
+      R_alloc(rec.lvl + 1, sizeof(struct ALIKEC_index));
   }
   return rec;
 }
@@ -36,9 +36,8 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_set(
   // lvl being exactly correct...
 
   Rprintf("Setting index lvl: %d with indices %d\n", rec.lvl, rec.indices);
-  struct ALIKEC_index * cur_ind = rec.indices + rec.lvl;
+  struct ALIKEC_index * cur_ind = rec.indices + rec.lvl - 1;
   *cur_ind = ind;
-  rec.lvl--;
   return rec;
 }
 /*
@@ -85,6 +84,21 @@ struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track rec) {
         "Logic Error: %s; contact maintainer.",
         "max recursion depth exceeded, this really shouldn't happen"
       );
+  }
+  return rec;
+}
+struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track rec) {
+  if(!rec.init) {
+    error(
+      "Logic Error: rec tracker should be initialized; contact maintainer."
+    );
+  } else {
+    if(!rec.lvl)
+      error(
+        "Logic Error: %s; contact maintainer.",
+        "tried to decrement rec counter below zero"
+      );
+    rec.lvl--;
   }
   return rec;
 }

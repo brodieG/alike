@@ -162,6 +162,7 @@
   int ALIKEC_is_dfish(SEXP obj);
   SEXP ALIKEC_is_dfish_ext(SEXP obj);
   struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track);
+  struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track);
 
   // - Imported Funs ----------------------------------------------------------
 
