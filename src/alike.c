@@ -533,6 +533,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
         strcat(err_chr_indices, err_chr_index);
       }
     }
+    Rprintf("Written: %s\n", err_chr_indices);
     // err_msg: error message produce by ALIKEC_alike_rec
     // has_nl: whether `err_msg` contains a new line
     // %s used to preserve the %s for use in _wrap
@@ -627,8 +628,11 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       call_post = "`";
       call_char = dep_chr;
     }
+    const char * call_char_ind = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s%s", call_char, res.message.indices, "", ""
+    );
     const char * tmp_call = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, res.message.wrap, call_char, "", "", ""
+      ALIKEC_MAX_CHAR, res.message.wrap, call_char_ind, "", "", ""
     );
     UNPROTECT(2);
     res_out.call = CSR_smprintf4(
