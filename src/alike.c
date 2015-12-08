@@ -574,7 +574,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 
     // one branch below creates SEXP, so pre-emptively protect
 
-    SEXP curr_fin = PROTECT(curr_sub);
+    SEXP curr_fin = curr_sub;
 
     if(TYPEOF(curr_sub) == LANGSXP) {
       SEXP call = CAR(curr_sub);
@@ -594,9 +594,12 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
           if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
         }
         if(is_an_op) {
-          curr_fin = list2(ALIKEC_SYM_paren_open, curr_sub);
+          curr_fin = PROTECT(list2(ALIKEC_SYM_paren_open, curr_sub));
           SET_TYPEOF(curr_fin, LANGSXP);
-    } } }
+        } else {
+          PROTECT(R_NilValue);  // stack balance
+        }
+    } }
     // Now deparse
 
     int width = set.width;
