@@ -1,14 +1,41 @@
 #include "alike.h"
 
-// Moves pointer on language object to skip any `(` calls since those are
-// already accounted for in parsing and as such don't add anything
+/*
+Initialize return object
+*/
+struct ALIKEC_res_lang ALIKEC_rec_lang_init() {
+  return (struct ALIKEC_res_lang) {
+    .success = 0,
+    .rec = ALIKEC_rec_init(),
+    .message = ""
+  }
+}
+/*
+Moves pointer on language object to skip any `(` calls since those are
+already accounted for in parsing and as such don't add anything.
+
+Returns a list/vector with a pointer to the updated lanaguage object position
+and an integer indicating how many parentheses were skipped
+*/
 
 SEXP ALIKEC_skip_paren(SEXP lang) {
-  if(TYPEOF(lang) != LANGSXP) return(lang);
-  while(
-    CAR(lang) == ALIKEC_SYM_paren_open && CDR(CDR(lang)) == R_NilValue
-  ) lang = CADR(lang);
-  return lang;
+  int i = 0;
+  SEXP res = PROTECT(allocVector(VECSXP, 2));
+  if(TYPEOF(lang) == LANGSXP) {
+    while(
+      CAR(lang) == ALIKEC_SYM_paren_open && CDR(CDR(lang)) == R_NilValue
+    ) {
+      lang = CADR(lang);
+      i++;
+      if(i < 0) error(
+        "Logic Error: %s; contact maintainer.",
+        "exceeded language recursion depth when skipping parens"
+      );
+  } }
+  SET_VECTOR_ELT(res, 0, lang);
+  SET_VECTOR_ELT(res, 1, ScalarInteger(i);
+  UNPROTECT(1);
+  return(res);
 }
 
 // - Anonymize Formula ---------------------------------------------------------
@@ -83,7 +110,8 @@ SEXP ALIKEC_match_call(
     UNPROTECT(1);
     return call;
   }
-  SETCADR(match_call, fun);  // remember, match_call is pre-defined as: match.call(def, quote(call))
+  // remember, match_call is pre-defined as: match.call(def, quote(call))
+  SETCADR(match_call, fun);
   UNPROTECT(1);
   SETCADR(CADDR(match_call), call);
   int tmp = 0;
@@ -98,74 +126,90 @@ const char * ALIKEC_lang_obj_compare(
   SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
   size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
-  struct ALIKEC_settings set
+  struct ALIKEC_settings set, struct ALIKEC_rec_track rec
 ) {
+  struct ALIKEC_res_lang res = ALIKEC_res_lang_init();
+  res.rec = rec;
+
+  SEXP cur_skip_paren = PROTECT(ALIKEC_skip_paren(current));
+  SEXP tar_skip_paren = PROTECT(ALIKEC_skip_paren(target));
+
+  // Skip parens and increment recursion; not we don't track recursion level
+  // for target
+
+  current = VECTOR_ELT(cur_skip_paren, 0);
+  int i, i_max = asInteger(VECTOR_ELT(cur_skip_paren, 1));
+  for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
+
   if(target == R_NilValue) return ""; // NULL matches anything
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
+
+  res.success = 0;  // assume fail until shown otherwise
 
   if(tsc_type == SYMSXP && csc_type == SYMSXP) {
     char * tar_abs = ALIKEC_symb_abstract(target, tar_hash, tar_varnum);
     char * cur_abs = ALIKEC_symb_abstract(current, cur_hash, cur_varnum);
-    char * rev_symb = pfHashFind(rev_hash, tar_abs);  // reverse hash to get what symbol should be in case of error
+    // reverse hash to get what symbol should be in case of error
+    char * rev_symb = pfHashFind(rev_hash, tar_abs);
     const char * csc_text = CHAR(PRINTNAME(current));
     if(rev_symb == NULL) {
       rev_symb = (char *) csc_text;
       pfHashSet(rev_hash, cur_abs, rev_symb);
     }
     if(strcmp(tar_abs, cur_abs)) {
-      ALIKEC_symb_mark(cur_par);
       if(*tar_varnum > *cur_varnum) {
-        return CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have a symbol different to `%s`", csc_text, "",
+        res.message = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "not be `%s`", csc_text, "",
           "", ""
         );
+      } else {
+        res.message = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "be `%s` (is `%s`)",
+          rev_symb, csc_text, "", ""
+        );
       }
-      return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "have symbol `%s` (is `%s`)",
-        rev_symb, csc_text, "", ""
-      );
     };
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-    ALIKEC_symb_mark(cur_par);
-    return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\") for `%s`",
+    res.message =  CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\")",
       ALIKEC_deparse_chr(CAR(target), -1), type2char(csc_type),
-      ALIKEC_deparse_chr(current, -1), ""
+      "", ""
     );
   } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
-    ALIKEC_symb_mark(cur_par);
-    return CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\") for `%s`",
-      type2char(tsc_type), type2char(csc_type), ALIKEC_deparse_chr(current, -1), ""
+    res.message = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
+      type2char(tsc_type), type2char(csc_type), "", ""
     );
   } else if (tsc_type == LANGSXP) {
-    const char * res;
     // Note how we pass cur_par and not current so we can modify cur_par
+    // this should be changed since we don't use that feature any more
     res = ALIKEC_lang_alike_rec(
       target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env, set
+      cur_varnum, formula, match_call, match_env, set, rec
     );
-    if(CAR(cur_par) == R_NilValue) SETCAR(cur_par, R_NilValue); //Nuking call since we don't want it in this case
-    if(res[0]) {
-      return res;
-    }
   } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
-    ALIKEC_symb_mark(cur_par);
-
-    return (const char *) CSR_smprintf4(
+    res.message = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
-      "be \"%s\" (is \"%s\") for token `%s`",
-      type2char(tsc_type), type2char(csc_type),
-      ALIKEC_deparse_chr(current, -1), ""
+      "be \"%s\" (is \"%s\")", type2char(tsc_type), type2char(csc_type), "", ""
     );
   } else if (formula && !R_compute_identical(target, current, 16)) {
     // Maybe this shouldn't be "identical", but too much of a pain in the butt
     // to do an all.equals type comparison
 
-    ALIKEC_symb_mark(cur_par);
-    return "have identical constant values";  // could have constant vs. language here, right?
+    // could have constant vs. language here, right?
+
+    res.message =  "have identical constant values";
+  } else res.success = 1;
+
+  // Deal with index implications of skiping parens
+
+  if(!res.success) {
+    for(i = 0; i < i_max; i++) {
+      res.rec = ALIKEC_rec_ind_num(res.rec, i + 1);
+      res.rec = ALIKEC_rec_dec(res.rec);
+    }
   }
-  return "";
+  return res;
 }
 
 /*
@@ -185,94 +229,112 @@ typically the case when the error is not specific to a particular part of the
 call).
 */
 
-const char * ALIKEC_lang_alike_rec(
+struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
   SEXP match_call, SEXP match_env, struct ALIKEC_settings set
 ) {
-  SEXP current = ALIKEC_skip_paren(CAR(cur_par));
-  target = ALIKEC_skip_paren(target);
+  SEXP current = CAR(cur_par);
+
+  target = VECTOR_ELT(tar_skip_paren, 0);
+
+  // If not language object, run comparison
+
+  struct ALIKEC_res_lang res = ALIKEC_res_lang_init();
+
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
-    return ALIKEC_lang_obj_compare(
+    res =  ALIKEC_lang_obj_compare(
       target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env, set
-  );}
-  SEXP tar_fun = CAR(target), cur_fun = CAR(current);
-
-  // Actual fun call must match exactly, unless NULL
-  if(tar_fun != R_NilValue && tar_fun != cur_fun) {
-    char * res = CSR_smprintf4(
-      ALIKEC_MAX_CHAR,
-      "be a call to `%s` (is a call to `%s`)",
-      ALIKEC_deparse_chr(CAR(target), -1),
-      ALIKEC_deparse_chr(CAR(current), -1), "", ""
+      cur_varnum, formula, match_call, match_env, set, rec
     );
-    ALIKEC_symb_mark(current);
-    return (const char *) res;
+  } else {
+    // If language object, then recurse
+
+    res.rec = ALIKEC_rec_inc(rec);
+
+    SEXP tar_fun = CAR(target), cur_fun = CAR(current);
+
+    // Actual fun call must match exactly, unless NULL
+
+    if(tar_fun != R_NilValue && tar_fun != cur_fun) {
+      res.success = 0;
+      res.rec = ALIKEC_rec_ind_num(res.rec, 1);
+      res.message = CSR_smprintf4(
+        ALIKEC_MAX_CHAR,
+        "be a call to `%s` (is a call to `%s`)",
+        ALIKEC_deparse_chr(CAR(target), -1),
+        ALIKEC_deparse_chr(CAR(current), -1), "", ""
+      );
+    } else if (CDR(target) != R_NilValue) {
+      // Zero length calls match anything, so only come here if target is not
+      // Nil
+
+      // Match the calls before comparison; small inefficiency below since we
+      // know that target and current must be the same fun; we shouldn't need
+      // to retrieve it twice as we do now
+
+      if(match_env != R_NilValue && set.lang_mode != 1) {
+        target = PROTECT(ALIKEC_match_call(target, match_call, match_env));
+        current = PROTECT(ALIKEC_match_call(current, match_call, match_env));
+      } else {
+        PROTECT(PROTECT(R_NilValue)); // stack balance
+      }
+      SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
+      R_xlen_t arg_num;
+
+      for(
+        tar_sub = CDR(target), cur_sub = CDR(current), arg_num = 0;
+        tar_sub != R_NilValue && cur_sub != R_NilValue;
+        tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag,
+        arg_num++
+      ) {
+        // Check tags are compatible; NULL tag in target allows any tag in current
+
+        cur_sub_tag = TAG(cur_sub);
+        tar_sub_tag = TAG(tar_sub);
+
+        if(tar_sub_tag != R_NilValue && tar_sub_tag != cur_sub_tag) {
+          char * prev_tag_msg = "as first argument";
+          if(prev_tag != R_UnboundValue) {
+            if(prev_tag == R_NilValue) {
+              prev_tag_msg = CSR_smprintf4(
+                ALIKEC_MAX_CHAR, "after argument #%s", CSR_len_as_chr(arg_num),
+                "", "", ""
+              );
+            } else {
+              prev_tag_msg = CSR_smprintf4(
+                ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
+                "", "", ""
+          );} }
+          ALIKEC_symb_mark(cur_par);
+          return CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "have argument `%s` %s",
+            CHAR(PRINTNAME(TAG(tar_sub))),
+            prev_tag_msg, "", ""
+        );}
+        tar_sub = ALIKEC_skip_paren(tar_sub);
+        cur_sub = ALIKEC_skip_paren(cur_sub);
+
+        SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
+        const char * res = ALIKEC_lang_obj_compare(
+          tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
+          tar_varnum, cur_varnum, formula, match_call, match_env, set
+        );
+        if(res[0]) return(res);
+      }
+      UNPROTECT(2);
+      if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
+        // Unorthodox way of signaling that we don't wan to show function call
+        SETCAR(cur_par, R_NilValue);
+        return (const char *) CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "be the same length (is %s)",
+          tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
+      );}
+    }
+    res.rec = ALIKEC_rec_dec(rec);
   }
-  // Zero length calls match anything
-
-  if(CDR(target) == R_NilValue) return "";
-
-  // Match the calls before comparison; small inefficiency below since we know
-  // that target and current must be the same fun; we shouldn't need to retrieve
-  // it twice as we do now
-
-  if(match_env != R_NilValue && set.lang_mode != 1) {
-    target = ALIKEC_match_call(target, match_call, match_env);
-    // want this change to persist back to calling fun
-    SETCAR(cur_par, ALIKEC_match_call(current, match_call, match_env));
-    current = CAR(cur_par);
-  }
-  SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
-  R_xlen_t arg_num;
-  for(
-    tar_sub = CDR(target), cur_sub = CDR(current), arg_num = 0;
-    tar_sub != R_NilValue && cur_sub != R_NilValue;
-    tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag,
-    arg_num++
-  ) {
-    // Check tags are compatible; NULL tag in target allows any tag in current
-
-    cur_sub_tag = TAG(cur_sub);
-    tar_sub_tag = TAG(tar_sub);
-
-    if(tar_sub_tag != R_NilValue && tar_sub_tag != cur_sub_tag) {
-      char * prev_tag_msg = "as first argument";
-      if(prev_tag != R_UnboundValue) {
-        if(prev_tag == R_NilValue) {
-          prev_tag_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "after argument #%s", CSR_len_as_chr(arg_num),
-            "", "", ""
-          );
-        } else {
-          prev_tag_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
-            "", "", ""
-      );} }
-      ALIKEC_symb_mark(cur_par);
-      return CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "have argument `%s` %s", CHAR(PRINTNAME(TAG(tar_sub))),
-        prev_tag_msg, "", ""
-    );}
-    tar_sub = ALIKEC_skip_paren(tar_sub);
-    cur_sub = ALIKEC_skip_paren(cur_sub);
-
-    SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
-    const char * res = ALIKEC_lang_obj_compare(
-      tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
-      tar_varnum, cur_varnum, formula, match_call, match_env, set
-    );
-    if(res[0]) return(res);
-  }
-  if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
-    // Unorthodox way of signaling that we don't wan to show function call
-    SETCAR(cur_par, R_NilValue);
-    return (const char *) CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be the same length (is %s)",
-      tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
-  );}
-  return "";
+  UNPROTECT(2);
+  return res;
 }
 /*
 Determine whether objects should be compared as calls or as formulas; the main
@@ -325,12 +387,14 @@ const char * ALIKEC_lang_alike_internal(
   ) {
     formula = 1;
   }
-  // Check if alike
+  // Check if alike; originally we would modify a copy of current, which is
+  // why we send curr_cpy_par; in the future we will no longer do that
 
   SEXP curr_cpy_par = PROTECT(list1(duplicate(current)));
+  struct ALIKEC_rec_track = ALIKEC_rec_init();
   const char * res = ALIKEC_lang_alike_rec(
     target, curr_cpy_par, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
-    formula, match_call, match_env, set
+    formula, match_call, match_env, set, rec
   );
   // Construct error message
 
