@@ -134,6 +134,7 @@
 
   // - Utility Funs -----------------------------------------------------------
 
+  const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec); 
   struct ALIKEC_rec_track ALIKEC_rec_def();
   struct ALIKEC_settings ALIKEC_set_def();
   struct ALIKEC_rec_track ALIKEC_rec_ind_chr(

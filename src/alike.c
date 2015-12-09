@@ -458,88 +458,11 @@ struct ALIKEC_res ALIKEC_alike_internal(
     res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
     if(res.success) return res;
   }
-  // - Contruct Error ----------------------------------------------------------
-
   /*
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  if(res.rec.lvl_max) {  // Recursion occurred
-    // Scan through all indices to calculate size of required vector
-
-    char * err_chr_index, * err_chr_indices;
-    const char * err_chr_index_val;
-    size_t err_size = 0, ind_size_max = 0, ind_size;
-
-    for(size_t i = 0; i < res.rec.lvl_max; i++) {
-      Rprintf("  Allocating for index %d of %d\n", i, res.rec.lvl_max);
-      switch(res.rec.indices[i].type) {
-        case 0:
-          ind_size = CSR_len_chr_len(res.rec.indices[i].ind.num);
-          break;
-        case 1:
-          ind_size =
-            CSR_strmlen(res.rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
-          break;
-        default: {
-          error(
-            "Logic Error: unexpected index type %d; contact maintainer.",
-            res.rec.indices[i].type
-          );
-        }
-      }
-      if(ind_size > ind_size_max) ind_size_max = ind_size;
-      err_size += ind_size;
-    }
-    // Allways alloacate as if index will be in [[index]] form as that is
-    // worst case
-    Rprintf("Now allocate character\n");
-    err_chr_indices = (char *) R_alloc(
-      err_size + 4 * res.rec.lvl_max + 1, sizeof(char)
-    );
-    err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
-    err_chr_indices[0] = '\0';
-
-    for(size_t i = 0; i < res.rec.lvl_max; i++) {
-      Rprintf("writing for index %d\n", i);
-      const char * index_tpl = "[[%s]]";
-      switch(res.rec.indices[i].type) {
-        case 0:
-          {
-            err_chr_index_val =
-              (const char *) CSR_len_as_chr(res.rec.indices[i].ind.num);
-          }
-          break;
-        case 1:
-          {
-            err_chr_index_val = res.rec.indices[i].ind.chr;
-            if(!ALIKEC_is_valid_name(err_chr_index_val)){
-              index_tpl = "$`%s`";
-            } else {
-              index_tpl = "$%s";
-            }
-          }
-          break;
-        default:
-          error(
-            "Logic Error: unexpected index type (2) %d", res.rec.indices[i].type
-          );
-      }
-      // Used to leave off last index for possible different treatment if
-      // dealing with a DF, but giving that up for now
-
-      sprintf(err_chr_index, index_tpl, err_chr_index_val);
-      if(i < res.rec.lvl_max) {  // all these chrs should be terminated...
-        strcat(err_chr_indices, err_chr_index);
-      }
-    }
-    Rprintf("Written: %s\n", err_chr_indices);
-    // err_msg: error message produce by ALIKEC_alike_rec
-    // has_nl: whether `err_msg` contains a new line
-    // %s used to preserve the %s for use in _wrap
-
-    res.message.indices = err_chr_indices;
-  }
+  res.message.indices = ALIKEC_rec_ind_as_chr(res.rec);
   return res;
 }
 /*

@@ -92,4 +92,81 @@ struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track rec) {
   rec.lvl--;
   return rec;
 }
+/*
+Translate recorded index data into a character string
+*/
+const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
 
+  char * err_chr_index, * err_chr_indices = "";
+  const char * err_chr_index_val;
+  size_t err_size = 0, ind_size_max = 0, ind_size;
+
+  if(rec.lvl_max) {  // Recursion occurred
+    // Scan through all indices to calculate size of required vector
+
+    for(size_t i = 0; i < rec.lvl_max; i++) {
+      Rprintf("  Allocating for index %d of %d\n", i, rec.lvl_max);
+      switch(rec.indices[i].type) {
+        case 0:
+          ind_size = CSR_len_chr_len(rec.indices[i].ind.num);
+          break;
+        case 1:
+          ind_size =
+            CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
+          break;
+        default: {
+          error(
+            "Logic Error: unexpected index type %d; contact maintainer.",
+            rec.indices[i].type
+          );
+        }
+      }
+      if(ind_size > ind_size_max) ind_size_max = ind_size;
+      err_size += ind_size;
+    }
+    // Allways alloacate as if index will be in [[index]] form as that is
+    // worst case
+    Rprintf("Now allocate character\n");
+    err_chr_indices = (char *) R_alloc(
+      err_size + 4 * rec.lvl_max + 1, sizeof(char)
+    );
+    err_chr_index = (char *) R_alloc(ind_size_max + 4 + 1, sizeof(char));
+    err_chr_indices[0] = '\0';
+
+    for(size_t i = 0; i < rec.lvl_max; i++) {
+      Rprintf("writing for index %d\n", i);
+      const char * index_tpl = "[[%s]]";
+      switch(rec.indices[i].type) {
+        case 0:
+          {
+            err_chr_index_val =
+              (const char *) CSR_len_as_chr(rec.indices[i].ind.num);
+          }
+          break;
+        case 1:
+          {
+            err_chr_index_val = rec.indices[i].ind.chr;
+            if(!ALIKEC_is_valid_name(err_chr_index_val)){
+              index_tpl = "$`%s`";
+            } else {
+              index_tpl = "$%s";
+            }
+          }
+          break;
+        default:
+          error(
+            "Logic Error: unexpected index type (2) %d", rec.indices[i].type
+          );
+      }
+      // Used to leave off last index for possible different treatment if
+      // dealing with a DF, but giving that up for now
+
+      sprintf(err_chr_index, index_tpl, err_chr_index_val);
+      if(i < rec.lvl_max) {  // all these chrs should be terminated...
+        strcat(err_chr_indices, err_chr_index);
+      }
+    }
+    Rprintf("Written: %s\n", err_chr_indices);
+  }
+  return err_chr_indices;
+}
