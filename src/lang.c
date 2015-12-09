@@ -120,14 +120,18 @@ SEXP ALIKEC_match_call(
   if(* err) return call; else return res;
 }
 /*
-Handle language object comparison; return zero length string if equal
+Handle language object comparison
+
+Note that we always pass cur_par instead of current so that we can modify the
+original call (mostly by using `match.call` on it)
 */
 const char * ALIKEC_lang_obj_compare(
-  SEXP target, SEXP current, SEXP cur_par, pfHashTable * tar_hash,
+  SEXP target, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
   size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
   struct ALIKEC_settings set, struct ALIKEC_rec_track rec
 ) {
+  SEXP current = CAR(cur_par);
   struct ALIKEC_res_lang res = ALIKEC_res_lang_init();
   res.rec = rec;
 
@@ -232,7 +236,8 @@ call).
 struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
-  SEXP match_call, SEXP match_env, struct ALIKEC_settings set
+  SEXP match_call, SEXP match_env, struct ALIKEC_settings set,
+  struct ALIKEC_rec_track rec
 ) {
   SEXP current = CAR(cur_par);
 
@@ -241,16 +246,17 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
   // If not language object, run comparison
 
   struct ALIKEC_res_lang res = ALIKEC_res_lang_init();
+  res.rec = rec;
 
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
     res =  ALIKEC_lang_obj_compare(
-      target, current, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env, set, rec
+      target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
+      cur_varnum, formula, match_call, match_env, set, rec.rec
     );
   } else {
     // If language object, then recurse
 
-    res.rec = ALIKEC_rec_inc(rec);
+    res.rec = ALIKEC_rec_inc(res.rec);
 
     SEXP tar_fun = CAR(target), cur_fun = CAR(current);
 
@@ -276,11 +282,12 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
       if(match_env != R_NilValue && set.lang_mode != 1) {
         target = PROTECT(ALIKEC_match_call(target, match_call, match_env));
         current = PROTECT(ALIKEC_match_call(current, match_call, match_env));
+        SETCAR(cur_par, current);  // ensures original call is matched
       } else {
         PROTECT(PROTECT(R_NilValue)); // stack balance
       }
       SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
-      R_xlen_t arg_num;
+      R_xlen_t arg_num, arg_num_prev = 0;
 
       for(
         tar_sub = CDR(target), cur_sub = CDR(current), arg_num = 0;
@@ -288,6 +295,11 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
         tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag,
         arg_num++
       ) {
+        if(arg_num_prev > arg_num)
+          error(
+            "Logic Error: %s; contact maintainer.",
+            "exceeded allowable call length"
+          );
         // Check tags are compatible; NULL tag in target allows any tag in current
 
         cur_sub_tag = TAG(cur_sub);
@@ -298,7 +310,7 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
           if(prev_tag != R_UnboundValue) {
             if(prev_tag == R_NilValue) {
               prev_tag_msg = CSR_smprintf4(
-                ALIKEC_MAX_CHAR, "after argument #%s", CSR_len_as_chr(arg_num),
+                ALIKEC_MAX_CHAR, "after argument %s", CSR_len_as_chr(arg_num),
                 "", "", ""
               );
             } else {
@@ -306,30 +318,55 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
                 ALIKEC_MAX_CHAR, "after argument `%s`", CHAR(PRINTNAME(prev_tag)),
                 "", "", ""
           );} }
-          ALIKEC_symb_mark(cur_par);
-          return CSR_smprintf4(
+          res.success = 0;
+          res.message = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "have argument `%s` %s",
             CHAR(PRINTNAME(TAG(tar_sub))),
             prev_tag_msg, "", ""
         );}
-        tar_sub = ALIKEC_skip_paren(tar_sub);
-        cur_sub = ALIKEC_skip_paren(cur_sub);
-
         SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
-        const char * res = ALIKEC_lang_obj_compare(
-          tar_sub_car, cur_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
+
+        // Note that `lang_obj_compare` kicks off recursion as well, and
+        // skips parens
+
+        struct ALIKEC_res_lang res = ALIKEC_lang_obj_compare(
+          tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
           tar_varnum, cur_varnum, formula, match_call, match_env, set
         );
-        if(res[0]) return(res);
+        // Update recursion indices
+
+        if(!res.success) {
+          if(tar_sub_tag != R_NilValue)
+            res.rec =
+              ALIKEC_rec_ind_chr(res.rec, CHAR(PRINTNAME(tar_sub_tag)));
+          else
+            res.rec =
+              ALIKEC_rec_ind_num(res.rec, arg_num + 1);
+        }
+        arg_num_prev = arg_num;
+      }
+      if(res.success) {
+        // Make sure that we compared all items; missing R_NilValue here means
+        // one of the calls has more items
+
+        R_xlen_t tar_len, cur_len;
+        tar_len = cur_len = arg_num;
+        if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
+          while(tar_sub != R_NilValue) {
+            tar_len++;
+            tar_sub = CDR(tar_sub);
+          }
+          while(cur_sub != R_NilValue) {
+            cur_len++;
+            cur_sub = CDR(cur_sub);
+          }
+          res.success = 0;
+          res.message = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "be length %s (is %s)",
+            CSR_len_as_chr(tar_len), CSR_len_as_chr(cur_len),  "", ""
+        );}
       }
       UNPROTECT(2);
-      if(tar_sub != R_NilValue || cur_sub != R_NilValue) {
-        // Unorthodox way of signaling that we don't wan to show function call
-        SETCAR(cur_par, R_NilValue);
-        return (const char *) CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be the same length (is %s)",
-          tar_sub == R_NilValue ? "longer" : "shorter", "", "", ""
-      );}
     }
     res.rec = ALIKEC_rec_dec(rec);
   }
