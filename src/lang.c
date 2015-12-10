@@ -176,7 +176,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
           rev_symb, csc_text, "", ""
         );
       }
-    };
+    } else res.success = 1;
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
     res.message =  CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\")",
