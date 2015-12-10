@@ -201,6 +201,7 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
         }
       }
       SETCAR(lang, index_call);
+      UNPROTECT(1);
       lang = CADR(index_call);
     }
   }

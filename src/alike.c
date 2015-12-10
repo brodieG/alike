@@ -462,7 +462,6 @@ struct ALIKEC_res ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  res.message.indices = ALIKEC_rec_ind_as_lang(res.rec);
   return res;
 }
 /*
@@ -554,6 +553,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       call_post = "`";
       call_char = dep_chr;
     }
+    error("indices no longer chr");
     const char * call_char_ind = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%s%s", call_char, res.message.indices, "", ""
     );

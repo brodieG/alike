@@ -217,6 +217,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
       res.rec = ALIKEC_rec_dec(res.rec);
     }
   }
+  UNPROTECT(2);
   return res;
 }
 
@@ -367,11 +368,12 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             CSR_len_as_chr(tar_len), CSR_len_as_chr(cur_len),  "", ""
         );}
       }
+      target = current = R_NilValue;
+
       UNPROTECT(2);
     }
     res.rec = ALIKEC_rec_dec(res.rec);
   }
-  UNPROTECT(2);
   return res;
 }
 /*
@@ -457,8 +459,6 @@ SEXP ALIKEC_lang_alike_core(
   for(int i = 0; i < 5; i++) SET_STRING_ELT(res_names, i, mkChar(names[i]));
 
   setAttrib(res_fin, R_NamesSymbol, res_names);
-  res_names = R_NilValue;
-  UNPROTECT(1);
   SET_VECTOR_ELT(res_fin, 0, ScalarLogical(res.success));
 
   if(!res.success) {
@@ -469,7 +469,7 @@ SEXP ALIKEC_lang_alike_core(
       res_fin, 4, VECTOR_ELT(ALIKEC_rec_ind_as_lang(res.rec), 0)
     );
   }
-  UNPROTECT(1);
+  UNPROTECT(4);
   return res_fin;
 }
 const char * ALIKEC_lang_alike_internal(
@@ -519,7 +519,6 @@ const char * ALIKEC_lang_alike_internal(
   //     err_msg = res;
   //   }
   // }
-  UNPROTECT(2);
 }
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
