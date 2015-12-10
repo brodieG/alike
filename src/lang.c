@@ -144,7 +144,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   current = VECTOR_ELT(cur_skip_paren, 0);
   int i, i_max = asInteger(VECTOR_ELT(cur_skip_paren, 1));
   for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
-  current = VECTOR_ELT(tar_skip_paren, 0);
+  target = VECTOR_ELT(tar_skip_paren, 0);
 
   if(target == R_NilValue) {// NULL matches anything
     res.success = 1;
