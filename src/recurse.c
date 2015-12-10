@@ -170,3 +170,52 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
   }
   return err_chr_indices;
 }
+/*
+Closely related to ALIKEC_rec_ind_as_chr except that it return a list (vector)
+with the language call with all the indices subset, and the pointer to the
+location in the language call that needs to be substituted.
+*/
+SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
+
+  char * err_chr_index, * err_chr_indices = "";
+  const char * err_chr_index_val;
+  size_t err_size = 0, ind_size_max = 0, ind_size;
+
+  SEXP res = PROTECT(allocVector(VECSXP, 2));
+  SEXP lang = PROTECT(list1(R_NilValue));
+  SEXP lang_cpy = lang;
+
+  if(rec.lvl_max) {  // Recursion occurred
+    // Make call to `[[` or `$`.  CAR is the `[[` or `$`, CADDR is the index
+    // value, and CADR is the spot that will be filled in with what is being
+    // subsetted: CADR$CADDR or CADR[[CADDR]]
+
+    for(size_t i = rec.lvl_max - 1; i >= 0; i--) {
+
+      SEXP index_call = PROTECT(lang3(R_NilValue, R_NilValue, R_NilValue));
+      switch(rec.indices[i].type) {
+        case 0:
+          SETCAR(index_call, R_Bracket2Symbol);
+          SETCADDR(index_call, ScalarInteger(rec.indices[i].ind.num));
+          break;
+        case 1:
+          SETCAR(index_call, R_Bracket2Symbol);
+          SETCADDR(index_call, ScalarInteger(install(rec.indices[i].ind.chr)));
+          break;
+        default: {
+          error(
+            "Logic Error: unexpected index type %d; contact maintainer.",
+            rec.indices[i].type
+          );
+        }
+      }
+      SETCAR(lang, index_call);
+      lang = CADR(index_call);
+    }
+  }
+  SET_VECTOR_ELT(res, 0, CAR(lang_cpy));
+  SET_VECTOR_ELT(res, 1, lang);
+
+  UNPROTECT(2);
+  return res;
+}

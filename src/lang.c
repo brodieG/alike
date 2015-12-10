@@ -436,7 +436,7 @@ const char * ALIKEC_lang_alike_internal(
   // Construct error message
 
   const char * err_msg = "";
-  if(res[0]) {
+  if(!res.success) {
     // Find display width
 
     SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
