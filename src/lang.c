@@ -335,7 +335,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
           tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
           tar_varnum, cur_varnum, formula, match_call, match_env, set, res.rec
         );
-        // Update recursion indices
+        // Update recursion indices and exit loop
 
         if(!res.success) {
           if(tar_sub_tag != R_NilValue)
@@ -344,6 +344,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
           else
             res.rec =
               ALIKEC_rec_ind_num(res.rec, arg_num + 1);
+          break;
         }
         arg_num_prev = arg_num;
       }
