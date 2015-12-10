@@ -31,7 +31,7 @@ struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
 Other struct initialization functions
 */
 struct ALIKEC_res_msg ALIKEC_res_msg_def(const char * msg) {
-  return (struct ALIKEC_res_msg) {.message=msg, .indices="", .wrap="%s"};
+  return (struct ALIKEC_res_msg) {.message=msg, .indices=R_NilValue, .wrap="%s"};
 }
 struct ALIKEC_res_sub ALIKEC_res_sub_def() {
   return (struct ALIKEC_res_sub) {
@@ -462,7 +462,7 @@ struct ALIKEC_res ALIKEC_alike_internal(
   Compute the part of the error that gives the index where the discrepancy
   occurred.
   */
-  res.message.indices = ALIKEC_rec_ind_as_chr(res.rec);
+  res.message.indices = ALIKEC_rec_ind_as_lang(res.rec);
   return res;
 }
 /*

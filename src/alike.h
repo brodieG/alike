@@ -24,7 +24,7 @@
   struct ALIKEC_res_msg {
     int success;
     const char * message;
-    const char * indices;
+    SEXP indices;
     const char * wrap;
   };
   // Keep track of environments in recursion to make sure we don't get into a
@@ -123,10 +123,11 @@
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
-  const char * ALIKEC_lang_alike_rec(
+  struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,
-    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings set
+    int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings set,
+    struct ALIKEC_rec_track rec
   );
   const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
@@ -134,7 +135,8 @@
 
   // - Utility Funs -----------------------------------------------------------
 
-  const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec); 
+  const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec);
+  SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec);
   struct ALIKEC_rec_track ALIKEC_rec_def();
   struct ALIKEC_settings ALIKEC_set_def();
   struct ALIKEC_rec_track ALIKEC_rec_ind_chr(

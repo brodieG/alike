@@ -176,11 +176,6 @@ with the language call with all the indices subset, and the pointer to the
 location in the language call that needs to be substituted.
 */
 SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
-
-  char * err_chr_index, * err_chr_indices = "";
-  const char * err_chr_index_val;
-  size_t err_size = 0, ind_size_max = 0, ind_size;
-
   SEXP res = PROTECT(allocVector(VECSXP, 2));
   SEXP lang = PROTECT(list1(R_NilValue));
   SEXP lang_cpy = lang;

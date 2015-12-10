@@ -3,12 +3,12 @@
 /*
 Initialize return object
 */
-struct ALIKEC_res_lang ALIKEC_rec_lang_init() {
+struct ALIKEC_res_lang ALIKEC_res_lang_init() {
   return (struct ALIKEC_res_lang) {
     .success = 0,
-    .rec = ALIKEC_rec_init(),
+    .rec = ALIKEC_rec_def(),
     .message = ""
-  }
+  };
 }
 /*
 Moves pointer on language object to skip any `(` calls since those are
@@ -33,7 +33,7 @@ SEXP ALIKEC_skip_paren(SEXP lang) {
       );
   } }
   SET_VECTOR_ELT(res, 0, lang);
-  SET_VECTOR_ELT(res, 1, ScalarInteger(i);
+  SET_VECTOR_ELT(res, 1, ScalarInteger(i));
   UNPROTECT(1);
   return(res);
 }
@@ -125,7 +125,7 @@ Handle language object comparison
 Note that we always pass cur_par instead of current so that we can modify the
 original call (mostly by using `match.call` on it)
 */
-const char * ALIKEC_lang_obj_compare(
+struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash,
   pfHashTable * cur_hash, pfHashTable * rev_hash, size_t * tar_varnum,
   size_t * cur_varnum, int formula, SEXP match_call, SEXP match_env,
@@ -135,17 +135,21 @@ const char * ALIKEC_lang_obj_compare(
   struct ALIKEC_res_lang res = ALIKEC_res_lang_init();
   res.rec = rec;
 
-  SEXP cur_skip_paren = PROTECT(ALIKEC_skip_paren(current));
-  SEXP tar_skip_paren = PROTECT(ALIKEC_skip_paren(target));
-
   // Skip parens and increment recursion; not we don't track recursion level
   // for target
+
+  SEXP cur_skip_paren = PROTECT(ALIKEC_skip_paren(current));
+  SEXP tar_skip_paren = PROTECT(ALIKEC_skip_paren(target));
 
   current = VECTOR_ELT(cur_skip_paren, 0);
   int i, i_max = asInteger(VECTOR_ELT(cur_skip_paren, 1));
   for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
+  current = VECTOR_ELT(tar_skip_paren, 0);
 
-  if(target == R_NilValue) return ""; // NULL matches anything
+  if(target == R_NilValue) {// NULL matches anything
+    res.success = 1;
+    return res;
+  }
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
 
   res.success = 0;  // assume fail until shown otherwise
@@ -233,15 +237,13 @@ typically the case when the error is not specific to a particular part of the
 call).
 */
 
-struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
+struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
   SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
   pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum, int formula,
   SEXP match_call, SEXP match_env, struct ALIKEC_settings set,
   struct ALIKEC_rec_track rec
 ) {
   SEXP current = CAR(cur_par);
-
-  target = VECTOR_ELT(tar_skip_paren, 0);
 
   // If not language object, run comparison
 
@@ -251,7 +253,7 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
   if(TYPEOF(target) != LANGSXP || TYPEOF(current) != LANGSXP) {
     res =  ALIKEC_lang_obj_compare(
       target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env, set, rec.rec
+      cur_varnum, formula, match_call, match_env, set, res.rec
     );
   } else {
     // If language object, then recurse
@@ -324,14 +326,13 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
             CHAR(PRINTNAME(TAG(tar_sub))),
             prev_tag_msg, "", ""
         );}
-        SEXP tar_sub_car = CAR(tar_sub), cur_sub_car = CAR(cur_sub);
-
         // Note that `lang_obj_compare` kicks off recursion as well, and
         // skips parens
 
-        struct ALIKEC_res_lang res = ALIKEC_lang_obj_compare(
+        SEXP tar_sub_car = CAR(tar_sub);
+        res = ALIKEC_lang_obj_compare(
           tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
-          tar_varnum, cur_varnum, formula, match_call, match_env, set
+          tar_varnum, cur_varnum, formula, match_call, match_env, set, res.rec
         );
         // Update recursion indices
 
@@ -374,12 +375,21 @@ struct ALIKEC_rec_lang ALIKEC_lang_alike_rec(
   return res;
 }
 /*
+Compare language objects.
+
+This is a semi internal function used by the internal language comparison
+mechanism as well as the external testing functions.
+
 Determine whether objects should be compared as calls or as formulas; the main
 difference in treatment is that calls are match-called if possible, and also
 that for calls constants need not be the same
+
+Return a list (vector) with the status, error message, the matched language
+object, the original language object, and index within the langauge object of
+the problem if there is one (relative to the matched object)
 */
 
-const char * ALIKEC_lang_alike_internal(
+SEXP ALIKEC_lang_alike_core(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   SEXP match_env = set.env;
@@ -394,7 +404,11 @@ const char * ALIKEC_lang_alike_internal(
   if(TYPEOF(match_env) != ENVSXP && match_env != R_NilValue)
     error("Argument `match.call.env` must be an environment or NULL");
 
-  // Create persistent objects for use throught recursion
+  /*
+  Create persistent objects for use throught recursion; these are the hash
+  tables that are used to keep track of names as they show up as we recurse
+  through the language objects
+  */
 
   pfHashTable * tar_hash = pfHashCreate(NULL);
   pfHashTable * cur_hash = pfHashCreate(NULL);
@@ -425,69 +439,92 @@ const char * ALIKEC_lang_alike_internal(
     formula = 1;
   }
   // Check if alike; originally we would modify a copy of current, which is
-  // why we send curr_cpy_par; in the future we will no longer do that
+  // why we send curr_cpy_par
 
   SEXP curr_cpy_par = PROTECT(list1(duplicate(current)));
-  struct ALIKEC_rec_track = ALIKEC_rec_init();
-  const char * res = ALIKEC_lang_alike_rec(
+  struct ALIKEC_rec_track rec = ALIKEC_rec_def();
+  struct ALIKEC_res_lang res = ALIKEC_lang_alike_rec(
     target, curr_cpy_par, tar_hash, cur_hash, rev_hash, tar_varnum, cur_varnum,
     formula, match_call, match_env, set, rec
   );
-  // Construct error message
+  // Save our results in a SEXP to simplify testing
+  const char * names[5] = {
+    "success", "message", "call.orig", "call.ind", "call.match"
+  };
+  SEXP res_fin = PROTECT(allocVector(VECSXP, 5));
+  SEXP res_names = PROTECT(allocVector(STRSXP, 5));
 
-  const char * err_msg = "";
+  for(int i = 0; i < 5; i++) SET_STRING_ELT(res_names, i, mkChar(names[i]));
+
+  setAttrib(res_fin, R_NamesSymbol, res_names);
+  res_names = R_NilValue;
+  UNPROTECT(1);
+  SET_VECTOR_ELT(res_fin, 0, ScalarLogical(res.success));
+
   if(!res.success) {
-    // Find display width
-
-    SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
-    SET_TYPEOF(width_call, LANGSXP);
-    SEXP disp_width = PROTECT(eval(width_call, R_BaseEnv));
-    int max_chars = 200;
-    if(TYPEOF(disp_width) == INTSXP && XLENGTH(disp_width) == 1) {
-      int width_opt = asInteger(disp_width);
-      if(width_opt != NA_INTEGER && width_opt > 0) max_chars = width_opt;
-    }
-    UNPROTECT(2);
-    /*
-    Based on width, determine how to display result, with these rules:
-    - if deparse contains newline, then start on new line
-    - if deparse plus rest of err message greater than max_char, then start on
-      new line
-    */
-    int use_in = CAR(curr_cpy_par) != R_NilValue;
-    if(use_in) {
-      int max_chars_net =
-        max_chars - (strlen(res) + strlen(set.prepend) + 4 + 1);
-      int err_dep_len, has_nl = 0;
-      const char * err_dep =
-        ALIKEC_deparse_chr(CAR(curr_cpy_par), -1);
-      for(err_dep_len = 0; err_dep[err_dep_len]; err_dep_len++) // calc dep length
-        if(err_dep[err_dep_len] == '\n') has_nl++;
-
-      int with_nl = has_nl || err_dep_len > max_chars_net;
-      /*
-      Add prompt looking stuff to front of deparsed call if it is multi-line;
-      really should be done elsewhere, also, we're not being super effcient
-      about this since we could record nl positions earlier
-      */
-
-      err_msg = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
-      );
-    } else {
-      err_msg = res;
-    }
+    SET_VECTOR_ELT(res_fin, 1, mkString(res.message));
+    SET_VECTOR_ELT(res_fin, 2, current);
+    SET_VECTOR_ELT(res_fin, 3, CAR(curr_cpy_par));
+    SET_VECTOR_ELT(
+      res_fin, 4, VECTOR_ELT(ALIKEC_rec_ind_as_lang(res.rec), 0)
+    );
   }
-  UNPROTECT(2);
-  return err_msg;
+  UNPROTECT(1);
+  return res_fin;
 }
+const char * ALIKEC_lang_alike_internal(
+  SEXP target, SEXP current, struct ALIKEC_settings set
+) {
+  error("This is half hacked right now...");
+  // code here preserved text conversion
+  // if(!res.success) {
+  //   // Find display width
 
+  //   SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
+  //   SET_TYPEOF(width_call, LANGSXP);
+  //   SEXP disp_width = PROTECT(eval(width_call, R_BaseEnv));
+  //   int max_chars = 200;
+  //   if(TYPEOF(disp_width) == INTSXP && XLENGTH(disp_width) == 1) {
+  //     int width_opt = asInteger(disp_width);
+  //     if(width_opt != NA_INTEGER && width_opt > 0) max_chars = width_opt;
+  //   }
+  //   UNPROTECT(2);
+  //   /*
+  //   Based on width, determine how to display result, with these rules:
+  //   - if deparse contains newline, then start on new line
+  //   - if deparse plus rest of err message greater than max_char, then start on
+  //     new line
+  //   */
+  //   int use_in = CAR(curr_cpy_par) != R_NilValue;
+  //   if(use_in) {
+  //     int max_chars_net =
+  //       max_chars - (strlen(res) + strlen(set.prepend) + 4 + 1);
+  //     int err_dep_len, has_nl = 0;
+  //     const char * err_dep =
+  //       ALIKEC_deparse_chr(CAR(curr_cpy_par), -1);
+  //     for(err_dep_len = 0; err_dep[err_dep_len]; err_dep_len++) // calc dep length
+  //       if(err_dep[err_dep_len] == '\n') has_nl++;
+
+  //     int with_nl = has_nl || err_dep_len > max_chars_net;
+  //     /*
+  //     Add prompt looking stuff to front of deparsed call if it is multi-line;
+  //     really should be done elsewhere, also, we're not being super effcient
+  //     about this since we could record nl positions earlier
+  //     */
+
+  //     err_msg = CSR_smprintf4(
+  //       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
+  //     );
+  //   } else {
+  //     err_msg = res;
+  //   }
+  // }
+  UNPROTECT(2);
+}
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = match_env;
-  const char * res = ALIKEC_lang_alike_internal(target, current, set);
-  if(strlen(res)) return mkString(res);
-  return ScalarLogical(1);
+  return ALIKEC_lang_alike_core(target, current, set);
 }
