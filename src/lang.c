@@ -369,7 +369,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
       }
       UNPROTECT(2);
     }
-    res.rec = ALIKEC_rec_dec(rec);
+    res.rec = ALIKEC_rec_dec(res.rec);
   }
   UNPROTECT(2);
   return res;
