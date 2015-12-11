@@ -181,22 +181,22 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
     // value, and CADR is the spot that will be filled in with what is being
     // subsetted: CADR$CADDR or CADR[[CADDR]]
 
-    for(size_t i = rec.lvl_max - 1; i >= 0; i--) {
-
+    for(size_t i = rec.lvl_max; i > 0; i--) {
+      size_t j = i - 1;
       SEXP index_call = PROTECT(lang3(R_NilValue, R_NilValue, R_NilValue));
-      switch(rec.indices[i].type) {
+      switch(rec.indices[j].type) {
         case 0:
           SETCAR(index_call, R_Bracket2Symbol);
-          SETCADDR(index_call, ScalarInteger(rec.indices[i].ind.num));
+          SETCADDR(index_call, ScalarInteger(rec.indices[j].ind.num));
           break;
         case 1:
           SETCAR(index_call, R_Bracket2Symbol);
-          SETCADDR(index_call, ScalarInteger(install(rec.indices[i].ind.chr)));
+          SETCADDR(index_call, install(rec.indices[j].ind.chr));
           break;
         default: {
           error(
             "Logic Error: unexpected index type %d; contact maintainer.",
-            rec.indices[i].type
+            rec.indices[j].type
           );
         }
       }
