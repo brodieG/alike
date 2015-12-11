@@ -105,7 +105,6 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
     // Scan through all indices to calculate size of required vector
 
     for(size_t i = 0; i < rec.lvl_max; i++) {
-      Rprintf("  Allocating for index %d of %d\n", i, rec.lvl_max);
       switch(rec.indices[i].type) {
         case 0:
           ind_size = CSR_len_chr_len(rec.indices[i].ind.num);
@@ -126,7 +125,6 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
     }
     // Allways alloacate as if index will be in [[index]] form as that is
     // worst case
-    Rprintf("Now allocate character\n");
     err_chr_indices = (char *) R_alloc(
       err_size + 4 * rec.lvl_max + 1, sizeof(char)
     );
@@ -134,7 +132,6 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
     err_chr_indices[0] = '\0';
 
     for(size_t i = 0; i < rec.lvl_max; i++) {
-      Rprintf("writing for index %d\n", i);
       const char * index_tpl = "[[%s]]";
       switch(rec.indices[i].type) {
         case 0:
@@ -166,7 +163,6 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
         strcat(err_chr_indices, err_chr_index);
       }
     }
-    Rprintf("Written: %s\n", err_chr_indices);
   }
   return err_chr_indices;
 }
