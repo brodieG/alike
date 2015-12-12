@@ -487,7 +487,7 @@ const char * ALIKEC_lang_alike_internal(
 
   const char * res = "";
 
-  if(asInteger(VECTOR_ELT(lang_res, 0))) {
+  if(!asInteger(VECTOR_ELT(lang_res, 0))) {
     // Get SEXPs, and substitute call into index; note that lang_ind_sub is the
     // CONS cell that references the spot to sub-in our call
 
