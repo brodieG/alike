@@ -192,7 +192,7 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
           SETCADDR(index_call, ScalarInteger(rec.indices[j].ind.num));
           break;
         case 1:
-          SETCAR(index_call, R_Bracket2Symbol);
+          SETCAR(index_call, R_DollarSymbol);
           SETCADDR(index_call, install(rec.indices[j].ind.chr));
           break;
         default: {
