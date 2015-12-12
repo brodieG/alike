@@ -533,7 +533,7 @@ const char * ALIKEC_lang_alike_internal(
       ALIKEC_MAX_CHAR, "have%s%s%s%s",
       call_pre, call_char, call_post, CHAR(asChar(VECTOR_ELT(lang_res, 1)))
     );
-    UNPROTECT(2);
+    UNPROTECT(1);
   }
   UNPROTECT(1);
   return res;
