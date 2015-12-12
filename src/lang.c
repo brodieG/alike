@@ -482,7 +482,6 @@ Translate result into character for use by alike
 const char * ALIKEC_lang_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
-
   SEXP lang_res = PROTECT(ALIKEC_lang_alike_core(target, current, set));
 
   const char * res = "";
@@ -495,7 +494,7 @@ const char * ALIKEC_lang_alike_internal(
     SEXP lang_call = VECTOR_ELT(lang_res, 2);
     SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
 
-    SETCAR(lang_ind_sub, lang_call);
+    SETCAR(lang_ind_sub, lang2(R_QuoteSymbol, lang_call));
 
     // Deparse
 
@@ -521,18 +520,19 @@ const char * ALIKEC_lang_alike_internal(
     }
     const char * call_char, * call_pre = "", * call_post = "";
     if(multi_line) {
-      call_pre = " in:\n%s";
+      call_pre = ":\n%s";
       call_char = ALIKEC_pad(lang_dep, -1, 2);
+      call_post = "\n";
     } else {
-      call_pre = " in `";
-      call_post = "`";
+      call_pre = " `";
+      call_post = "` ";
       call_char = dep_chr;
     }
     res = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s %s%s%s", CHAR(asChar(VECTOR_ELT(lang_res, 1))),
-      call_pre, call_char, call_post
+      ALIKEC_MAX_CHAR, "have%s%s%s%s",
+      call_pre, call_char, call_post, CHAR(asChar(VECTOR_ELT(lang_res, 1)))
     );
-    UNPROTECT(1);
+    UNPROTECT(2);
   }
   UNPROTECT(1);
   return res;
