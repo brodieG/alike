@@ -465,10 +465,10 @@ SEXP ALIKEC_lang_alike_core(
   if(!res.success) {
     SET_VECTOR_ELT(res_fin, 1, mkString(res.message));
     SET_VECTOR_ELT(res_fin, 2, current);
-    SET_VECTOR_ELT(res_fin, 3, CAR(curr_cpy_par));
     SET_VECTOR_ELT(
-      res_fin, 4, VECTOR_ELT(ALIKEC_rec_ind_as_lang(res.rec), 0)
+      res_fin, 3, VECTOR_ELT(ALIKEC_rec_ind_as_lang(res.rec), 0)
     );
+    SET_VECTOR_ELT(res_fin, 4, CAR(curr_cpy_par));
   }
   UNPROTECT(4);
   return res_fin;
