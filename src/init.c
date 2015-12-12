@@ -19,6 +19,7 @@ R_CallMethodDef callMethods[] = {
   {"compare_dims", (DL_FUNC) &ALIKEC_compare_dim_ext, 5},
   {"compare_ts", (DL_FUNC) &ALIKEC_compare_ts_ext, 2},
   {"lang_alike", (DL_FUNC) &ALIKEC_lang_alike_ext, 3},
+  {"lang_alike_chr", (DL_FUNC) &ALIKEC_lang_alike_chr_ext, 3},
   {"fun_alike", (DL_FUNC) &ALIKEC_fun_alike_ext, 2},
   {"deparse", (DL_FUNC) &ALIKEC_deparse_ext, 2},
   {"deparse_oneline", (DL_FUNC) &ALIKEC_deparse_oneline_ext, 3},

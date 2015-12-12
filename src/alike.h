@@ -123,6 +123,7 @@
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
+  SEXP ALIKEC_lang_alike_chr_ext(SEXP target, SEXP current, SEXP match_env);
   struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
     SEXP target, SEXP cur_par, pfHashTable * tar_hash, pfHashTable * cur_hash,
     pfHashTable * rev_hash, size_t * tar_varnum, size_t * cur_varnum,

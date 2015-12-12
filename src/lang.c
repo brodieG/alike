@@ -451,80 +451,107 @@ SEXP ALIKEC_lang_alike_core(
     formula, match_call, match_env, set, rec
   );
   // Save our results in a SEXP to simplify testing
-  const char * names[5] = {
-    "success", "message", "call.orig", "call.ind", "call.match"
+  const char * names[6] = {
+    "success", "message", "call.match", "call.ind", "call.ind.sub.par",
+    "call.orig"
   };
   SEXP res_fin = PROTECT(allocVector(VECSXP, 5));
   SEXP res_names = PROTECT(allocVector(STRSXP, 5));
 
-  for(int i = 0; i < 5; i++) SET_STRING_ELT(res_names, i, mkChar(names[i]));
+  for(int i = 0; i < 6; i++) SET_STRING_ELT(res_names, i, mkChar(names[i]));
 
   setAttrib(res_fin, R_NamesSymbol, res_names);
   SET_VECTOR_ELT(res_fin, 0, ScalarLogical(res.success));
 
   if(!res.success) {
+    SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
+
     SET_VECTOR_ELT(res_fin, 1, mkString(res.message));
-    SET_VECTOR_ELT(res_fin, 2, current);
-    SET_VECTOR_ELT(
-      res_fin, 3, VECTOR_ELT(ALIKEC_rec_ind_as_lang(res.rec), 0)
-    );
-    SET_VECTOR_ELT(res_fin, 4, CAR(curr_cpy_par));
+    SET_VECTOR_ELT(res_fin, 2, CAR(curr_cpy_par));
+    SET_VECTOR_ELT(res_fin, 3, VECTOR_ELT(rec_ind, 0));
+    SET_VECTOR_ELT(res_fin, 4, VECTOR_ELT(rec_ind, 1));
+    SET_VECTOR_ELT(res_fin, 5, current);
+    UNPROTECT(1);
   }
   UNPROTECT(4);
   return res_fin;
 }
+/*
+Translate result into character for use by alike
+*/
 const char * ALIKEC_lang_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
-  error("This is half hacked right now...");
-  // code here preserved text conversion
-  // if(!res.success) {
-  //   // Find display width
 
-  //   SEXP width_call = PROTECT(list2(ALIKEC_SYM_getOption, mkString("width")));
-  //   SET_TYPEOF(width_call, LANGSXP);
-  //   SEXP disp_width = PROTECT(eval(width_call, R_BaseEnv));
-  //   int max_chars = 200;
-  //   if(TYPEOF(disp_width) == INTSXP && XLENGTH(disp_width) == 1) {
-  //     int width_opt = asInteger(disp_width);
-  //     if(width_opt != NA_INTEGER && width_opt > 0) max_chars = width_opt;
-  //   }
-  //   UNPROTECT(2);
-  //   /*
-  //   Based on width, determine how to display result, with these rules:
-  //   - if deparse contains newline, then start on new line
-  //   - if deparse plus rest of err message greater than max_char, then start on
-  //     new line
-  //   */
-  //   int use_in = CAR(curr_cpy_par) != R_NilValue;
-  //   if(use_in) {
-  //     int max_chars_net =
-  //       max_chars - (strlen(res) + strlen(set.prepend) + 4 + 1);
-  //     int err_dep_len, has_nl = 0;
-  //     const char * err_dep =
-  //       ALIKEC_deparse_chr(CAR(curr_cpy_par), -1);
-  //     for(err_dep_len = 0; err_dep[err_dep_len]; err_dep_len++) // calc dep length
-  //       if(err_dep[err_dep_len] == '\n') has_nl++;
+  SEXP lang_res = PROTECT(ALIKEC_lang_alike_core(target, current, set));
 
-  //     int with_nl = has_nl || err_dep_len > max_chars_net;
-  //     /*
-  //     Add prompt looking stuff to front of deparsed call if it is multi-line;
-  //     really should be done elsewhere, also, we're not being super effcient
-  //     about this since we could record nl positions earlier
-  //     */
+  const char * res = "";
 
-  //     err_msg = CSR_smprintf4(
-  //       ALIKEC_MAX_CHAR, "%s in:%s%s", res, with_nl ? "\n" : " ", err_dep, ""
-  //     );
-  //   } else {
-  //     err_msg = res;
-  //   }
-  // }
+  if(asInteger(VECTOR_ELT(lang_res, 0))) {
+    // Get SEXPs, and substitute call into index; note that lang_ind_sub is the
+    // CONS cell that references the spot to sub-in our call
+
+    SEXP lang_ind = VECTOR_ELT(lang_res, 3);
+    SEXP lang_call = VECTOR_ELT(lang_res, 2);
+    SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
+
+    SETCAR(lang_ind_sub, lang_call);
+
+    // Deparse
+
+    int width = set.width;
+    if(width < 0) width = asInteger(ALIKEC_getopt("width"));
+    if(width < 10 || width > 1000) width = 80;
+
+    int dep_cutoff;
+
+    if(width < 62) dep_cutoff = width - 2;
+    else dep_cutoff = 60;
+    if(dep_cutoff < 20) dep_cutoff = 60;
+
+    SEXP lang_dep = PROTECT(ALIKEC_deparse(lang_ind, dep_cutoff));
+
+    // Handle the different deparse scenarios
+
+    int multi_line = 1;
+    const char * dep_chr = CHAR(asChar(lang_dep));
+
+    if(XLENGTH(lang_dep) == 1) {
+      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= width - 2) multi_line = 0;
+    }
+    const char * call_char, * call_pre = "", * call_post = "";
+    if(multi_line) {
+      call_pre = " in:\n%s";
+      call_char = ALIKEC_pad(lang_dep, -1, 2);
+    } else {
+      call_pre = " in `";
+      call_post = "`";
+      call_char = dep_chr;
+    }
+    res = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "%s %s%s%s", CHAR(asChar(VECTOR_ELT(lang_res, 1))),
+      call_pre, call_char, call_post
+    );
+    UNPROTECT(1);
+  }
+  UNPROTECT(1);
+  return res;
 }
+/*
+For testing purposes
+*/
 SEXP ALIKEC_lang_alike_ext(
   SEXP target, SEXP current, SEXP match_env
 ) {
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = match_env;
   return ALIKEC_lang_alike_core(target, current, set);
+}
+
+SEXP ALIKEC_lang_alike_chr_ext(
+  SEXP target, SEXP current, SEXP match_env
+) {
+  struct ALIKEC_settings set = ALIKEC_set_def("");
+  set.env = match_env;
+  return mkString(ALIKEC_lang_alike_internal(target, current, set));
 }

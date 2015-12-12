@@ -176,7 +176,7 @@ location in the language call that needs to be substituted.
 SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
   SEXP res = PROTECT(allocVector(VECSXP, 2));
   SEXP lang = PROTECT(list1(R_NilValue));
-  SEXP lang_cpy = lang;
+  SEXP lang_cpy = lang, lang_ref;
 
   if(rec.lvl_max) {  // Recursion occurred
     // Make call to `[[` or `$`.  CAR is the `[[` or `$`, CADDR is the index
@@ -205,11 +205,11 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
       SETCAR(lang, index_call);
       UNPROTECT(1);
       lang = CADR(index_call);
+      lang_ref = CDR(index_call);
     }
+    SET_VECTOR_ELT(res, 0, CAR(lang_cpy));
+    SET_VECTOR_ELT(res, 1, lang_ref);
   }
-  SET_VECTOR_ELT(res, 0, CAR(lang_cpy));
-  SET_VECTOR_ELT(res, 1, lang);
-
   UNPROTECT(2);
   return res;
 }

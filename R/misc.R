@@ -31,6 +31,9 @@ ts_compare <- function(target, current)
 lang_alike <- function(target, current, match.call.env=parent.frame())
   .Call(ALIKEC_lang_alike, target, current, match.call.env)
 
+lang_alike_chr <- function(target, current, match.call.env=parent.frame())
+  .Call(ALIKEC_lang_alike_chr, target, current, match.call.env)
+
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
