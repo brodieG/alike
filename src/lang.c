@@ -455,8 +455,8 @@ SEXP ALIKEC_lang_alike_core(
     "success", "message", "call.match", "call.ind", "call.ind.sub.par",
     "call.orig"
   };
-  SEXP res_fin = PROTECT(allocVector(VECSXP, 5));
-  SEXP res_names = PROTECT(allocVector(STRSXP, 5));
+  SEXP res_fin = PROTECT(allocVector(VECSXP, 6));
+  SEXP res_names = PROTECT(allocVector(STRSXP, 6));
 
   for(int i = 0; i < 6; i++) SET_STRING_ELT(res_names, i, mkChar(names[i]));
 
