@@ -35,8 +35,10 @@ struct ALIKEC_rec_track ALIKEC_rec_ind_set(
 ) {
   // Initialize indices if not initialized
 
-  if(!rec.indices) rec = ALIKEC_rec_ind_init(rec);
-
+  if(!rec.indices) {
+    rec = ALIKEC_rec_ind_init(rec);
+    rec.lvl_max = rec.lvl;
+  }
   // Find correct spot in previously allocated indices spaces, clearly relies on
   // lvl being exactly correct...
 
