@@ -323,22 +323,24 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             ALIKEC_MAX_CHAR, "have argument `%s` %s",
             CHAR(PRINTNAME(TAG(tar_sub))),
             prev_tag_msg, "", ""
-        );}
-        // Note that `lang_obj_compare` kicks off recursion as well, and
-        // skips parens
+          );
+        } else {
+          // Note that `lang_obj_compare` kicks off recursion as well, and
+          // skips parens
 
-        SEXP tar_sub_car = CAR(tar_sub);
-        res = ALIKEC_lang_obj_compare(
-          tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
-          tar_varnum, cur_varnum, formula, match_call, match_env, set, res.rec
-        );
+          SEXP tar_sub_car = CAR(tar_sub);
+          res = ALIKEC_lang_obj_compare(
+            tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
+            tar_varnum, cur_varnum, formula, match_call, match_env, set, res.rec
+          );
+        }
         // Update recursion indices and exit loop; keep in mind that this is a
         // call so first element is fun, hence `arg_num + 2`
 
         if(!res.success) {
-          if(tar_sub_tag != R_NilValue)
+          if(cur_sub_tag != R_NilValue)
             res.rec =
-              ALIKEC_rec_ind_chr(res.rec, CHAR(PRINTNAME(tar_sub_tag)));
+              ALIKEC_rec_ind_chr(res.rec, CHAR(PRINTNAME(cur_sub_tag)));
           else
             res.rec =
               ALIKEC_rec_ind_num(res.rec, arg_num + 2);
