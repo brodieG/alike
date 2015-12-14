@@ -146,15 +146,12 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
   target = VECTOR_ELT(tar_skip_paren, 0);
 
-  if(target == R_NilValue) {// NULL matches anything
-    res.success = 1;
-    return res;
-  }
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
-
   res.success = 0;  // assume fail until shown otherwise
 
-  if(tsc_type == SYMSXP && csc_type == SYMSXP) {
+  if(target == R_NilValue) {// NULL matches anything
+    res.success = 1;
+  } else if(tsc_type == SYMSXP && csc_type == SYMSXP) {
     char * tar_abs = ALIKEC_symb_abstract(target, tar_hash, tar_varnum);
     char * cur_abs = ALIKEC_symb_abstract(current, cur_hash, cur_varnum);
     // reverse hash to get what symbol should be in case of error
