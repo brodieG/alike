@@ -141,6 +141,21 @@ SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars, SEXP keep_at_end) {
 SEXP ALIKEC_deparse(SEXP obj, int width_cutoff) {
   return ALIKEC_deparse_core(obj, width_cutoff);
 }
+/*
+version that uses default deparse width if console is wide enought, otherwise
+based on console width
+*/
+SEXP ALIKEC_deparse_width(SEXP obj, int width) {
+  if(width < 0) width = asInteger(ALIKEC_getopt("width"));
+  if(width < 10 || width > 1000) width = 80;
+
+  int dep_cutoff;
+
+  if(width < 62) dep_cutoff = width - 2;
+  else dep_cutoff = 60;
+  if(dep_cutoff < 20) dep_cutoff = 60;
+  return ALIKEC_deparse(obj, dep_cutoff);
+}
 SEXP ALIKEC_deparse_ext(SEXP obj, SEXP width_cutoff) {
   return ALIKEC_deparse(obj, asInteger(width_cutoff));
 }

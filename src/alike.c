@@ -524,17 +524,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     } }
     // Now deparse
 
-    int width = set.width;
-    if(width < 0) width = asInteger(ALIKEC_getopt("width"));
-    if(width < 10 || width > 1000) width = 80;
-
-    int dep_cutoff;
-
-    if(width < 62) dep_cutoff = width - 2;
-    else dep_cutoff = 60;
-    if(dep_cutoff < 20) dep_cutoff = 60;
-
-    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse(curr_fin, dep_cutoff));
+    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse_depth(curr_fin, dep_cutoff));
 
     // Handle the different deparse scenarios
 

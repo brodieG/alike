@@ -498,17 +498,7 @@ const char * ALIKEC_lang_alike_internal(
 
     // Deparse
 
-    int width = set.width;
-    if(width < 0) width = asInteger(ALIKEC_getopt("width"));
-    if(width < 10 || width > 1000) width = 80;
-
-    int dep_cutoff;
-
-    if(width < 62) dep_cutoff = width - 2;
-    else dep_cutoff = 60;
-    if(dep_cutoff < 20) dep_cutoff = 60;
-
-    SEXP lang_dep = PROTECT(ALIKEC_deparse(lang_ind, dep_cutoff));
+    SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang_ind, set.width));
 
     // Handle the different deparse scenarios
 

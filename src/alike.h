@@ -157,6 +157,7 @@
   SEXP ALIKEC_deparse_oneline_ext(
     SEXP obj, SEXP max_chars, SEXP keep_at_end
   );
+  SEXP ALIKEC_deparse_width(SEXP obj, int width);
   SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
   const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad);
   SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad);
