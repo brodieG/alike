@@ -51,14 +51,30 @@ struct ALIKEC_res_sub ALIKEC_alike_attr(
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
+  PROTECT(res_sub.message);  // less than ideal...
+
   if(!res.success) {
     res_sub.success = 0;
-    res_sub.message.wrap = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, special ? "%s%s(%%s)%s" : "%sattr(%%s, \"%s\")%s",
-      attr_attr ? "attributes(" : "", attr_name, attr_attr ? ")" : "", ""
+    SET_VECTOR_ELT(
+      res_sub.message, 0,
+      mkString("be `alike` the corresponding element in target")
     );
-    res_sub.message.message = "be `alike` the corresponding element in target";
+    SEXP wrap_call;
+    if(attr_attr) {
+      wrap_call = PROTECT(
+        lang3(ALIKEC_SYM_attr, R_NilValue, mkString(attr_name))
+      );
+    } else {
+      wrap_call = PROTECT(lang2(ALIKEC_SYM_attributes, R_NilValue));
+    }
+    SEXP wrap = PROTECT(allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(wrap, 0, wrap_call);
+    SET_VECTOR_ELT(wrap, 1, CDR(wrap_call));
+
+    SET_VECTOR_ELT(res_sub.message, 1, wrap);
+    UNPROTECT(2);
   }
+  UNPROTECT(1);
   return res_sub;
 }
 

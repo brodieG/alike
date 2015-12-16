@@ -30,8 +30,19 @@ struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
 /*
 Other struct initialization functions
 */
-struct ALIKEC_res_msg ALIKEC_res_msg_def(const char * msg) {
-  return (struct ALIKEC_res_msg) {.message=msg, .indices=R_NilValue, .wrap="%s"};
+SEXP ALIKEC_res_msg_def(const char * msg) {
+  SEXP res_msg = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(res_msg, 0, mkString(msg));  // message
+  SET_VECTOR_ELT(res_msg, 1, R_NilValue);     // wrap
+
+  SEXP res_names = PROTECT(allocVector(STRSXP, 2));
+  SET_STRING_ELT(res_names, 0, mkString("message));
+  SET_STRING_ELT(res_names, 1, mkString("wrap"));
+
+  setAttr(res_msg, R_NamesSymbol, res_names);
+  UNPROTECT(2);
+
+  return res_msg;
 }
 struct ALIKEC_res_sub ALIKEC_res_sub_def() {
   return (struct ALIKEC_res_sub) {

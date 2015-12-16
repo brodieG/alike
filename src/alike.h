@@ -21,12 +21,6 @@
     const char * message;
     const char * call;
   };
-  struct ALIKEC_res_msg {
-    int success;
-    const char * message;
-    SEXP indices;
-    const char * wrap;
-  };
   // Keep track of environments in recursion to make sure we don't get into a
   // infinite recursion loop
 
@@ -51,7 +45,7 @@
   };
   struct ALIKEC_res {
     int success;
-    struct ALIKEC_res_msg message;
+    SEXP message;
     int df;
     struct ALIKEC_rec_track rec;
   };
@@ -61,7 +55,7 @@
   struct ALIKEC_res_lang {
     int success;
     struct ALIKEC_rec_track rec;
-    const char * message;
+    const char * chr_msg;
   };
   // Structure used for functions called by 'alike_obj', main difference with
   // the return value of 'alike_obj' is 'indices', since that is a more complex
@@ -69,7 +63,7 @@
 
   struct ALIKEC_res_sub {
     int success;
-    struct ALIKEC_res_msg message;
+    SEXP message;
     int df;      // whether df or not, not use by all functions
     int lvl;     // Type of error used for prioritizing
   };
