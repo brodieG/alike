@@ -36,10 +36,10 @@ SEXP ALIKEC_res_msg_def(const char * msg) {
   SET_VECTOR_ELT(res_msg, 1, R_NilValue);     // wrap
 
   SEXP res_names = PROTECT(allocVector(STRSXP, 2));
-  SET_STRING_ELT(res_names, 0, mkString("message));
+  SET_STRING_ELT(res_names, 0, mkString("message"));
   SET_STRING_ELT(res_names, 1, mkString("wrap"));
 
-  setAttr(res_msg, R_NamesSymbol, res_names);
+  setAttrib(res_msg, R_NamesSymbol, res_names);
   UNPROTECT(2);
 
   return res_msg;
@@ -47,14 +47,14 @@ SEXP ALIKEC_res_msg_def(const char * msg) {
 struct ALIKEC_res_sub ALIKEC_res_sub_def() {
   return (struct ALIKEC_res_sub) {
     .success=1,
-    .message=ALIKEC_res_msg_def(""),
+    .message=R_NilValue,
     .df=0
   };
 }
 struct ALIKEC_res ALIKEC_res_def() {
   return (struct ALIKEC_res) {
     .success=1,
-    .message=ALIKEC_res_msg_def(""),
+    .message=R_NilValue, // so we don't need to protect yet
     .df=0,
     .rec=ALIKEC_rec_def()
   };
@@ -96,7 +96,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       const char * msg_tmp = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%sbe S4", (s4_tar ? "" : "not "), "", "", ""
       );
-      res.message = ALIKEC_res_msg_def(msg_tmp);
+      res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp));
     } else {
       SEXP klass, klass_attrib;
       SEXP s, t;
@@ -124,16 +124,19 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SETCAR(t, ALIKEC_SYM_inherits); t = CDR(t);
       SETCAR(t, current); t = CDR(t);
       SETCAR(t, klass);
-      if(!asLogical(eval(s, R_BaseEnv))) {
+      int inherits = asLogical(eval(s, R_BaseEnv));
+      UNPROTECT(1);
+
+      if(!inherits) {
         err = 1;
         const char * msg_tmp = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "inherit from S4 class \"%s\" (package: %s)",
           CHAR(asChar(klass)), CHAR(asChar(klass_attrib)), "", ""
         );
-        res.message = ALIKEC_res_msg_def(msg_tmp);
-      }
-      UNPROTECT(1);
+        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp));
+      } else PROTECT(R_NilValue);
     }
+    PROTECT(R_NilValue); // stack balance with next `else if`
   } else if(target != R_NilValue) {  // Nil objects match anything when nested
     // - Attributes ------------------------------------------------------------
     /*
@@ -145,13 +148,16 @@ struct ALIKEC_res ALIKEC_alike_obj(
     struct ALIKEC_res_sub res_attr = ALIKEC_compare_attributes_internal(
       target, current, set
     );
+    PROTECT(res_attr.message);
+
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
+    const char * msg_chr = "";
+
     if(!res_attr.success) {
       // If top level error (class), make sure not overriden by others
       if(res_attr.lvl <= 2) err = 1;
       else err_attr = 1;
-      res.message = res_attr.message;
     }
     // - Special Language Objects && Funs --------------------------------------
 
@@ -168,8 +174,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(err_lang[0]) {
         err = 1;
         res.success = 0;
-        res.message = ALIKEC_res_msg_def(err_lang);
-    } }
+        msg_chr = err_lang;
+      }
+    }
     int is_fun = 0;
 
     if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
@@ -177,7 +184,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(err_fun[0]) {
         err = 1;
         res.success = 0;
-        res.message = ALIKEC_res_msg_def(err_fun);
+        msg_chr = err_fun;
     } }
     // - Type ------------------------------------------------------------------
 
@@ -190,7 +197,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(!err && !is_lang && err_type[0]) {
       err = 1;
       res.success = 0;
-      res.message = ALIKEC_res_msg_def(err_type);
+      msg_chr = err_type;
     }
     // - Length ----------------------------------------------------------------
 
@@ -223,7 +230,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
             err_tok1,  err_tok2,  "", ""
           );
         }
-        res.message = ALIKEC_res_msg_def(msg_tmp);
+        msg_chr = msg_tmp;
       } else if (
         is_df && err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
         TYPEOF(current) == VECSXP && XLENGTH(current) &&
@@ -243,8 +250,14 @@ struct ALIKEC_res ALIKEC_alike_obj(
           CSR_len_as_chr(cur_first_el_len), ""
         );
         res.success = 0;
-        res.message = ALIKEC_res_msg_def(msg_tmp);
+        msg_chr = msg_tmp;
     } }
+    // If no normal, errors, use the attribute error
+    if(!err && err_attr) {
+      res.message = PROTECT(res_attr.message);  // stack balance
+    } else if(err) {
+      res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
+    }
   }
   // - Known Limitations -------------------------------------------------------
 
@@ -283,6 +296,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   } else {
     res.success = 1;
   }
+  UNPROTECT(2);
   return res;
 }
 /*
@@ -315,126 +329,146 @@ struct ALIKEC_res ALIKEC_alike_rec(
   */
   void R_CheckUserInterrupt(void);
 
-  // normal logic, which will have checked length and attributes, etc.
+  // normal logic, which will have checked length and attributes, etc.  Note
+  // funny protection here, we PROTECT the message, and if we ever modify
+  // res or res.message we UNPROTECT and reprotect to avoid growing the
+  // PROTECT stack
 
-  Rprintf("Check object\n");
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+  PROTECT(res.message);
   res.rec = rec;
-  Rprintf("done check object\n");
+
   if(!res.success) {
-    Rprintf("Object comp failed at level %d\n", res.rec.lvl);
     res.rec.lvl_max = res.rec.lvl;
-    return res;
-  }
-  res.rec = ALIKEC_rec_inc(res.rec);  // Increase recursion level
-  Rprintf("Incremented to %d\n", res.rec.lvl);
+  } else {
+    res.rec = ALIKEC_rec_inc(res.rec);  // Increase recursion level
 
-  R_xlen_t tar_len = xlength(target);
-  SEXPTYPE tar_type = TYPEOF(target);
+    R_xlen_t tar_len = xlength(target);
+    SEXPTYPE tar_type = TYPEOF(target);
 
-  if(tar_type == VECSXP || tar_type == EXPRSXP) {
-    R_xlen_t i;
+    if(tar_type == VECSXP || tar_type == EXPRSXP) {
+      R_xlen_t i;
 
-    for(i = 0; i < tar_len; i++) {
-      res = ALIKEC_alike_rec(
-        VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
-      );
-      if(!res.success) {
-        SEXP vec_names = getAttrib(target, R_NamesSymbol);
-        const char * ind_name;
-        if(
-          vec_names == R_NilValue ||
-          !((ind_name = CHAR(STRING_ELT(vec_names, i))))[0]
-        )
-          res.rec = ALIKEC_rec_ind_num(res.rec, i + 1);
-        else
-          res.rec = ALIKEC_rec_ind_chr(res.rec, ind_name);
-        break;
-      }
-    }
-  } else if (tar_type == ENVSXP && !set.in_attr) {
-    // Need to guard against possible circular reference in the environments
-    // Note it is important that we cannot recurse when checking environments
-    // in attributes as othrewise we could get inifinite recursion since
-    // rec tracking is specific to each call to ALIKEC_alike_internal
-
-    if(!res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
-
-    if(!res.rec.envs->no_rec)
-      res.rec.envs->no_rec = !ALIKEC_env_track(target, res.rec.envs);
-    if(res.rec.envs->no_rec < 0 && !set.suppress_warnings) {
-      warning(
-        "`alike` environment stack exhausted; %s.",
-        "unable to recurse any further into environments"
-      );
-      res.rec.envs->no_rec = 1; // so we only get warning once
-    }
-    if(res.rec.envs->no_rec || target == current) {
-      res.success = 1;
-    } else {
-      if(target == R_GlobalEnv && current != R_GlobalEnv) {
-        res.success = 0;
-        res.message.message = "be the global environment";
-      } else {
-        SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
-        R_xlen_t tar_name_len = XLENGTH(tar_names), i;
-
-        if(tar_name_len != tar_len)
-          error("Logic Error: mismatching name-env lengths; contact maintainer");
-        for(i = 0; i < tar_len; i++) {
-          const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
-          SEXP var_name = PROTECT(install(var_name_chr));
-          SEXP var_cur_val = findVarInFrame(current, var_name);
-          if(var_cur_val == R_UnboundValue) {
-            res.success = 0;
-            res.message.message = CSR_smprintf4(
-              ALIKEC_MAX_CHAR, "contain variable `%s`",
-              CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
-            );
-            UNPROTECT(1);
-            break;
-          } else {
-            res = ALIKEC_alike_rec(
-              findVarInFrame(target, var_name), var_cur_val, res.rec, set
-            );
-            UNPROTECT(1);
-            if(!res.success) {
-              res.rec = ALIKEC_rec_ind_chr(res.rec, var_name_chr);
-              break;
-        } } }
-        UNPROTECT(1);
-      }
-    }
-  } else if (tar_type == LISTSXP) {
-    SEXP tar_sub, cur_sub;
-    R_xlen_t i = 0;
-    for(
-      tar_sub = target, cur_sub = current; tar_sub != R_NilValue;
-      tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), i++
-    ) {
-      // Check tag names; should be in same order??  Probably
-
-      SEXP tar_tag = TAG(tar_sub);
-      SEXP tar_tag_chr = PRINTNAME(tar_tag);
-      if(tar_tag != R_NilValue && tar_tag != TAG(cur_sub)) {
-        res.message.message = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
-          CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
+      for(i = 0; i < tar_len; i++) {
+        res = ALIKEC_alike_rec(
+          VECTOR_ELT(target, i), VECTOR_ELT(current, i), res.rec, set
         );
-        res.success = 0;
-        break;
-      } else {
-        res = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), res.rec, set);
+        UNPROTECT(1);
+        PROTECT(res.message);
+
         if(!res.success) {
-          if(tar_tag != R_NilValue)
-            res.rec =
-              ALIKEC_rec_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)));
+          SEXP vec_names = getAttrib(target, R_NamesSymbol);
+          const char * ind_name;
+          if(
+            vec_names == R_NilValue ||
+            !((ind_name = CHAR(STRING_ELT(vec_names, i))))[0]
+          )
+            res.rec = ALIKEC_rec_ind_num(res.rec, i + 1);
           else
-            res.rec =
-              ALIKEC_rec_ind_num(res.rec, i + 1);
+            res.rec = ALIKEC_rec_ind_chr(res.rec, ind_name);
           break;
-  } } } }
-  res.rec = ALIKEC_rec_dec(res.rec); // decrement recursion tracker
+        }
+      }
+    } else if (tar_type == ENVSXP && !set.in_attr) {
+      // Need to guard against possible circular reference in the environments
+      // Note it is important that we cannot recurse when checking environments
+      // in attributes as othrewise we could get inifinite recursion since
+      // rec tracking is specific to each call to ALIKEC_alike_internal
+
+      if(!res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
+
+      if(!res.rec.envs->no_rec)
+        res.rec.envs->no_rec = !ALIKEC_env_track(target, res.rec.envs);
+      if(res.rec.envs->no_rec < 0 && !set.suppress_warnings) {
+        warning(
+          "`alike` environment stack exhausted; %s.",
+          "unable to recurse any further into environments"
+        );
+        res.rec.envs->no_rec = 1; // so we only get warning once
+      }
+      if(res.rec.envs->no_rec || target == current) {
+        res.success = 1;
+      } else {
+        if(target == R_GlobalEnv && current != R_GlobalEnv) {
+          res.success = 0;
+          UNPROTECT(1);
+          res.message =
+            PROTECT(ALIKEC_res_msg_def("be the global environment"));
+        } else {
+          SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
+          R_xlen_t tar_name_len = XLENGTH(tar_names), i;
+
+          if(tar_name_len != tar_len)
+            error(
+              "Logic Error: mismatching name-env lengths; contact maintainer"
+            );
+          for(i = 0; i < tar_len; i++) {
+            const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
+            SEXP var_name = PROTECT(install(var_name_chr));
+            SEXP var_cur_val = findVarInFrame(current, var_name);
+            if(var_cur_val == R_UnboundValue) {
+              res.success = 0;
+              UNPROTECT(1);
+              res.message= PROTECT(
+                ALIKEC_res_msg_def(
+                  CSR_smprintf4(
+                    ALIKEC_MAX_CHAR, "contain variable `%s`",
+                    CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
+              ) ) );
+              UNPROTECT(1); // unprotect var_name
+              break;
+            } else {
+              res = ALIKEC_alike_rec(
+                findVarInFrame(target, var_name), var_cur_val, res.rec, set
+              );
+              UNPROTECT(1);
+              PROTECT(res.message);
+
+              UNPROTECT(1); // unprotect var_name
+              if(!res.success) {
+                res.rec = ALIKEC_rec_ind_chr(res.rec, var_name_chr);
+                break;
+          } } }
+          UNPROTECT(1);
+        }
+      }
+    } else if (tar_type == LISTSXP) {
+      SEXP tar_sub, cur_sub;
+      R_xlen_t i = 0;
+      for(
+        tar_sub = target, cur_sub = current; tar_sub != R_NilValue;
+        tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), i++
+      ) {
+        // Check tag names; should be in same order??  Probably
+
+        SEXP tar_tag = TAG(tar_sub);
+        SEXP tar_tag_chr = PRINTNAME(tar_tag);
+        if(tar_tag != R_NilValue && tar_tag != TAG(cur_sub)) {
+          UNPROTECT(1);
+          res.message= PROTECT(
+            ALIKEC_res_msg_def(
+              CSR_smprintf4(
+                ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
+                CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
+          ) ) );
+          res.success = 0;
+          break;
+        } else {
+          res = ALIKEC_alike_rec(CAR(tar_sub), CAR(cur_sub), res.rec, set);
+          UNPROTECT(1);
+          PROTECT(res.message);
+          if(!res.success) {
+            if(tar_tag != R_NilValue)
+              res.rec =
+                ALIKEC_rec_ind_chr(res.rec, CHAR(asChar(tar_tag_chr)));
+            else
+              res.rec =
+                ALIKEC_rec_ind_num(res.rec, i + 1);
+            break;
+    } } } }
+    res.rec = ALIKEC_rec_dec(res.rec); // decrement recursion tracker
+  }
+  UNPROTECT(1); // if we handled msg PROTECT properly stack should be 1 deep
   return res;
 }
 /*-----------------------------------------------------------------------------\
@@ -459,20 +493,19 @@ struct ALIKEC_res ALIKEC_alike_internal(
     // Handle NULL special case at top level
 
     res.success = 0;
-    res.message.message = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
-      type2char(TYPEOF(current)), "", "", ""
-    );
+    res.message = PROTECT(
+      ALIKEC_res_msg_def(
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
+          type2char(TYPEOF(current)), "", "", ""
+    ) ) );
   } else {
     // Recursively check object
 
     res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
-    if(res.success) return res;
+    PROTECT(res.message);
   }
-  /*
-  Compute the part of the error that gives the index where the discrepancy
-  occurred.
-  */
+  UNPROTECT(1);
   return res;
 }
 /*
@@ -481,6 +514,8 @@ substituted expression
 
 Note that width is only really used to control the deparse wrapping; rest of
 text is not wrapped.  Negative width will use the getOption("width");
+
+curr_sub is just current substituted
 */
 struct ALIKEC_res_fin ALIKEC_alike_wrap(
   SEXP target, SEXP current, SEXP curr_sub, struct ALIKEC_settings set
@@ -492,28 +527,46 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     error("Logic Error; `curr_sub` must be language.");
 
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
-  struct ALIKEC_res_fin res_out = {.message = res.message.message, .call = ""};
-
+  PROTECT(res.message);
+  struct ALIKEC_res_fin res_out = {
+    .message = CHAR(asChar(VECTOR_ELT(res.message, 0))), .call = ""
+  };
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
   // how wide the error is; if the error is short enough we can include it
   // inline; otherwise we need to modify how we display it
 
   if(!res.success) {
+    // Get indices, and sub in the current substituted expression if they
+    // exist
+
+    SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
+
+    if(TYPEOF(VECTOR_ELT(rec_ind, 0)) == LANGSXP) {
+      SETCAR(VECTOR_ELT(rec_ind, 1), curr_sub);
+      curr_sub = VECTOR_ELT(rec_ind, 0);
+    }
+
+    // Merge the wrap call with the original call so we can get stuff like
+    // `names(curr_sub)`
+
+    if(VECTOR_ELT(res.message, 1) != R_NilValue) { // wrap
+      SETCAR(VECTOR_ELT(VECTOR_ELT(res.message, 1), 1), curr_sub);
+      curr_sub = VECTOR_ELT(VECTOR_ELT(res.message, 0), 1);
+    }
     // Handle case where expression is a binary operator; in these cases we need
     // to wrap calls in parens so that any subsequent indices we use make sense,
     // though in reality we need to improve this so that we only use parens when
     // strictly needed
 
-    // one branch below creates SEXP, so pre-emptively protect
-
     SEXP curr_fin = curr_sub;
+    int is_an_op = 0;
 
     if(TYPEOF(curr_sub) == LANGSXP) {
       SEXP call = CAR(curr_sub);
       if(TYPEOF(call) == SYMSXP) {
         const char * call_sym = CHAR(PRINTNAME(call));
-        int is_an_op = 0, i = 1;
+        int i = 1;
         if(
           !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
           !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
@@ -527,15 +580,12 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
           if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
         }
         if(is_an_op) {
-          curr_fin = PROTECT(list2(ALIKEC_SYM_paren_open, curr_sub));
-          SET_TYPEOF(curr_fin, LANGSXP);
-        } else {
-          PROTECT(R_NilValue);  // stack balance
-        }
-    } }
-    // Now deparse
+          curr_fin = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
+      } }
+    }
+    if(!is_an_op) PROTECT(R_NilValue);  // stack balance
 
-    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse_depth(curr_fin, dep_cutoff));
+    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse_width(curr_fin, set.width));
 
     // Handle the different deparse scenarios
 
@@ -543,7 +593,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     const char * dep_chr = CHAR(asChar(curr_sub_dep));
 
     if(XLENGTH(curr_sub_dep) == 1) {
-      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= width - 2) multi_line = 0;
+      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
     }
     const char * call_char, * call_pre = "", * call_post = "";
     if(multi_line) {
@@ -554,18 +604,12 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       call_post = "`";
       call_char = dep_chr;
     }
-    error("indices no longer chr");
-    const char * call_char_ind = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s", call_char, res.message.indices, "", ""
-    );
-    const char * tmp_call = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, res.message.wrap, call_char_ind, "", "", ""
-    );
-    UNPROTECT(2);
     res_out.call = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s", call_pre, tmp_call, call_post, ""
+      ALIKEC_MAX_CHAR, "%s%s%s", call_pre, call_char, call_post, ""
     );
+    UNPROTECT(3);
   }
+  UNPROTECT(1);
   return res_out;
 }
 /*
