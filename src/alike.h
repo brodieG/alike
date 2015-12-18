@@ -107,6 +107,7 @@
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
+  SEXP ALIKEC_res_msg_def(const char * msg);
   struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
@@ -200,5 +201,6 @@
   SEXP ALIKEC_CALL_matchcall;
   SEXP ALIKEC_CALL_matchcall_sub;
   SEXP ALIKEC_SYM_current;
-
+  SEXP ALIKEC_SYM_attr;
+  SEXP ALIKEC_SYM_attributes;
 #endif

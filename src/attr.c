@@ -82,6 +82,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   const char * cur_class;
   const char * tar_class;
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
+  res.message = PROTECT(ALIKEC_res_msg_def(""));
 
   tar_class_len = XLENGTH(target);
   cur_class_len = XLENGTH(current);
@@ -101,41 +102,62 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
 
     if(res.success && strcmp(cur_class, tar_class)) { // class mismatch
       res.success = 0;
+
       if(cur_class_len > 1) {
-        char * err_ind = CSR_len_as_chr((R_xlen_t)(cur_class_i + 1));
+        SEXP wrap_call = PROTECT(
+          lang3(
+            R_BracketSymbol, lang2(R_ClassSymbol, R_NilValue),
+            ScalarInteger(cur_class_i + 1)
+        ) );
+        SEXP wrap = PROTECT(allocVector(VECSXP, 2));
 
-        res.message.wrap = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "class(%%s)[%s]", err_ind, "", "", ""
-        );
-        res.message.message =  CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
-          tar_class, cur_class, "", ""
-        );
+        SET_VECTOR_ELT(wrap, 0, wrap_call);
+        SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
+
+        SET_VECTOR_ELT(res.message, 1, wrap);
+        SET_VECTOR_ELT(res.message, 0,
+          mkString(
+            CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
+              tar_class, cur_class, "", ""
+        ) ) );
+        UNPROTECT(2);
       } else {
-        res.message.message =  CSR_smprintf4(
-          ALIKEC_MAX_CHAR,  "be class \"%s\" (is \"%s\")",
-          tar_class, cur_class, "", ""
-        );
-  } } }
-  if(!res.success) return res;
-  if(tar_class_len > cur_class_len) {
-    res.success = 0;
-    res.message.message = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "inherit from class \"%s\"",
-      CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
-    );
-    return res;
-  }
-  // Check the class attributes
+        SET_VECTOR_ELT(res.message, 0, mkString(
+          CSR_smprintf4(
+            ALIKEC_MAX_CHAR,  "be class \"%s\" (is \"%s\")",
+            tar_class, cur_class, "", ""
+  ) ) ); } } }
+  // Check to make sure have enough classes
 
-  return ALIKEC_alike_attr(
-    ATTRIB(target), ATTRIB(current), "class", set, 1, 1
-  );
+  if(res.success) {
+    if(tar_class_len > cur_class_len) {
+      res.success = 0;
+      SET_VECTOR_ELT(res.message, 0, mkString(
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "inherit from class \"%s\"",
+          CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
+  ) ) ); } }
+  // Make sure class attributes are alike
+
+  if(res.success) {
+    UNPROTECT(1);
+    res = ALIKEC_alike_attr(
+      ATTRIB(target), ATTRIB(current), "class", set, 1, 1
+    );
+    PROTECT(res.message);
+  }
+  UNPROTECT(1);
+  return res;
 }
 SEXP ALIKEC_compare_class_ext(SEXP target, SEXP current) {
-  return ALIKEC_res_sub_as_sxp(
-    ALIKEC_compare_class(target, current, ALIKEC_set_def(""))
+  struct ALIKEX_res_sub res = ALIKEC_compare_class(
+    target, current, ALIKEC_set_def("")
   );
+  PROTECT(res.message);
+  SEXP res_sxp = ALIKEC_res_sub_as_sxp(res);
+  UNPROTECT(1);
+  return res;
 }
 /*-----------------------------------------------------------------------------\
 \-----------------------------------------------------------------------------*/
@@ -206,23 +228,24 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
   if(class_err_string[0]) {
     res.success = 0;
     res.lvl = 1;
-    res.message.message = class_err_string;
+    res.message = ALIKEC_res_msg_def(class_err_string);
     return res;
   }
   // Normal dim checking
 
   if(current == R_NilValue) {
     res.success = 0;
-    res.message.message = "have a \"dim\" attribute";
+    res.message = ALIKEC_res_msg_def("have a \"dim\" attribute");
     return res;
   }
   if(target_len != current_len) {
     res.success = 0;
-    res.message.message = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "have %s dimension%s (has %s)",
-      CSR_len_as_chr(target_len), target_len == (R_xlen_t) 1 ? "" : "s",
-      CSR_len_as_chr(current_len), ""
-    );
+    res.message = ALIKEC_res_msg_def(
+      CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "have %s dimension%s (has %s)",
+        CSR_len_as_chr(target_len), target_len == (R_xlen_t) 1 ? "" : "s",
+        CSR_len_as_chr(current_len), ""
+    ) );
     return res;
   }
   R_xlen_t attr_i;
@@ -255,11 +278,12 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
           CSR_len_as_chr((R_xlen_t)(attr_i + 1)), "", "", ""
       );}
       res.success = 0;
-      res.message.message = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "have %s%s %s (has %s)",
-        (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2,
-        CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i]))
-      );
+      res.message = ALIKEC_res_msg_def(
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have %s%s %s (has %s)",
+          (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2,
+          CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i]))
+      ) );
       return res;
   } }
   return ALIKEC_alike_attr(target, current, "dim", set, 1, 1);
@@ -310,6 +334,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set, int strict
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
+  PROTECT(res.msg);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
 
   // Special character attributes must be alike; not sure the logic here is
@@ -318,51 +343,60 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
   if(!res.success) {
     res_sub.success = 0;
     res_sub.message = res.message;
-    return res_sub;
+  } else {
+    // But also have contraints on values
+
+    SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
+    R_xlen_t cur_len, tar_len, i;
+
+    // should have been handled previously
+    if(tar_type != cur_type) error("Logic Error 266");
+    else if (!(tar_len = XLENGTH(target))) {
+      // zero len match to anything
+      PROTECT(R_NilValue);
+    } else if ((cur_len = XLENGTH(current)) != tar_len) {
+      // should have been handled previously
+      error("Logic error 268");
+    } else if (tar_type == INTSXP) {
+      if(!R_compute_identical(target, current, 16)){
+        res_sub.success=0;
+        res_sub.message = PROTECT(ALIKEC_res_msg_def("be identical to target"));
+      }
+    } else if (tar_type == STRSXP) {
+      // Only determine what name is wrong if we know there is a mismatch since we
+      // have to loop thorugh each value.  Zero length targets match anything
+      // unless in strict mode
+
+      if(!R_compute_identical(target, current, 16)) {
+        for(i = (R_xlen_t) 0; i < tar_len; i++) {
+          const char * cur_name_val = CHAR(STRING_ELT(current, i));
+          const char * tar_name_val = CHAR(STRING_ELT(target, i));
+          if(         // check dimnames names match
+            (strict || tar_name_val[0]) && strcmp(tar_name_val, cur_name_val) != 0
+          ) {
+            res_sub.success=0;
+            res_sub.message = PROTECT(
+              ALIKEC_res_msg_def(
+                CSR_smprintf4(
+                  ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
+                  tar_name_val, cur_name_val, "", ""
+            ) ) );
+            SEXP wrap = PROTECT(allocVector(VECSXP, 2));
+            SET_VECTOR_ELT(wrap, 0,
+              lang3(R_BracketSymbol, R_NilValue, ScalarInteger(i + 1))
+            );
+            SET_VECTOR_ELT(wrap, 1, CDR(VECTOR_ELT(wrap, 0)));
+            SET_VECTOR_ELT(res_sub.message, 1, wrap);
+            UNPROTECT(1);
+            break;
+        } }
+        PROTECT(R_NilValue);
+      } else PROTECT(R_NilValue);
+    } else
+      error("Logic Error in compare_special_char_attrs; contact maintainer");
   }
-  // But also have contraints on values
-
-  SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
-  R_xlen_t cur_len, tar_len, i;
-
-  // should have been handled previously
-  if(tar_type != cur_type) error("Logic Error 266");
-  // zero len match to anything
-  else if (!(tar_len = XLENGTH(target))) return res_sub;
-  // should have been handled previously
-  else if ((cur_len = XLENGTH(current)) != tar_len) error("Logic error 268");
-  else if (tar_type == INTSXP) {
-    if(!R_compute_identical(target, current, 16)){
-      res_sub.success=0;
-      res_sub.message.message = "be identical to target";
-    }
-    return res_sub;
-  } else if (tar_type == STRSXP) {
-    // Only determine what name is wrong if we know there is a mismatch since we
-    // have to loop thorugh each value.  Zero length targets match anything
-    // unless in strict mode
-
-    if(!R_compute_identical(target, current, 16)) {
-      for(i = (R_xlen_t) 0; i < tar_len; i++) {
-        const char * cur_name_val = CHAR(STRING_ELT(current, i));
-        const char * tar_name_val = CHAR(STRING_ELT(target, i));
-        if(         // check dimnames names match
-          (strict || tar_name_val[0]) && strcmp(tar_name_val, cur_name_val) != 0
-        ) {
-          res_sub.success=0;
-          res_sub.message.wrap = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "%%s[%s]", CSR_len_as_chr((R_xlen_t)(i + 1)),
-            "", "", ""
-          );
-          res_sub.message.message = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
-            tar_name_val, cur_name_val, "", ""
-          );
-          break;
-    } } }
-    return res_sub;
-  }
-  error("Logic Error in compare_special_char_attrs; contact maintainer");
+  UNPROTECT(1);
+  return res_sub;
 }
 // External version for unit testing
 
