@@ -1,21 +1,5 @@
 #include "alike.h"
 
-SEXP ALIKEC_res_msg_as_sxp(struct ALIKEC_res_msg msg) {
-  SEXP out = PROTECT(allocVector(VECSXP, 3));
-  SEXP out_names = PROTECT(allocVector(STRSXP, 3));
-  const char * names[3] = {"message", "indices", "wrap"};
-  int i;
-
-  for(i = 0; i < 3; i++) SET_STRING_ELT(out_names, i, mkChar(names[i]));
-
-  SET_VECTOR_ELT(out, 0, mkString(msg.message));
-  SET_VECTOR_ELT(out, 1, mkString(msg.indices));
-  SET_VECTOR_ELT(out, 2, mkString(msg.wrap));
-  setAttrib(out, R_NamesSymbol, out_names);
-  UNPROTECT(2);
-
-  return out;
-}
 SEXP ALIKEC_res_sub_as_sxp(struct ALIKEC_res_sub sub) {
   SEXP out = PROTECT(allocVector(VECSXP, 4));
   SEXP out_names = PROTECT(allocVector(STRSXP, 4));
@@ -25,7 +9,7 @@ SEXP ALIKEC_res_sub_as_sxp(struct ALIKEC_res_sub sub) {
   for(i = 0; i < 4; i++) SET_STRING_ELT(out_names, i, mkChar(names[i]));
 
   SET_VECTOR_ELT(out, 0, ScalarInteger(sub.success));
-  SET_VECTOR_ELT(out, 1, ALIKEC_res_msg_as_sxp(sub.message));
+  SET_VECTOR_ELT(out, 1, sub.message);
   SET_VECTOR_ELT(out, 2, ScalarInteger(sub.df));
   SET_VECTOR_ELT(out, 3, ScalarInteger(sub.lvl));
   setAttrib(out, R_NamesSymbol, out_names);
