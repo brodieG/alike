@@ -131,6 +131,7 @@
 
   // - Utility Funs -----------------------------------------------------------
 
+  void psh(const char * lab);
   const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec);
   SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec);
   struct ALIKEC_rec_track ALIKEC_rec_def();
