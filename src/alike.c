@@ -257,7 +257,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
       res.message = PROTECT(res_attr.message);  // stack balance
     } else if(err) {
       res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
-    }
+    } else PROTECT(R_NilValue);
+  } else {
+    PROTECT(PROTECT(R_NilValue));
   }
   // - Known Limitations -------------------------------------------------------
 
@@ -403,6 +405,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
               "Logic Error: mismatching name-env lengths; contact maintainer"
             );
           for(i = 0; i < tar_len; i++) {
+            Rprintf("xxx");
             const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
             SEXP var_name = PROTECT(install(var_name_chr));
             SEXP var_cur_val = findVarInFrame(current, var_name);
@@ -489,23 +492,22 @@ struct ALIKEC_res ALIKEC_alike_internal(
 
   struct ALIKEC_res res = ALIKEC_res_def();
 
+  // Note, no PROTECTion since we exit immediately (res.message is SEXP)
+
   if(TYPEOF(target) == NILSXP && TYPEOF(current) != NILSXP) {
     // Handle NULL special case at top level
 
     res.success = 0;
-    res.message = PROTECT(
-      ALIKEC_res_msg_def(
-        CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
-          type2char(TYPEOF(current)), "", "", ""
-    ) ) );
+    res.message = ALIKEC_res_msg_def(
+      CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
+        type2char(TYPEOF(current)), "", "", ""
+    ) );
   } else {
     // Recursively check object
 
     res = ALIKEC_alike_rec(target, current, ALIKEC_rec_def(), set);
-    PROTECT(res.message);
   }
-  UNPROTECT(1);
   return res;
 }
 /*

@@ -1,6 +1,7 @@
 #include "alike.h"
 
 SEXP ALIKEC_res_sub_as_sxp(struct ALIKEC_res_sub sub) {
+  PROTECT(sub.message);
   SEXP out = PROTECT(allocVector(VECSXP, 4));
   SEXP out_names = PROTECT(allocVector(STRSXP, 4));
   const char * names[4] = {"success", "message", "df", "lvl"};
@@ -13,7 +14,7 @@ SEXP ALIKEC_res_sub_as_sxp(struct ALIKEC_res_sub sub) {
   SET_VECTOR_ELT(out, 2, ScalarInteger(sub.df));
   SET_VECTOR_ELT(out, 3, ScalarInteger(sub.lvl));
   setAttrib(out, R_NamesSymbol, out_names);
-  UNPROTECT(2);
+  UNPROTECT(3);
 
   return out;
 }
@@ -347,6 +348,11 @@ names.
 struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set, int strict
 ) {
+  // We're playing with fire a little with PROTECT since we're not actually
+  // PROTECTing the result of ALIKEC_res_msg_def in most cases to avoid
+  // having to keep the stack balance across all branches; in theory the code
+  // returns before there should be any gc happening
+
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
@@ -367,14 +373,13 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
     if(tar_type != cur_type) error("Logic Error 266");
     else if (!(tar_len = XLENGTH(target))) {
       // zero len match to anything
-      PROTECT(R_NilValue);
     } else if ((cur_len = XLENGTH(current)) != tar_len) {
       // should have been handled previously
       error("Logic error 268");
     } else if (tar_type == INTSXP) {
       if(!R_compute_identical(target, current, 16)){
         res_sub.success=0;
-        res_sub.message = PROTECT(ALIKEC_res_msg_def("be identical to target"));
+        res_sub.message = ALIKEC_res_msg_def("be identical to target");
       }
     } else if (tar_type == STRSXP) {
       // Only determine what name is wrong if we know there is a mismatch since we
@@ -401,15 +406,13 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
             );
             SET_VECTOR_ELT(wrap, 1, CDR(VECTOR_ELT(wrap, 0)));
             SET_VECTOR_ELT(res_sub.message, 1, wrap);
-            UNPROTECT(1);
+            UNPROTECT(2);
             break;
-        } }
-        PROTECT(R_NilValue);
-      } else PROTECT(R_NilValue);
+      } } }
     } else
       error("Logic Error in compare_special_char_attrs; contact maintainer");
   }
-  UNPROTECT(2);
+  UNPROTECT(1);
   return res_sub;
 }
 // External version for unit testing
@@ -515,8 +518,8 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
         struct ALIKEC_res res_tmp = ALIKEC_alike_internal(
           CAR(prim_attr_cpy), CAR(sec_attr_cpy), set
         );
-        PROTECT(res_tmp.message);
         if(!res_tmp.success) {
+          PROTECT(res_tmp.message); // not really necessary since unused
           res.success = 0;
           res.message = PROTECT(
             ALIKEC_res_msg_def(
@@ -524,12 +527,11 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           ) );
           SEXP wrap = PROTECT(ALIKEC_compare_dimnames_wrap(prim_tag));
           SET_VECTOR_ELT(res.message, 1, wrap);
-          UNPROTECT(1);
+          UNPROTECT(3);
           return res;
         }
         do_continue = 1;
         res_tmp.message = R_NilValue;
-        UNPROTECT(1);
         break;
     } }
     if(do_continue) continue;
@@ -540,7 +542,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
     );
     SEXP wrap = PROTECT(ALIKEC_compare_dimnames_wrap(prim_tag));
     SET_VECTOR_ELT(res.message, 1, wrap);
-    UNPROTECT(1);
+    UNPROTECT(1);  // <- should be 2?
     return res;
   }
   // Compare actual dimnames attr
@@ -581,33 +583,30 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
         );
       if(!dimnames_comp.success) {
         PROTECT(dimnames_comp.message);
-        SEXP wrap = PROTECT(allocVector(VECSXP, 2));
+        SEXP wrap = VECTOR_ELT(dimnames_comp.message, 1);
+        SEXP wrap_call, wrap_ref;
 
         if(prim_len == 2) { // matrix like
-          SET_VECTOR_ELT(wrap, 0, lang2(R_NilValue, R_NilValue));
-          SET_VECTOR_ELT(wrap, 1, CDR(VECTOR_ELT(wrap, 0)));
+          wrap_call = PROTECT(lang2(R_NilValue, R_NilValue));
+          wrap_ref = CDR(wrap_call);
           switch(attr_i) {
-            case (R_xlen_t) 0: {
-              SETCAR(VECTOR_ELT(wrap, 0), R_RowNamesSymbol);
-              break;
-            }
-            case (R_xlen_t) 1: {
-              SETCAR(VECTOR_ELT(wrap, 0), ALIKEC_SYM_colnames);
-              break;
-            }
+            case (R_xlen_t) 0: SETCAR(wrap, R_RowNamesSymbol); break;
+            case (R_xlen_t) 1: SETCAR(wrap, ALIKEC_SYM_colnames); break;
             default:
              error(
                "Logic Error: dimnames dimension mismatch; contact maintainer."
              );
           }
         } else {
-          SET_VECTOR_ELT(
-            wrap, 0, lang3(
+          wrap_call = PROTECT(
+            lang3(
               R_Bracket2Symbol, lang2(R_DimNamesSymbol, R_NilValue),
               ScalarInteger(attr_i + 1)
           ) );
-          SET_VECTOR_ELT(wrap, 1, CDR(CADR(VECTOR_ELT(wrap, 0))));
+          wrap_ref = CDR(CADR(wrap_call));
         }
+        SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+        SET_VECTOR_ELT(wrap, 1, wrap_ref);
         UNPROTECT(2);
         return dimnames_comp;
   } } }
