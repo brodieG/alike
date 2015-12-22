@@ -203,4 +203,6 @@
   SEXP ALIKEC_SYM_current;
   SEXP ALIKEC_SYM_attr;
   SEXP ALIKEC_SYM_attributes;
+  SEXP ALIKEC_SYM_colnames;
+  SEXP ALIKEC_SYM_length;
 #endif

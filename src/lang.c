@@ -7,7 +7,7 @@ struct ALIKEC_res_lang ALIKEC_res_lang_init() {
   return (struct ALIKEC_res_lang) {
     .success = 0,
     .rec = ALIKEC_rec_def(),
-    .message = ""
+    .chr_msg = ""
   };
 }
 /*
@@ -163,25 +163,25 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
     }
     if(strcmp(tar_abs, cur_abs)) {
       if(*tar_varnum > *cur_varnum) {
-        res.message = CSR_smprintf4(
+        res.chr_msg = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "not be `%s`", csc_text, "",
           "", ""
         );
       } else {
-        res.message = CSR_smprintf4(
+        res.chr_msg = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "be `%s` (is `%s`)",
           rev_symb, csc_text, "", ""
         );
       }
     } else res.success = 1;
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-    res.message =  CSR_smprintf4(
+    res.chr_msg =  CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\")",
       ALIKEC_deparse_chr(CAR(target), -1), type2char(csc_type),
       "", ""
     );
   } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
-    res.message = CSR_smprintf4(
+    res.chr_msg = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
       type2char(tsc_type), type2char(csc_type), "", ""
     );
@@ -193,7 +193,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
       cur_varnum, formula, match_call, match_env, set, rec
     );
   } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
-    res.message = CSR_smprintf4(
+    res.chr_msg = CSR_smprintf4(
       ALIKEC_MAX_CHAR,
       "be \"%s\" (is \"%s\")", type2char(tsc_type), type2char(csc_type), "", ""
     );
@@ -203,7 +203,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
 
     // could have constant vs. language here, right?
 
-    res.message =  "have identical constant values";
+    res.chr_msg =  "have identical constant values";
   } else res.success = 1;
 
   // Deal with index implications of skiping parens
@@ -265,7 +265,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
     if(tar_fun != R_NilValue && tar_fun != cur_fun) {
       res.success = 0;
       res.rec = ALIKEC_rec_ind_num(res.rec, 1);
-      res.message = CSR_smprintf4(
+      res.chr_msg = CSR_smprintf4(
         ALIKEC_MAX_CHAR,
         "be a call to `%s` (is a call to `%s`)",
         ALIKEC_deparse_chr(CAR(target), -1),
@@ -319,7 +319,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
                 "", "", ""
           );} }
           res.success = 0;
-          res.message = CSR_smprintf4(
+          res.chr_msg = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "have argument `%s` %s",
             CHAR(PRINTNAME(TAG(tar_sub))),
             prev_tag_msg, "", ""
@@ -364,7 +364,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             cur_sub = CDR(cur_sub);
           }
           res.success = 0;
-          res.message = CSR_smprintf4(
+          res.chr_msg = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "be length %s (is %s)",
             CSR_len_as_chr(tar_len), CSR_len_as_chr(cur_len),  "", ""
         );}
@@ -466,7 +466,7 @@ SEXP ALIKEC_lang_alike_core(
   if(!res.success) {
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
-    SET_VECTOR_ELT(res_fin, 1, mkString(res.message));
+    SET_VECTOR_ELT(res_fin, 1, mkString(res.chr_msg));
     SET_VECTOR_ELT(res_fin, 2, CAR(curr_cpy_par));
     SET_VECTOR_ELT(res_fin, 3, VECTOR_ELT(rec_ind, 0));
     SET_VECTOR_ELT(res_fin, 4, VECTOR_ELT(rec_ind, 1));
@@ -506,7 +506,7 @@ const char * ALIKEC_lang_alike_internal(
     const char * dep_chr = CHAR(asChar(lang_dep));
 
     if(XLENGTH(lang_dep) == 1) {
-      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= width - 2) multi_line = 0;
+      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
     }
     const char * call_char, * call_pre = "", * call_post = "";
     if(multi_line) {
