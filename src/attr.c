@@ -26,7 +26,10 @@ stop recursion since we're not returning the nested error message.
 
 - `special` parameter indicates attributes that are known to have accessor
   functions (e.g. `names`).
-- `attr_attr` indicates we are checking the attributes of an attribute
+- `attr_attr` indicates we are checking the attributes of an attribute; NOTE:
+  can currently no longer remember how/why this should be used, we used to
+  use `attr` when this was TRUE, and `attributes` when not, but that doesn't
+  make much sense?
 */
 
 struct ALIKEC_res_sub ALIKEC_alike_attr(
@@ -35,30 +38,38 @@ struct ALIKEC_res_sub ALIKEC_alike_attr(
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
-  PROTECT(res_sub.message);  // less than ideal...
 
   if(!res.success) {
     res_sub.success = 0;
-    SET_VECTOR_ELT(
-      res_sub.message, 0,
-      mkString("be `alike` the corresponding element in target")
+    res_sub.message = PROTECT(
+      ALIKEC_res_msg_def("be `alike` the corresponding element in target")
     );
     SEXP wrap_call;
-    if(attr_attr) {
+    // if(attr_attr) {
+    //   wrap_call = PROTECT(
+    //     lang3(ALIKEC_SYM_attr, R_NilValue, mkString(attr_name))
+    //   );
+    // } else {
+    //   wrap_call = PROTECT(lang2(R_NilValue, R_NilValue));
+    //   SET_CAR(
+    //     wrap_call,
+    //     special ? install(attr_name) : ALIKEC_SYM_attributes
+    //   );
+    // }
+    if(special) {
+      wrap_call = PROTECT(lang2(install(attr_name), R_NilValue));
+    } else {
       wrap_call = PROTECT(
         lang3(ALIKEC_SYM_attr, R_NilValue, mkString(attr_name))
       );
-    } else {
-      wrap_call = PROTECT(lang2(ALIKEC_SYM_attributes, R_NilValue));
     }
     SEXP wrap = PROTECT(allocVector(VECSXP, 2));
     SET_VECTOR_ELT(wrap, 0, wrap_call);
     SET_VECTOR_ELT(wrap, 1, CDR(wrap_call));
 
     SET_VECTOR_ELT(res_sub.message, 1, wrap);
-    UNPROTECT(2);
+    UNPROTECT(3);
   }
-  UNPROTECT(1);
   return res_sub;
 }
 
