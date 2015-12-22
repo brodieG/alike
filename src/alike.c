@@ -36,8 +36,8 @@ SEXP ALIKEC_res_msg_def(const char * msg) {
   SET_VECTOR_ELT(res_msg, 1, R_NilValue);     // wrap
 
   SEXP res_names = PROTECT(allocVector(STRSXP, 2));
-  SET_STRING_ELT(res_names, 0, mkString("message"));
-  SET_STRING_ELT(res_names, 1, mkString("wrap"));
+  SET_STRING_ELT(res_names, 0, mkChar("message"));
+  SET_STRING_ELT(res_names, 1, mkChar("wrap"));
 
   setAttrib(res_msg, R_NamesSymbol, res_names);
   UNPROTECT(2);
