@@ -554,12 +554,13 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
       ALIKEC_compare_special_char_attrs_internal(prim_names, sec_names, set, 0);
     if(!dimnames_name_comp.success) {
       PROTECT(dimnames_name_comp.message);
-      SEXP wrap = PROTECT(allocVector(VECSXP, 2));
-      SET_VECTOR_ELT(
-        wrap, 0, lang2(R_NamesSymbol, lang2(R_DimNamesSymbol, R_NilValue))
+      // re-wrap in names(dimnames())
+      SEXP wrap = VECTOR_ELT(dimnames_name_comp.message, 1);
+      SEXP wrap_call = PROTECT(
+        lang2(R_NamesSymbol, lang2(R_DimNamesSymbol, R_NilValue))
       );
-      SET_VECTOR_ELT(wrap, 1, CDR(CADR(VECTOR_ELT(wrap, 0))));
-      SET_VECTOR_ELT(dimnames_name_comp.message, 1, wrap);
+      SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+      SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
       UNPROTECT(2);
       return dimnames_name_comp;
     }
