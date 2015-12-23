@@ -32,8 +32,9 @@ Other struct initialization functions
 */
 SEXP ALIKEC_res_msg_def(const char * msg) {
   SEXP res_msg = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(res_msg, 0, mkString(msg));  // message
-  SET_VECTOR_ELT(res_msg, 1, R_NilValue);     // wrap
+
+  SET_VECTOR_ELT(res_msg, 0, mkString(msg));          // message
+  SET_VECTOR_ELT(res_msg, 1, allocVector(VECSXP, 2)); // wrap
 
   SEXP res_names = PROTECT(allocVector(STRSXP, 2));
   SET_STRING_ELT(res_names, 0, mkChar("message"));

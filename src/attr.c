@@ -378,7 +378,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
       error("Logic error 268");
     } else if (tar_type == INTSXP) {
       if(!R_compute_identical(target, current, 16)){
-        res_sub.success=0;
+        res_sub.success = 0;
         res_sub.message = ALIKEC_res_msg_def("be identical to target");
       }
     } else if (tar_type == STRSXP) {
@@ -561,7 +561,11 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
       SEXP wrap_call = PROTECT(
         lang2(R_NamesSymbol, lang2(R_DimNamesSymbol, R_NilValue))
       );
-      SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+      if(VECTOR_ELT(wrap, 0) == R_NilValue) {
+        SET_VECTOR_ELT(wrap, 0, wrap_call);
+      } else {
+        SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+      }
       SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
       UNPROTECT(2);
       return dimnames_name_comp;
@@ -590,8 +594,8 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           wrap_call = PROTECT(lang2(R_NilValue, R_NilValue));
           wrap_ref = CDR(wrap_call);
           switch(attr_i) {
-            case (R_xlen_t) 0: SETCAR(wrap, R_RowNamesSymbol); break;
-            case (R_xlen_t) 1: SETCAR(wrap, ALIKEC_SYM_colnames); break;
+            case (R_xlen_t) 0: SETCAR(wrap_call, R_RowNamesSymbol); break;
+            case (R_xlen_t) 1: SETCAR(wrap_call, ALIKEC_SYM_colnames); break;
             default:
              error(
                "Logic Error: dimnames dimension mismatch; contact maintainer."
@@ -1057,6 +1061,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   // If in strict mode, must have the same number of attributes
 
   if(set.attr_mode == 2 && prim_attr_count != sec_attr_count) {
+    errs[7].success = 0;
     errs[7].message = PROTECT(
       ALIKEC_res_msg_def(
         CSR_smprintf4(
