@@ -1085,7 +1085,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
       res_attr.lvl = i;
       break;
   } }
-  UNPROTECT(1 + ps);
+  UNPROTECT(ps);
   return res_attr;
 }
 /*-----------------------------------------------------------------------------\
