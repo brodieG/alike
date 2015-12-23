@@ -605,7 +605,11 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           ) );
           wrap_ref = CDR(CADR(wrap_call));
         }
-        SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+        if(VECTOR_ELT(wrap, 0) != R_NilValue) {
+          SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
+        } else {
+          SET_VECTOR_ELT(wrap, 0, wrap_call);
+        }
         SET_VECTOR_ELT(wrap, 1, wrap_ref);
         UNPROTECT(2);
         return dimnames_comp;
