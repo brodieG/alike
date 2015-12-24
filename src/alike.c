@@ -532,7 +532,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
   struct ALIKEC_res_fin res_out = {
-    .message = CHAR(asChar(VECTOR_ELT(res.message, 0))), .call = ""
+    .message = "", .call = ""
   };
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
@@ -543,6 +543,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Get indices, and sub in the current substituted expression if they
     // exist
 
+    res_out.message = CHAR(asChar(VECTOR_ELT(res.message, 0)));
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
     if(TYPEOF(VECTOR_ELT(rec_ind, 0)) == LANGSXP) {
