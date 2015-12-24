@@ -45,6 +45,31 @@ SEXP ALIKEC_attr_wrap(SEXP tag, SEXP call) {
   return wrap;
 }
 /*
+Take an existing wrap and insert another wrapping call inside the wrap
+
+Note this always assumes that the ultimate target of the wrapping is the CDR of
+`call`
+
+This function modifies `wrap` and does not return
+*/
+void ALIKEC_wrap_around(SEXP wrap, SEXP call) {
+  if(TYPEOF(wrap) != VECSXP && xlength(wrap) != 2)
+    error("Unexpected format for wrap object");
+  SEXP w1 = VECTOR_ELT(wrap, 0);
+  SEXP w2 = VECTOR_ELT(wrap, 1);
+  if(w1 != R_NilValue && TYPEOF(w1) != LANGSXP)
+    error("First element of wrap object must be NULL or language");
+
+  if(w1 == R_NilValue) {
+    // unintialized
+    SET_VECTOR_ELT(wrap, 0, call);
+  } else {
+    SETCAR(w2, call);
+  }
+  SET_VECTOR_ELT(wrap, 1, CDR(call));
+  UNPROTECT(1);
+}
+/*
 Runs alike on an attribute, really just like running alike, but since it is on
 an attribute and we don't want a massive nested error message, provide a
 different error message; this is not very efficient; in theory we could just
@@ -996,21 +1021,20 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
           ALIKEC_compare_special_char_attrs_internal(
             tar_attr_el_val, cur_attr_el_val, set, 0
           );
+        Rprintf("Done Name Check\n");
         PROTECT(name_comp.message); ps++;
         if(!name_comp.success) {
           int is_names = tar_tag == R_NamesSymbol;
           int err_ind = is_names ? 3 : 4;
           errs[err_ind] = name_comp;
 
-          // wrap original wrap in names/rownames; shouldn't need to change
-          // pointer to substitution location
+          // wrap original wrap in names/rownames
 
-          SET_VECTOR_ELT(
-            VECTOR_ELT(errs[err_ind].message, 1), 1,
-            lang2(
-              tar_tag == R_NamesSymbol ? R_NamesSymbol : R_RowNamesSymbol,
-              VECTOR_ELT(errs[err_ind].message, 1)
-        ) );}
+          SEXP wrap_orig = VECTOR_ELT(errs[err_ind].message, 1);
+          SEXP call = PROTECT(lang2(tar_tag, R_NilValue));
+          ALIKEC_wrap_around(wrap_orig, call); // modifies wrap_orig
+          UNPROTECT(1);
+        }
         continue;
       // - Dims ----------------------------------------------------------------
 
