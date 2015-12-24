@@ -84,8 +84,8 @@ stop recursion since we're not returning the nested error message.
 */
 
 struct ALIKEC_res_sub ALIKEC_alike_attr(
-  SEXP target, SEXP current, const char * attr_name,
-  struct ALIKEC_settings set, int special, int attr_attr
+  SEXP target, SEXP current, SEXP attr_symb,
+  struct ALIKEC_settings set, int attr_attr
 ) {
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   struct ALIKEC_res_sub res_sub = ALIKEC_res_sub_def();
@@ -892,6 +892,10 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
             ALIKEC_MAX_CHAR, "not have attributes (has %s attributes)",
             CSR_len_as_chr(xlength(cur_attr)), "", "", ""
       ) ) );
+      PrintValue(ALIKEC_attr_wrap(TAG(tar_attr), R_NilValue));
+      SET_VECTOR_ELT(
+        errs[7].message, 1, ALIKEC_attr_wrap(TAG(tar_attr), R_NilValue)
+      );
     } else PROTECT(R_NilValue);
   }
   ps++;
