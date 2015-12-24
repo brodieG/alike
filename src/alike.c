@@ -550,11 +550,12 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       SETCAR(VECTOR_ELT(rec_ind, 1), curr_sub);
       curr_sub = VECTOR_ELT(rec_ind, 0);
     }
-
     // Merge the wrap call with the original call so we can get stuff like
     // `names(curr_sub)`
 
-    if(VECTOR_ELT(res.message, 1) != R_NilValue) { // wrap
+    if(
+      VECTOR_ELT(VECTOR_ELT(res.message, 1), 0) != R_NilValue
+    ) {
       SETCAR(VECTOR_ELT(VECTOR_ELT(res.message, 1), 1), curr_sub);
       curr_sub = VECTOR_ELT(VECTOR_ELT(res.message, 0), 1);
     }
@@ -664,10 +665,8 @@ SEXP ALIKEC_alike_ext(
     error(
       "Logic Error; `curr_sub` must be language."
     );
-  Rprintf("set defaults\n");
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
-  Rprintf("Call wrap\n");
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
