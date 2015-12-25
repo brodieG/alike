@@ -553,11 +553,10 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Merge the wrap call with the original call so we can get stuff like
     // `names(curr_sub)`
 
-    if(
-      VECTOR_ELT(VECTOR_ELT(res.message, 1), 0) != R_NilValue
-    ) {
-      SETCAR(VECTOR_ELT(VECTOR_ELT(res.message, 1), 1), curr_sub);
-      curr_sub = VECTOR_ELT(VECTOR_ELT(res.message, 0), 1);
+    SEXP wrap = VECTOR_ELT(res.message, 1);
+    if(VECTOR_ELT(wrap, 0) != R_NilValue) {
+      SETCAR(VECTOR_ELT(wrap, 1), curr_sub);
+      curr_sub = VECTOR_ELT(wrap, 0);
     }
     // Handle case where expression is a binary operator; in these cases we need
     // to wrap calls in parens so that any subsequent indices we use make sense,
