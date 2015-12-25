@@ -36,7 +36,7 @@ SEXP ALIKEC_attr_wrap(SEXP tag, SEXP call) {
     SET_VECTOR_ELT(wrap, 0, lang2(tag, call));
   } else {
     SEXP tag_name = PROTECT(allocVector(STRSXP, 1));
-    SET_STRING_ELT(tag_name, 0, PRINTNAME(tag_name));
+    SET_STRING_ELT(tag_name, 0, PRINTNAME(tag));
     SET_VECTOR_ELT(wrap, 0, lang3(ALIKEC_SYM_attr, call, tag_name));
     UNPROTECT(1);
   }
