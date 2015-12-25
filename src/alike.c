@@ -258,7 +258,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
       res.message = PROTECT(res_attr.message);  // stack balance
     } else if(err) {
       res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
-    } else PROTECT(R_NilValue);
+    } else {
+      PROTECT(R_NilValue);
+    }
   } else {
     PROTECT(PROTECT(R_NilValue));
   }
@@ -338,6 +340,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
   // PROTECT stack
 
   struct ALIKEC_res res = ALIKEC_alike_obj(target, current, set);
+
   PROTECT(res.message);
   res.rec = rec;
 
@@ -406,7 +409,6 @@ struct ALIKEC_res ALIKEC_alike_rec(
               "Logic Error: mismatching name-env lengths; contact maintainer"
             );
           for(i = 0; i < tar_len; i++) {
-            Rprintf("xxx");
             const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
             SEXP var_name = PROTECT(install(var_name_chr));
             SEXP var_cur_val = findVarInFrame(current, var_name);
@@ -564,6 +566,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // strictly needed
 
     SEXP curr_fin = curr_sub;
+    SEXP curr_fin_alt = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
     int is_an_op = 0;
 
     if(TYPEOF(curr_sub) == LANGSXP) {
@@ -584,11 +587,8 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
           if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
         }
         if(is_an_op) {
-          curr_fin = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
-      } }
-    }
-    if(!is_an_op) PROTECT(R_NilValue);  // stack balance
-
+          curr_fin = curr_fin_alt;
+    } } }
     SEXP curr_sub_dep = PROTECT(ALIKEC_deparse_width(curr_fin, set.width));
 
     // Handle the different deparse scenarios

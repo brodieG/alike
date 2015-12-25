@@ -67,7 +67,6 @@ void ALIKEC_wrap_around(SEXP wrap, SEXP call) {
     SETCAR(w2, call);
   }
   SET_VECTOR_ELT(wrap, 1, CDR(call));
-  UNPROTECT(1);
 }
 /*
 Runs alike on an attribute, really just like running alike, but since it is on
@@ -892,7 +891,6 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
             ALIKEC_MAX_CHAR, "not have attributes (has %s attributes)",
             CSR_len_as_chr(xlength(cur_attr)), "", "", ""
       ) ) );
-      PrintValue(ALIKEC_attr_wrap(TAG(tar_attr), R_NilValue));
       SET_VECTOR_ELT(
         errs[7].message, 1, ALIKEC_attr_wrap(TAG(tar_attr), R_NilValue)
       );
@@ -1025,7 +1023,6 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
           ALIKEC_compare_special_char_attrs_internal(
             tar_attr_el_val, cur_attr_el_val, set, 0
           );
-        Rprintf("Done Name Check\n");
         PROTECT(name_comp.message); ps++;
         if(!name_comp.success) {
           int is_names = tar_tag == R_NamesSymbol;
