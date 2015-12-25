@@ -157,7 +157,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
         SEXP wrap_call = PROTECT(
           lang3(
             R_BracketSymbol, lang2(R_ClassSymbol, R_NilValue),
-            ScalarInteger(cur_class_i + 1)
+            ScalarReal(cur_class_i + 1)
         ) );
         SEXP wrap = PROTECT(allocVector(VECSXP, 2));
 
@@ -440,7 +440,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
             ) ) );
             SEXP wrap = PROTECT(allocVector(VECSXP, 2));
             SET_VECTOR_ELT(wrap, 0,
-              lang3(R_BracketSymbol, R_NilValue, ScalarInteger(i + 1))
+              lang3(R_BracketSymbol, R_NilValue, ScalarReal(i + 1))
             );
             SET_VECTOR_ELT(wrap, 1, CDR(VECTOR_ELT(wrap, 0)));
             SET_VECTOR_ELT(res_sub.message, 1, wrap);
@@ -643,7 +643,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           wrap_call = PROTECT(
             lang3(
               R_Bracket2Symbol, lang2(R_DimNamesSymbol, R_NilValue),
-              ScalarInteger(attr_i + 1)
+              ScalarReal(attr_i + 1)
           ) );
           wrap_ref = CDR(CADR(wrap_call));
         }
@@ -697,7 +697,7 @@ struct ALIKEC_res_sub ALIKEC_compare_ts(
         SET_VECTOR_ELT(
           wrap, 0, lang3(
             R_BracketSymbol, lang2(R_TspSymbol, R_NilValue),
-            ScalarInteger(i + 1)
+            ScalarReal(i + 1)
         ) );
         SET_VECTOR_ELT(wrap, 1, CDR(CADR(VECTOR_ELT(wrap, 0))));
         SET_VECTOR_ELT(res.message, 1, wrap);
