@@ -47,6 +47,7 @@ void R_init_alike(DllInfo *info)
   ALIKEC_SYM_attr = install("attr");
   ALIKEC_SYM_colnames = install("colnames");
   ALIKEC_SYM_length = install("length");
+  ALIKEC_SYM_syntacticnames = install("syntacticnames");
 
   CSR_smprintf4 = (
     char *(*)(

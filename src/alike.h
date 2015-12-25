@@ -206,4 +206,5 @@
   SEXP ALIKEC_SYM_attributes;
   SEXP ALIKEC_SYM_colnames;
   SEXP ALIKEC_SYM_length;
+  SEXP ALIKEC_SYM_syntacticnames;
 #endif

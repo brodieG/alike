@@ -96,9 +96,11 @@ struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track rec) {
 }
 /*
 Translate recorded index data into a character string
+
+This function is DEPRECATED in favor of the one that returns the index as
+language
 */
 const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
-
   char * err_chr_index, * err_chr_indices = "";
   const char * err_chr_index_val;
   size_t err_size = 0, ind_size_max = 0, ind_size;
@@ -175,6 +177,7 @@ location in the language call that needs to be substituted.
 */
 SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
   SEXP res = PROTECT(allocVector(VECSXP, 2));
+  setAttrib(res, ALIKEC_SYM_syntacticnames, ScalarLogical(1));
   SEXP lang = PROTECT(list1(R_NilValue));
   SEXP lang_cpy = lang;
 
@@ -189,19 +192,19 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
       switch(rec.indices[j].type) {
         case 0:
           SETCAR(index_call, R_Bracket2Symbol);
-          SETCADDR(index_call, ScalarInteger(rec.indices[j].ind.num));
+          SETCADDR(index_call, ScalarReal(rec.indices[j].ind.num));
           break;
         case 1:
           SETCAR(index_call, R_DollarSymbol);
           SETCADDR(index_call, install(rec.indices[j].ind.chr));
+          if(!ALIKEC_is_valid_name(rec.indices[j].ind.chr))
+            setAttrib(res, ALIKEC_SYM_syntacticnames, ScalarLogical(0));
           break;
         default: {
           error(
             "Logic Error: unexpected index type %d; contact maintainer.",
             rec.indices[j].type
-          );
-        }
-      }
+      );} }
       SETCAR(lang, index_call);
       UNPROTECT(1);
       lang = CDR(index_call);

@@ -604,8 +604,13 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       call_pre = "Expression:\n%s";
       call_char = ALIKEC_pad(curr_sub_dep, -1, 2);
     } else {
-      call_pre = "`";
-      call_post = "`";
+      if(asLogical(getAttrib(rec_ind, ALIKEC_SYM_syntacticnames))) {
+        call_pre = "`";
+        call_post = "`";
+      } else {
+        call_pre = "{";
+        call_post = "}";
+      }
       call_char = dep_chr;
     }
     res_out.call = CSR_smprintf4(
