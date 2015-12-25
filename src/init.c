@@ -4,7 +4,7 @@
 static const
 R_CallMethodDef callMethods[] = {
   {"alike_ext", (DL_FUNC) &ALIKEC_alike_ext, 4},
-  {"alike_fast1", (DL_FUNC) &ALIKEC_alike_fast1, 3},
+  {"alike_fast1", (DL_FUNC) &ALIKEC_alike_fast1, 4},
   {"alike_fast2", (DL_FUNC) &ALIKEC_alike_fast2, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
