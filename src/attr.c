@@ -969,7 +969,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
       (
         (tar_attr_el == R_NilValue && set.attr_mode == 2) ||
         cur_attr_el == R_NilValue
-      ) && !errs[7].success
+      ) && errs[7].success
     ) {
       errs[7].success = 0;
       errs[7].message = PROTECT(
