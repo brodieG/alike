@@ -365,7 +365,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
           }
           res.success = 0;
           res.chr_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "be length %s (is %s)",
+            ALIKEC_MAX_CHAR, "have %s arguments (has %s)",
             CSR_len_as_chr(tar_len), CSR_len_as_chr(cur_len),  "", ""
         );}
       }
@@ -494,36 +494,38 @@ const char * ALIKEC_lang_alike_internal(
     SEXP lang_call = VECTOR_ELT(lang_res, 2);
     SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
 
-    SETCAR(lang_ind_sub, lang2(R_QuoteSymbol, lang_call));
+    if(lang_ind_sub != R_NilValue) {
+      SETCAR(lang_ind_sub, lang2(R_QuoteSymbol, lang_call));
+      SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang_ind, set.width));
 
-    // Deparse
+      // Handle the different deparse scenarios
 
-    SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang_ind, set.width));
+      int multi_line = 1;
+      const char * dep_chr = CHAR(asChar(lang_dep));
 
-    // Handle the different deparse scenarios
-
-    int multi_line = 1;
-    const char * dep_chr = CHAR(asChar(lang_dep));
-
-    if(XLENGTH(lang_dep) == 1) {
-      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
-    }
-    const char * call_char, * call_pre = "", * call_post = "";
-    if(multi_line) {
-      call_pre = ":\n%s";
-      call_char = ALIKEC_pad(lang_dep, -1, 2);
-      call_post = "\n";
+      if(XLENGTH(lang_dep) == 1) {
+        if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
+      }
+      const char * call_char, * call_pre = "", * call_post = "";
+      if(multi_line) {
+        call_pre = ":\n%s";
+        call_char = ALIKEC_pad(lang_dep, -1, 2);
+        call_post = "\n";
+      } else {
+        call_pre = " `";
+        call_post = "` ";
+        call_char = dep_chr;
+      }
+      res = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "have%s%s%s%s",
+        call_pre, call_char, call_post, CHAR(asChar(VECTOR_ELT(lang_res, 1)))
+      );
+      UNPROTECT(1);
     } else {
-      call_pre = " `";
-      call_post = "` ";
-      call_char = dep_chr;
-    }
-    res = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "have%s%s%s%s",
-      call_pre, call_char, call_post, CHAR(asChar(VECTOR_ELT(lang_res, 1)))
-    );
-    UNPROTECT(1);
-  }
+      res = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "%s",
+        CHAR(asChar(VECTOR_ELT(lang_res, 1))), "", "", ""
+  );} }
   UNPROTECT(1);
   return res;
 }

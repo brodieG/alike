@@ -20,6 +20,8 @@ unitizer_sect("Calls", {
   c7 <- quote(fun(x + y + x, FUN(w, y + 2)))
   c8 <- quote(fun(x + y + x, FUN(w, x - 2)))
   c9 <- quote(fun(x + y + x, FUN(w, x + "hello")))
+  c10 <- quote(fun(1))
+  c11 <- quote(fun(1, 2))
 
   alike:::lang_alike(c0, c1, NULL)  # TRUE
   alike:::lang_alike(c0, c2, NULL)  # no, inconsistent
@@ -29,6 +31,7 @@ unitizer_sect("Calls", {
   alike:::lang_alike(c5, c7, NULL)  # inconsistent
   alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
   alike:::lang_alike(c5, c9, NULL)  # TRUE
+  alike:::lang_alike(c11, c10, NULL)# Length mismatch
 
   fun <- function(abc, bcd, efg) NULL
 
