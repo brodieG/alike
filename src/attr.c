@@ -128,7 +128,8 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   if(TYPEOF(current) != STRSXP || TYPEOF(target) != STRSXP)
     return ALIKEC_alike_attr(target, current, R_ClassSymbol, set, 0);
 
-  int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i;
+  int tar_class_len, cur_class_len, len_delta, tar_class_i, cur_class_i,
+      is_df = 0;
   const char * cur_class;
   const char * tar_class;
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
@@ -148,7 +149,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   ) {
     cur_class = CHAR(STRING_ELT(current, cur_class_i));
     tar_class = CHAR(STRING_ELT(target, tar_class_i));
-    if(!res.df && !strcmp(tar_class, "data.frame")) res.df = 1;
+    if(!is_df && !strcmp(tar_class, "data.frame")) is_df = 1;
 
     if(res.success && strcmp(cur_class, tar_class)) { // class mismatch
       res.success = 0;
@@ -198,6 +199,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
     PROTECT(res.message);
   }
   UNPROTECT(1);
+  res.df = is_df;
   return res;
 }
 SEXP ALIKEC_compare_class_ext(SEXP target, SEXP current) {
@@ -1110,7 +1112,6 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     error("Logic Error: attribute depth counter corrupted; contact maintainer");
   set.in_attr--;
 
-  res_attr.df = is_df;
   int i;
   for(i = 0; i < 8; i++) {
     if(!errs[i].success && (!rev || (rev && set.attr_mode == 2))) {
@@ -1118,6 +1119,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
       res_attr.lvl = i;
       break;
   } }
+  res_attr.df = is_df;
   UNPROTECT(ps);
   return res_attr;
 }
