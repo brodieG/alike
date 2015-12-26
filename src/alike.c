@@ -153,11 +153,13 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
-    const char * msg_chr = "";
 
     if(!res_attr.success) {
       // If top level error (class), make sure not overriden by others
-      if(res_attr.lvl <= 2) err = 1;
+      if(res_attr.lvl <= 2) {
+        err = 1;
+        res.message = res_attr.message;
+      }
       else err_attr = 1;
     }
     // - Special Language Objects && Funs --------------------------------------
@@ -174,8 +176,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       const char * err_lang = ALIKEC_lang_alike_internal(target, current, set);
       if(err_lang[0]) {
         err = 1;
-        res.success = 0;
-        msg_chr = err_lang;
+        res.message = PROTECT(ALIKEC_res_msg_def(err_lang));
       }
     }
     int is_fun = 0;
@@ -184,22 +185,21 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err_fun = ALIKEC_fun_alike_internal(target, current);
       if(err_fun[0]) {
         err = 1;
-        res.success = 0;
-        msg_chr = err_fun;
+        res.message = PROTECT(ALIKEC_res_msg_def(err_fun));
     } }
     // - Type ------------------------------------------------------------------
 
     // lang excluded because we can have symbol-lang comparisons that resolve
     //  to symbol symbol
 
-    err_type = ALIKEC_type_alike_internal(
-      target, current, set.type_mode, set.fuzzy_int_max_len
-    );
-    if(!err && !is_lang && err_type[0]) {
-      err = 1;
-      res.success = 0;
-      msg_chr = err_type;
-    }
+    if(!err && !is_lang) {
+      err_type = ALIKEC_type_alike_internal(
+        target, current, set.type_mode, set.fuzzy_int_max_len
+      );
+      if(err_type[0]) {
+        err = 1;
+        res.message = PROTECT(ALIKEC_res_msg_def(err_type));
+    } }
     // - Length ----------------------------------------------------------------
 
     /*
@@ -208,7 +208,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     for environments since rules for alikeness are different for environments
     */
 
-    if(!is_lang && !is_fun && tar_type != ENVSXP) {
+    if(!err && !is_lang && !is_fun && tar_type != ENVSXP) {
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       // if attribute error is not class, override with col count error
@@ -231,7 +231,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
             err_tok1,  err_tok2,  "", ""
           );
         }
-        msg_chr = msg_tmp;
       } else if (
         is_df && err_lvl > 0 && tar_type == VECSXP && XLENGTH(target) &&
         TYPEOF(current) == VECSXP && XLENGTH(current) &&
@@ -250,16 +249,15 @@ struct ALIKEC_res ALIKEC_alike_obj(
           tar_first_el_len == (R_xlen_t) 1 ? "" : "s",
           CSR_len_as_chr(cur_first_el_len), ""
         );
-        res.success = 0;
-        msg_chr = msg_tmp;
-    } }
+      }
+      if(err) res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp));
+      else PROTECT(R_NilValue);
+    } else PROTECT(R_NilValue);
+
     // If no normal, errors, use the attribute error
+
     if(!err && err_attr) {
       res.message = PROTECT(res_attr.message);  // stack balance
-    } else if(err) {
-      res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
-    } else {
-      PROTECT(R_NilValue);
     }
   } else {
     PROTECT(PROTECT(R_NilValue));
