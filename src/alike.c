@@ -211,7 +211,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(!err && !is_lang && !is_fun && tar_type != ENVSXP) {
       SEXP tar_first_el, cur_first_el;
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
-      Rprintf("Length check\n");
       // if attribute error is not class, override with col count error
       // zero lengths match any length
       if(
@@ -254,7 +253,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     if(!err && err_attr) {
       res.message = PROTECT(res_attr.message);
-    } else if(err && msg_chr) {
+    } else if(err && msg_chr[0]) {
       res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
     } else {
       PROTECT(R_NilValue);
