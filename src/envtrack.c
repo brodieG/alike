@@ -48,7 +48,7 @@ struct ALIKEC_env_track * ALIKEC_env_set_create(int stack_size_init) {
     (struct ALIKEC_env_track *)
       R_alloc(1, sizeof(struct ALIKEC_env_track));
   envs->stack_size = envs->stack_ind = envs->stack_mult = 0;
-  envs->env_stack = 0;
+  envs->env_stack = envs->no_rec = 0;
   envs->stack_size_init = stack_size_init;
   int res = ALIKEC_env_stack_alloc(envs);
   if(!res) error("Unable to allocate `alike` environment stack");
