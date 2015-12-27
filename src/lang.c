@@ -5,7 +5,7 @@ Initialize return object
 */
 struct ALIKEC_res_lang ALIKEC_res_lang_init() {
   return (struct ALIKEC_res_lang) {
-    .success = 0,
+    .success = 1,
     .rec = ALIKEC_rec_def(),
     .chr_msg = ""
   };
