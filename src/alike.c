@@ -380,9 +380,10 @@ struct ALIKEC_res ALIKEC_alike_rec(
 
       if(!res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
 
+      int env_stack_status = ALIKEC_env_track(target, res.rec.envs);
       if(!res.rec.envs->no_rec)
-        res.rec.envs->no_rec = !ALIKEC_env_track(target, res.rec.envs);
-      if(res.rec.envs->no_rec < 0 && !set.suppress_warnings) {
+        res.rec.envs->no_rec = !env_stack_status;
+      if(env_stack_status  < 0 && !set.suppress_warnings) {
         warning(
           "`alike` environment stack exhausted; %s.",
           "unable to recurse any further into environments"

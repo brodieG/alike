@@ -70,7 +70,7 @@ activated.
 Returns
   * > 1 if the environment has not been seen before (and adds it to stack),
     really it is the result of the allocation attempt
-  * 0 if the environment is new
+  * 0 if the environment is found
   * -1 if we are out of space in the env stack
 */
 
