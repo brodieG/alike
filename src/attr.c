@@ -731,11 +731,9 @@ struct ALIKEC_res_sub  ALIKEC_compare_levels(
     );
     PROTECT(res.message);
     if(!res.success) {
-      SEXP wrap = PROTECT(allocVector(VECSXP, 2));
-      SET_VECTOR_ELT(wrap, 0, lang2(R_LevelsSymbol, R_NilValue));
-      SET_VECTOR_ELT(wrap, 1, CDR(VECTOR_ELT(wrap, 0)));
-      SET_VECTOR_ELT(res.message, 1, wrap);
-      UNPROTECT(1);
+      ALIKEC_wrap_around(
+        VECTOR_ELT(res.message, 1), lang2(R_LevelsSymbol, R_NilValue)
+      );
     }
     UNPROTECT(1);
     return res;
