@@ -220,7 +220,7 @@ Attributes present in `current` but missing in `target` may be anything at all.
 
 #### Overview
 
-The special attributes are `names`, `row.names`, `dim`, `dimnames`, `class`, `tsp`, and `levels`.  These attributes are discussed in sections [2.2 and 2.3 of the R Language Definition](http://cran.r-project.org/doc/manuals/r-release/R-lang.html#Attributes), and have well defined and consistently applied semantics in R.  Since the semantics of these attributes is well known, we are able to define "alikeness" for them in a more granular way than we can for arbitrary attributes.
+The special attributes are `names`, `row.names`, `dim`, `dimnames`, `class`, `tsp`, and `levels`.  These attributes are discussed in sections [2.2 and 2.3 of the R Language Definition](http://cran.r-project.org/doc/manuals/r-release/R-lang.html#Attributes), and have well defined and consistently applied semantics in R.  Since the semantics of these attributes are well known, we are able to define "alikeness" for them in a more granular way than we can for arbitrary attributes.
 
 #### row.names and names
 
