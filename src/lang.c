@@ -495,7 +495,13 @@ const char * ALIKEC_lang_alike_internal(
     SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
 
     if(lang_ind_sub != R_NilValue) {
-      SETCAR(lang_ind_sub, lang2(R_QuoteSymbol, lang_call));
+      SEXP wrap_symb;
+      if(CAR(lang_call) == ALIKEC_SYM_tilde) {
+        wrap_symb = ALIKEC_SYM_paren_open;
+      } else {
+        wrap_symb = R_QuoteSymbol;
+      }
+      SETCAR(lang_ind_sub, lang2(wrap_symb, lang_call));
       SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang_ind, set.width));
 
       // Handle the different deparse scenarios
