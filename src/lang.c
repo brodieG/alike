@@ -477,62 +477,43 @@ SEXP ALIKEC_lang_alike_core(
   return res_fin;
 }
 /*
-Translate result into character for use by alike
+  Translate result into res_sub for use by alike
+
+  Probalby some inefficiency in the C -> SEXP -> C translations going on; this
+  is happening mostly for legacy reason so should probably clean up to stick to
+  C at some point.  One of the changes (amongst others) is that we no longer care
+  about recording the call / language that caused the problem since we're
+  refering directly to the original object
 */
-const char * ALIKEC_lang_alike_internal(
+struct ALIKEC_res_sub ALIKEC_lang_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   SEXP lang_res = PROTECT(ALIKEC_lang_alike_core(target, current, set));
 
-  const char * res = "";
-
-  if(!asInteger(VECTOR_ELT(lang_res, 0))) {
-    // Get SEXPs, and substitute call into index; note that lang_ind_sub is the
-    // CONS cell that references the spot to sub-in our call
+  struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
+  if(asInteger(VECTOR_ELT(lang_res, 0))) {
+    PROTECT(res.message);  // stack balance
+  } else {
+    res.success = 0;
+    res.message = PROTECT(
+      ALIKEC_res_msg_def(CHAR(asChar(VECTOR_ELT(lang_res, 1))))
+    );
+    // Deal with wrap
 
     SEXP lang_ind = VECTOR_ELT(lang_res, 3);
-    SEXP lang_call = VECTOR_ELT(lang_res, 2);
     SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
 
-    if(lang_ind_sub != R_NilValue) {
-      SEXP wrap_symb;
-      if(CAR(lang_call) == ALIKEC_SYM_tilde) {
-        wrap_symb = ALIKEC_SYM_paren_open;
-      } else {
-        wrap_symb = R_QuoteSymbol;
-      }
-      SETCAR(lang_ind_sub, lang2(wrap_symb, lang_call));
-      SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang_ind, set.width));
+    // Formulas need to be wrapped in parens for indexing to make sense
 
-      // Handle the different deparse scenarios
-
-      int multi_line = 1;
-      const char * dep_chr = CHAR(asChar(lang_dep));
-
-      if(XLENGTH(lang_dep) == 1) {
-        if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
-      }
-      const char * call_char, * call_pre = "", * call_post = "";
-      if(multi_line) {
-        call_pre = ":\n%s";
-        call_char = ALIKEC_pad(lang_dep, -1, 2);
-        call_post = "\n";
-      } else {
-        call_pre = " `";
-        call_post = "` ";
-        call_char = dep_chr;
-      }
-      res = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "have%s%s%s%s",
-        call_pre, call_char, call_post, CHAR(asChar(VECTOR_ELT(lang_res, 1)))
-      );
-      UNPROTECT(1);
-    } else {
-      res = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%s",
-        CHAR(asChar(VECTOR_ELT(lang_res, 1))), "", "", ""
-  );} }
-  UNPROTECT(1);
+    if(TYPEOF(target) == LANGSXP && CAR(target) == ALIKEC_SYM_tilde) {
+      SETCAR(lang_ind_sub, lang2(ALIKEC_SYM_paren_open, CAR(lang_ind_sub)));
+      lang_ind_sub = CDR(CAR(lang_ind_sub));
+    }
+    SEXP wrap = VECTOR_ELT(res.message, 1);
+    SET_VECTOR_ELT(wrap, 0, lang_ind);
+    SET_VECTOR_ELT(wrap, 1, lang_ind_sub);
+  }
+  UNPROTECT(2);
   return res;
 }
 /*
@@ -551,5 +532,13 @@ SEXP ALIKEC_lang_alike_chr_ext(
 ) {
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = match_env;
-  return mkString(ALIKEC_lang_alike_internal(target, current, set));
+  SEXP res = PROTECT(ALIKEC_lang_alike_internal(target, current, set).message);
+  SEXP res_str;
+  if(res != R_NilValue) {
+    res_str = PROTECT(VECTOR_ELT(res, 0));
+  } else {
+    res_str = PROTECT(mkString(""));
+  }
+  UNPROTECT(2);
+  return res_str;
 }

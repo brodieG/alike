@@ -114,7 +114,7 @@
   SEXP ALIKEC_compare_class_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dimnames_ext(SEXP prim, SEXP sec);
   SEXP ALIKEC_compare_dim_ext(SEXP prim, SEXP sec, SEXP target, SEXP current);
-  const char * ALIKEC_lang_alike_internal(
+  struct ALIKEC_res_sub ALIKEC_lang_alike_internal(
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
   SEXP ALIKEC_lang_alike_ext(SEXP target, SEXP current, SEXP match_env);
