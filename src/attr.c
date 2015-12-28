@@ -764,8 +764,8 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
 ) {
   R_xlen_t tae_val_len, cae_val_len;
   SEXPTYPE tae_type = TYPEOF(target), cae_type = TYPEOF(current);
-  tae_val_len = XLENGTH(target);
-  cae_val_len = XLENGTH(current);
+  tae_val_len = xlength(target);
+  cae_val_len = xlength(current);
 
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
 
@@ -801,9 +801,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
     SEXP wrap = PROTECT(ALIKEC_attr_wrap(attr_sym, R_NilValue));
     SET_VECTOR_ELT(res.message, 1, wrap);
     UNPROTECT(1);
-  } else if (
-    (tae_val_len = xlength(target)) != (cae_val_len = xlength(current))
-  ) {
+  } else if (tae_val_len != cae_val_len) {
     if(set.attr_mode || tae_val_len) {
       res.success = 0;
       res.message = PROTECT(
