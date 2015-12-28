@@ -174,11 +174,15 @@ struct ALIKEC_res ALIKEC_alike_obj(
           (cur_type == LANGSXP || cur_type == SYMSXP)
       ) )
     ) {
-      const char * err_lang = ALIKEC_lang_alike_internal(target, current, set);
-      if(err_lang[0]) {
+      struct ALIKEC_res_sub res_lang = ALIKEC_lang_alike_internal(
+        target, current, set
+      );
+      PROTECT(res_lang.message);
+      if(!res_lang.success) {
         err = 1;
-        msg_chr = err_lang;
-    } }
+        res.message = res_lang.message;
+      }
+    } else PROTECT(R_NilValue);
     int is_fun = 0;
 
     if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
@@ -259,7 +263,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       PROTECT(R_NilValue);
     }
   } else {
-    PROTECT(PROTECT(R_NilValue));
+    PROTECT(PROTECT(PROTECT(R_NilValue)));
   }
   // - Known Limitations -------------------------------------------------------
 
@@ -298,7 +302,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
   } else {
     res.success = 1;
   }
-  UNPROTECT(2);
+  UNPROTECT(3);
   return res;
 }
 /*
@@ -577,7 +581,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
           !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
           !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
           !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
-          !strcmp("&&", call_sym)
+          !strcmp("&&", call_sym) || !strcmp("~", call_sym)
         ) is_an_op = 1;
         if(!is_an_op && call_sym[0] == '%') {
           // check for %xx% operators
