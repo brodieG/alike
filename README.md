@@ -1,4 +1,3 @@
-
 ---
 output:
   md_document:
@@ -8,6 +7,7 @@ output:
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 
+# alike - Verify S3 Object Structure
 
 <table style="border: none; background-color: transparent; vertical-align: middle;">
   <tr style="border: none; background-color: transparent; padding: 2px;">
@@ -29,9 +29,6 @@ output:
     <td style="border: none; background-color: transparent; padding: 2px;">
       <a href='https://codecov.io/github/brodieG/alike?branch=dev'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=development'></a>
 </table>
-
-
-# alike - Verify S3 Object Structure
 
 **NOTE**: this is a snippet from the **[vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/alike/master/inst/doc/alike.html)**; we recommend you look at the actual vignette as it will show the evaluated R expressions and the links will work.
 
