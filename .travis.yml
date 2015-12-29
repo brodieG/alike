@@ -1,0 +1,26 @@
+# Sample .travis.yml for R projects from https://github.com/craigcitro/r-travis
+
+language: r
+
+r_binary_packages:
+  - testthat
+  - devtools
+  - knitr
+  - markdown
+
+warnings_are_errors: true
+
+sudo: required
+
+cran: http://cran.rstudio.com/
+
+r_github_packages:
+  - jimhester/covr@no_try
+
+after_success:
+  - Rscript -e 'covr::codecov(quiet=FALSE, ...=list(quiet=FALSE))'
+
+# notifications:
+#   email:
+#     on_success: brodie.gaslam@yahoo.com
+#     on_failure: brodie.gaslam@yahoo.com

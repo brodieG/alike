@@ -1,3 +1,4 @@
+
 ---
 output:
   md_document:
@@ -13,6 +14,28 @@ knitr::opts_chunk$set(
   fig.path = "README-"
 )
 ```
+
+<table style="border: none; background-color: transparent; vertical-align: middle;">
+  <tr style="border: none; background-color: transparent; padding: 2px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
+      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=master'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">RC:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=rc'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=development'></a>
+  <tr style="border: none; background-color: transparent; padding: 2px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
+      <a href='https://codecov.io/github/brodieG/alike?branch=master'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=master'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">RC:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://codecov.io/github/brodieG/alike?branch=rc'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=rc'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://codecov.io/github/brodieG/alike?branch=dev'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=development'></a>
+</table>
+
 
 # alike - Verify S3 Object Structure
 
