@@ -15,6 +15,7 @@ sudo: required
 cran: http://cran.rstudio.com/
 
 r_github_packages:
+  - brodieG/cstringr
   - jimhester/covr@no_try
 
 after_success:
