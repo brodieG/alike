@@ -19,9 +19,10 @@ unitizer_sect("Class Matching", {
   .alike(obj1, obj2, alike_settings(attr.mode=1))   # FALSE
 } )
 unitizer_sect("S4", {
-  setClass("foo", representation(a = "character", b = "numeric"))
-  setClass("bar", representation(d = "numeric", c = "numeric"))
-  setClass("baz", contains="foo", list(c="character"))
+  bn <- .BaseNamespaceEnv
+  setClass("foo", representation(a = "character", b = "numeric"), where=bn)
+  setClass("bar", representation(d = "numeric", c = "numeric"), where=bn)
+  setClass("baz", contains="foo", list(c="character"), where=bn)
 
   x <- new("foo")
   y <- new("foo")
@@ -61,8 +62,8 @@ unitizer_sect("S4", {
   .alike(y, v) # TRUE
 } )
 unitizer_sect("R5", {
-  Foo <- setRefClass("Foo")
-  Bar <- setRefClass("Bar")
+  Foo <- setRefClass("Foo", where=bn)
+  Bar <- setRefClass("Bar", where=bn)
 
   Foo.1 <- Foo$new()
   Foo.2 <- Foo$new()

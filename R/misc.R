@@ -31,11 +31,20 @@ ts_compare <- function(target, current)
 lang_alike <- function(target, current, match.call.env=parent.frame())
   .Call(ALIKEC_lang_alike, target, current, match.call.env)
 
+lang_alike_chr <- function(target, current, match.call.env=parent.frame())
+  .Call(ALIKEC_lang_alike_chr, target, current, match.call.env)
+
 fun_alike <- function(target, current)
   .Call(ALIKEC_fun_alike, target, current)
 
-dep_alike <- function(obj, lines)
-  .Call(ALIKEC_deparse, obj, lines)
+dep_alike <- function(obj, width.cutoff=60L)
+  .Call(ALIKEC_deparse, obj, width.cutoff)
+
+dep_oneline<- function(obj, max.chars=20L, keep.at.end=0L)
+  .Call(ALIKEC_deparse_oneline, obj, max.chars, keep.at.end)
+
+pad <- function(obj, lines=-1, pad=-1)
+  .Call(ALIKEC_pad, obj, lines, pad)
 
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
@@ -43,12 +52,18 @@ match_call_alike <- function(call, env)
 env_track <- function(env, size_init = 32)
   .Call(ALIKEC_env_track, env, size_init)
 
+is_valid_name <- function(name)
+  .Call(ALIKEC_is_valid_name_ext, name)
+
+is_dfish <- function(obj)
+  .Call(ALIKEC_is_dfish, obj)
+
 #' Used for testing C code
 #'
 #' @keywords internal
-
-alike_test <- function(target, current, settings=parent.frame())
-  .Call(ALIKEC_test, target, current, settings)
+#' @export
+alike_test <- function(obj)
+  .Call(ALIKEC_test, substitute(obj))
 
 #' @keywords internal
 

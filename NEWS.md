@@ -1,3 +1,12 @@
+alike 1.1.0
+===========
+
+* Improvements to error message so that user can just copy paste relevant part 
+  of error message in prompt and see what the problem object is (fix 
+  issues #26, #32, #35)
+    * Use substituted `current` expression
+    * Use accessor functions to problem item (e.g. `names(abc$b[[1]])`)
+
 alike 1.0.0
 ===========
 

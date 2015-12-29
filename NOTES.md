@@ -70,47 +70,49 @@ typealike:
 
 Initial benchmarks (before attr checking):
 
-  lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
-  lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
+```
+lst <-   list(list( 1,  2), list( 3, list( 4, list( 5, list(6, 6.1, 6.2)))))
+lst.2 <- list(list(11, 21), list(31, list(41, list(51, list(61          )))))
 
-  microbenchmark(alike2(lst, lst.2), alike(lst, lst.2), .alike2(lst, lst.2))
+microbenchmark(alike2(lst, lst.2), alike(lst, lst.2), .alike2(lst, lst.2))
 
-  Unit: microseconds
-                  expr      min        lq    median       uq      max neval
-    alike2(lst, lst.2)    5.644    6.7105    8.4745   11.085   19.995   100
-     alike(lst, lst.2) 1106.624 1120.6535 1133.5815 1159.470 2245.159   100
-   .alike2(lst, lst.2)    4.012    4.5560    5.4650    7.905   66.953   100
+Unit: microseconds
+                expr      min        lq    median       uq      max neval
+  alike2(lst, lst.2)    5.644    6.7105    8.4745   11.085   19.995   100
+   alike(lst, lst.2) 1106.624 1120.6535 1133.5815 1159.470 2245.159   100
+ .alike2(lst, lst.2)    4.012    4.5560    5.4650    7.905   66.953   100
 
-  > microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst))
-  Unit: microseconds
-                expr      min        lq    median        uq      max neval
-    alike2(lst, lst)    3.850    4.7085    6.7295    9.8175   22.973   100
-     alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
-   .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
-
+> microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst))
+Unit: microseconds
+              expr      min        lq    median        uq      max neval
+  alike2(lst, lst)    3.850    4.7085    6.7295    9.8175   22.973   100
+   alike(lst, lst) 2762.135 2823.9385 2865.7025 2957.9535 5773.793   100
+ .alike2(lst, lst)    2.235    2.7315    3.3835    5.8075   12.835   100
+```
 After adding S4 checks (and also upgrading to OSX 10.9 and R 3.1.1:
+```
+setClass("x", list(a="integer"))
+setClass("z", contains="x", list(b="integer"))
+y <- new("x")
+w <- new("z")
 
-    setClass("x", list(a="integer"))
-    setClass("z", contains="x", list(b="integer"))
-    y <- new("x")
-    w <- new("z")
+microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst), .alike2(y, w))
 
-    microbenchmark(alike2(lst, lst), alike(lst, lst), .alike2(lst, lst), .alike2(y, w))
-
-    Unit: microseconds
-                  expr      min       lq    median        uq      max neval
-      alike2(lst, lst)    3.925    4.693    6.9255    9.0355   18.768   100
-       alike(lst, lst) 2326.880 2365.172 2395.5355 2417.4255 3800.582   100
-     .alike2(lst, lst)    1.961    2.272    2.5050    3.1080   20.000   100
-         .alike2(y, w)    1.934    2.796    3.3625    6.5495   13.822   100
-
+Unit: microseconds
+              expr      min       lq    median        uq      max neval
+  alike2(lst, lst)    3.925    4.693    6.9255    9.0355   18.768   100
+   alike(lst, lst) 2326.880 2365.172 2395.5355 2417.4255 3800.582   100
+ .alike2(lst, lst)    1.961    2.272    2.5050    3.1080   20.000   100
+     .alike2(y, w)    1.934    2.796    3.3625    6.5495   13.822   100
+```
 And some that cause errors:
-
-    microbenchmark(.alike2(lst, lst.2), .alike2(w, y))
-    Unit: microseconds
-                    expr   min     lq median     uq    max neval
-     .alike2(lst, lst.2) 3.662 3.7625 3.8665 4.0015 19.204   100
-           .alike2(w, y) 2.944 3.2205 3.3315 3.5265 37.653   100
+```
+microbenchmark(.alike2(lst, lst.2), .alike2(w, y))
+Unit: microseconds
+                expr   min     lq median     uq    max neval
+ .alike2(lst, lst.2) 3.662 3.7625 3.8665 4.0015 19.204   100
+       .alike2(w, y) 2.944 3.2205 3.3315 3.5265 37.653   100
+```
 
 ### As of v0.2.2
 
@@ -131,48 +133,60 @@ Unit: microseconds
 
 Here we actually start profiling.  Baseline:
 
-    Unit: microseconds
-                      expr   min    lq median   uq    max neval
-     alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
+```
+Unit: microseconds
+                  expr   min    lq median   uq    max neval
+ alike(mtcars, mtcars) 4.351 4.512 4.6065 4.78 32.948  1000
+```
 
 Get rid of unnecessary prepend copy:
 
-    > microbenchmark(alike(mtcars, mtcars), times=1000)
-    Unit: microseconds
-                      expr   min   lq median    uq    max neval
-     alike(mtcars, mtcars) 3.973 4.16 4.3135 4.638 21.119  1000
+```
+> microbenchmark(alike(mtcars, mtcars), times=1000)
+Unit: microseconds
+                  expr   min   lq median    uq    max neval
+ alike(mtcars, mtcars) 3.973 4.16 4.3135 4.638 21.119  1000
+```
 
 Astonishingly, getting rid of the index business didn't appear to improve things
 much at all:
 
-    > microbenchmark(alike(mtcars, mtcars), times=1000)
-    Unit: microseconds
-                      expr   min    lq median    uq   max neval
-     alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
+```
+> microbenchmark(alike(mtcars, mtcars), times=1000)
+Unit: microseconds
+                  expr   min    lq median    uq   max neval
+ alike(mtcars, mtcars) 3.954 4.097  4.159 4.325 30.94  1000
+```
 
 Actually, maybe it did.  Had a few bug fixes in between above and below, but
 don't see why it would have been slower as a result of bugs:
 
-    > microbenchmark(alike(mtcars, mtcars), times=1000)
-    Unit: microseconds
-                      expr   min    lq median     uq    max neval
-     alike(mtcars, mtcars) 3.719 3.828  3.888 3.9645 20.667  1000
+```
+> microbenchmark(alike(mtcars, mtcars), times=1000)
+Unit: microseconds
+                  expr   min    lq median     uq    max neval
+ alike(mtcars, mtcars) 3.719 3.828  3.888 3.9645 20.667  1000
+```
 
 Upon testing a bit more, could be starting with a fresh R process (or alternatively having a bogged down one) that makes the difference?
 
 Some more improvements of swapping out `strcmp` for direct symbol comparison:
 
-    > microbenchmark(alike(mtcars, mtcars), times=1000)
-    Unit: microseconds
-                      expr   min    lq median    uq    max neval
-     alike(mtcars, mtcars) 3.591 3.746 3.8215 3.953 30.225  1000
+```
+> microbenchmark(alike(mtcars, mtcars), times=1000)
+Unit: microseconds
+                  expr   min    lq median    uq    max neval
+ alike(mtcars, mtcars) 3.591 3.746 3.8215 3.953 30.225  1000
+```
 
 One issue with all this, laboriously we benchmarked `strcmp` on 8 character strings, and found that 4MM comparisons, it took:
 
+```
     Unit: microseconds
                     expr       min        lq     median         uq       max neval
      alike_test(1, 2, 3) 16707.573 16806.983 16870.4480 16994.7620 21516.922   100
      alike_test(0, 2, 3)   207.384   209.116   212.1385   221.7965   403.504   100
+```
 
 Or about 4 ns per comparison.  In `mtcars`, based on profiling information from instruments, we found that about 7.3% of the time was spent on `strcmp` comparing names, and there are 43 names (8 cols, 35 rows) or so, so that adds up to about 6.1ns per comparison, which ties out.
 
@@ -182,22 +196,26 @@ Also, we pre-allocate the object used to deparse the error message even before e
 
 After removing `strcmp` in the cases where the names are known to be identical:
 
-    > microbenchmark(alike(mtcars, mtcars), alike(mtcars.a, mtcars), times=1000)
-    Unit: microseconds
-                        expr   min     lq median     uq    max neval
-       alike(mtcars, mtcars) 2.966 3.1465 3.2430 3.4005  4.728  1000
-     alike(mtcars.a, mtcars) 2.931 3.1060 3.2075 3.3820 30.654  1000
+```
+> microbenchmark(alike(mtcars, mtcars), alike(mtcars.a, mtcars), times=1000)
+Unit: microseconds
+                    expr   min     lq median     uq    max neval
+   alike(mtcars, mtcars) 2.966 3.1465 3.2430 3.4005  4.728  1000
+ alike(mtcars.a, mtcars) 2.931 3.1060 3.2075 3.3820 30.654  1000
+```
 
 Finally, collapsing all the settings into one argument:
 
-    > sets <- list(0L, alike:::MachDblEpsSqrt, 0L, FALSE, sys.frame(sys.nframe()))
-    > microbenchmark(alike(mtcars, mtcars), alike_test(mtcars, mtcars, sets), alike_test(mtcars, mtcars, NULL), .alike(mtcars, mtcars), times=10000)
-    Unit: microseconds
-                                 expr   min    lq median    uq     max neval
-                alike(mtcars, mtcars) 2.934 3.161  3.319 3.486 808.905 10000
-     alike_test(mtcars, mtcars, sets) 2.157 2.313  2.394 2.534  12.154 10000
-     alike_test(mtcars, mtcars, NULL) 2.070 2.243  2.335 2.480 655.997 10000
-               .alike(mtcars, mtcars) 1.951 2.124  2.199 2.318  13.585 10000
+```
+> sets <- list(0L, alike:::MachDblEpsSqrt, 0L, FALSE, sys.frame(sys.nframe()))
+> microbenchmark(alike(mtcars, mtcars), alike_test(mtcars, mtcars, sets), alike_test(mtcars, mtcars, NULL), .alike(mtcars, mtcars), times=10000)
+Unit: microseconds
+                             expr   min    lq median    uq     max neval
+            alike(mtcars, mtcars) 2.934 3.161  3.319 3.486 808.905 10000
+ alike_test(mtcars, mtcars, sets) 2.157 2.313  2.394 2.534  12.154 10000
+ alike_test(mtcars, mtcars, NULL) 2.070 2.243  2.335 2.480 655.997 10000
+           .alike(mtcars, mtcars) 1.951 2.124  2.199 2.318  13.585 10000
+```
 
 The extra argument over the original "fast" version costs ~120ns, and the argument validation another ~80ns.
 
@@ -206,24 +224,30 @@ The extra argument over the original "fast" version costs ~120ns, and the argume
 
 The is the baseline:
 
-    microbenchmark(alike_test(x, w))
-    Unit: nanoseconds
-                 expr min  lq median   uq   max neval
-     alike_test(x, w) 832 888 1050.5 1212 17721   100
+```
+microbenchmark(alike_test(x, w))
+Unit: nanoseconds
+             expr min  lq median   uq   max neval
+ alike_test(x, w) 832 888 1050.5 1212 17721   100
+```
 
 Now let's add a call to `parent.frame` in the R function to pass through `.Call`.
 
-    microbenchmark(alike_test(x, w))
-    Unit: microseconds
-                 expr   min     lq median     uq     max neval
-     alike_test(x, w) 1.114 1.2005  1.311 1.5275 163.422   100
+```
+microbenchmark(alike_test(x, w))
+Unit: microseconds
+             expr   min     lq median     uq     max neval
+ alike_test(x, w) 1.114 1.2005  1.311 1.5275 163.422   100
+```
 
 And add a `substitute`:
 
-    microbenchmark(alike_test(x, w))
-    Unit: microseconds
-                 expr   min    lq median    uq     max neval
-     alike_test(x, w) 1.435 1.586  1.672 1.879 160.893   100
+```
+microbenchmark(alike_test(x, w))
+Unit: microseconds
+             expr   min    lq median    uq     max neval
+ alike_test(x, w) 1.435 1.586  1.672 1.879 160.893   100
+```
 
 At this point we've replicated a promise of sorts, by capturing the expression,
 as well as the evaluation environment, but we've add 600ns in evaluation time.
@@ -232,35 +256,40 @@ as well as the evaluation environment, but we've add 600ns in evaluation time.
 
 Need to track indices, use a list?  Prototype
 
-    index = CONS(x, R_NilValue)
-    alike_rec(tar, cur, index.pl)
-    ...
-    curr.ind = SEXP
-    if(err) {
-      res = {1, mkString("Error Message")}
-    }
-    else if(recurse) {
-      SETCDR(index.pl, CONS(curr.ind))
-      return(alike_rec(rec(tar.child, cur.child, CDR(index.pl))))
-    }
-    else
-    return {0, R_NilValue}
-
+```
+index = CONS(x, R_NilValue)
+alike_rec(tar, cur, index.pl)
+...
+curr.ind = SEXP
+if(err) {
+  res = {1, mkString("Error Message")}
+}
+else if(recurse) {
+  SETCDR(index.pl, CONS(curr.ind))
+  return(alike_rec(rec(tar.child, cur.child, CDR(index.pl))))
+}
+else
+return {0, R_NilValue}
+```
 ## Duplication
 
 Duplication is somewhat expensive, with:
 
-    y <- quote(x + fun(1, 2, fun2(a, b)) / 3 + news(23))
-    microbenchmark(alike_test(y, 1))
-    Unit: microseconds
-                 expr   min     lq median    uq    max neval
-     alike_test(y, 1) 1.253 1.4035 1.5475 1.754 15.181   100
+```
+y <- quote(x + fun(1, 2, fun2(a, b)) / 3 + news(23))
+microbenchmark(alike_test(y, 1))
+Unit: microseconds
+             expr   min     lq median    uq    max neval
+ alike_test(y, 1) 1.253 1.4035 1.5475 1.754 15.181   100
+```
 
 Reference
 
-    Unit: nanoseconds
-                 expr min    lq median   uq   max neval
-     alike_test(y, 1) 739 780.5    909 1074 89326  1000
+```
+Unit: nanoseconds
+             expr min    lq median   uq   max neval
+ alike_test(y, 1) 739 780.5    909 1074 89326  1000
+```
 
 So about half a microsecond to duplicate a somewhat complex object.  Is this tolerable?
 
@@ -366,6 +395,222 @@ The main draw-back is that by not providing that argument we move away from the 
 
 Another option might be allow flexible numeric types only for scalars under the view that those are the only ones that are likely to be manually input?
 
+## Error Messages
+
+When looking at something like:
+```
+## Error in analyze.test.run(x = run.1): Argument `x` should be "dist" at index [[1]] for "names" (is "x") at index [["data"]]
+```
+Perhaps:
+```
+Argument `x` should have `names(x$data)[[1]]` be "dist" (is "x")
+```
+would be better?
+```
+- Error in analyze(x = laps.3):
+-   Argument `x` should be class "POSIXct" (is "numeric") at index
+-   [["data"]][["time"]]
+
++ Error in analyze(x = laps.3):
++   Argument `x` should have `x$data$time` be class "POSIXct" (is "numeric")
+
++ Error in analyze(x = laps.2):
++   Argument `x` should have a "names" attribute ("names" missing)
+
++ Error in analyze(x = laps.2):
++   Argument `x` should have "names" ("names" attribute missing)
+
+- Argument `x` should be \"a\" at index [[1]] for \"levels\" (is \"k\") at
+- index [[2]][[\"b\"]]
+
++ Argument `x` should have `levels(x[[2]]$b)[[1]]` be \"a\" (is \"k\")
++ > str(x[[2]]$b)
++ List of 2
++ ...
+
++ Argument `x` should have `attr(x[[2]]$b, "levels")[[1]]` be \"a\" (is \"k\")
+```
+Latest versions:
+```
+"`lst.6.1[[2]]$`c d`$d` should be type \"numeric\" (is \"character\")"
+"{lst.6.1[[2]]$`c d`$d} should be type \"numeric\" (is \"character\")"
+```
+### Names
+
+Special case, particularly because we **could** use them to ascertain missingness, but what about rownames/colnames?  How comprehensive a view of the mismatch do we want to provide?  We can't realistically provide a full diff; under what circumstances do we want to point out exactly what's wrong?  Some scenarios:
+
+* Missing names
+* Names completely mismatched
+* One name missing
+* One name mismatch
+
+One of the annoyances with the existing mechanism is that it tells you about the first mismatch, which may be one of many, and it makes it seem like only one is wrong.  Ideally we would get a comprehensive diff of the mismatches with some logic to make the screen output manageable (i.e. don't necessarily show the diffs if names are completely wrong).
+
+```
+- Error in analyze(x = laps.1):
+-   Argument `x` should be "car" at index [[1]] for "names" (is "lap")
+
++ Error in analyze(x = laps.1):
++   Argument `x` should have `names(laps.1[["track"]][["curves"]])[[1]]` be
++   "car" (is "lap"); here is a snapshot of the object as supplied:
++ > str(laps.1[["track"]][["curves"]])
++ | List of 2
++ |  $ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  $ time: num [1:10] 123 241 363 481 600 ...
++ |  - attr(*, "row.names")= int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  - attr(*, "class")= chr "laps"
+
++ Error in analyze(x = laps.1):
++   Argument `x` should have `names(laps.1$track$curves]])[[1]]` be
++   "car" (is "lap"); here is a snapshot of the object as supplied:
++ > str(laps.1$track$curves)
++ | List of 2
++ |  $ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  $ time: num [1:10] 123 241 363 481 600 ...
++ |  - attr(*, "row.names")= int [1:10] 1 2 3 4 5 6 7 8 9 10
++ |  - attr(*, "class")= chr "laps"
+
++ Error in analyze(x = laps.1):
++   Argument `x` should have names for `laps.1$track$curves` (does not)
+
+# OR:
 
 
++ Error in analyze(x = laps.1):
++   Argument `x` is missing element "car"
 
+# OR:
+
++   Argument `x` should have `x[["car"]]` defined (is missing)
++   Argument `x` should have `laps.2[["car"]]` defined (is missing)
++   `laps.2[["car"]]` should evaluate to character (is integer) for argument `x`
+
++   In argument `x`, `laps.2[["car"]]` should evaluate to character (is integer)
++   For argument `x`, `laps.2[["car"]]` should evaluate to character (is integer)
++   Invalid argument `x`: `laps.2[["car"]]` should evaluate to character (is integer)
++   Invalid argument `x`: `laps.2[["car"]]` should be character (is integer)
+
+-   should be length 1 (is 2) at index [[2]][[2]]
++   `current[[2]][[2]]` should be length 1 (is 2)
+
+# -----------------------------------------------------------------------------
+
+- Error in analyze(x = laps.2):
+-   Argument `x` should be type "character" (is "NULL") for "names"
+
+```
+Ideally would get a text representation of object with issues highlighted.  It seems like the most natural representation is an `str`, since it makes it fairly easy to show the stuff that is right and wrong.  We may need to use a pseudo
+`str` so that we can highlight when class or length of a component is incorrect, and possibly color as well.  This is likely to be prohibitively complicated though.  Additionally, there are issues with integration in validate when we're comparing with both template and custom expressions or even when we're comparing against multiple possible templates.
+```
+List of 2
+ $ car : chr "corvette z06"
+ $ data:'data.frame':	10 obs. of  2 variables:
+  ..$ lap : int [1:10] 1 2 3 4 5 6 7 8 9 10
+  ..$ time: * num [1:10] 123 241 363 481 600 ... *
+  ..$ extra: * NULL *
+ - attr(*, "class")= chr "laps"
+
+```
+### Language objects
+
+
+Langauge object diffs actually provide a lot more information, so minor tweaks might be okay.
+
+```
+- should be a call to `+` (is "symbol") for `Sepal.Width` in:
+- > Sepal.Length ~ `{Sepal.Width}`
+- at index [["terms"]]
+
++ should have `x[["terms"]]` contain a call to `+` (is "symbol") at
++ `Sepal.Width` in:
++ > Sepal.Length ~ `{Sepal.Width}`
+```
+
+### Message Construction Logistics
+
+Process right now is to recurse and collect indices when exiting recursion
+along with message.  So in:
+
+```
+`current[[2]][[2]]` should be length 1 (is 2)
+`attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
+
+msg: `<exp>` should <err>
+exp:
+  attr(<object><index>, "<attr.name>")<sub.ind>       attr(%%s, "%s")%s
+  <attr.name>(<object><index>)<sub.ind>               %s(%%s)%s
+  <object><index>
+```
+So, need to return index, what mode (`attr`, `attr.name`, or object).  So err
+message just needs to be simplified.
+
+Gah, but problem with ^^^ is we need some way of separating what the object should be from the object designation to allow stuff like:
+
+```
+Error in analyze(x = laps.1):
+Argument `x` failure; must meet at least one of the following:
+  - `obj.1[[2]][[2]]` should be character (is logical):
+  - `attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
+  - `obj.1` should be length 1 (is 2)
+  - `obj.1 > 4` should evaluate to all TRUE values (contains non-TRUE values)
+
+Error in analyze(x = laps.1):
+  Argument `x`: `obj.1[[2]][[2]]` should be character (is logical)
+  Argument `x`: `this_is_a_really_long_call(with_some_really_long_arguments, and_another_long_argument)[[1]][[2]]$blah_blah_blah` should be character (is logical)
+  Argument `x` must meet at least one of the following:
+    - `obj.1[[2]][[2]]` should be character (is logical):
+    - `this_is_a_really_long_call(with_some_really_long_arguments, and_another_long argument)[[1]][[2]]$blah_blah_blah` should be charater (is logical)
+    - the following expression should be character (is logical):
+        this_is_a_really_long_call(with_some_really_long_arguments, 
+            and_another_long argument)[[1]][[2]]$blah_blah_blah
+    - expression:
+        this_is_a_really_long_call(with_some_really_long_arguments, 
+            and_another_long argument)[[1]][[2]]$blah_blah_blah
+      should be character (is integer)
+    - `attr(x$a$b$terms[[1]], "my_attr")[[1]]` should be integer (is character)
+    - `this_is_a_really_long_call(with_some_really_long_arguments, 
+    and_another_long_argument)[[1]][[2]]$blah_blah_blah` should be character (is integer)
+
+  In argument `x`: `obj.1[[2]][[2]]` should be character (is logical)
+  For argument `x`: `obj.1[[2]][[2]]` should be character (is logical)
+
+Argument `x` fails validation: `obj.1[[2]][[2]]` should be character (is logical)
+
+
+Argument `x` should have `obj.1[[2]][[2]]` be character (is logical)
+
+```
+
+Actually, seems like this is fine so long as we are willing to tolerate a little repetitiousness.
+
+Or some such would need to decompose into:
+```
+have `%%s` be integer (is character)
+```
+Where `%%s` could be:
+```
+object_name + index OR accessor(object_name + index)
+```
+on question is whether it makes sense to use the full object expression when there is no recursion or anything interesting:
+```
+Argument `x` should have `abc` be character (is integer)
+Argument `x` should be character (is integer)
+```
+
+## Bugs to Report
+
+```
+> x <- 25
+> x <- integer()
+> attr(x, "special") <- list(1, 2, setNames(1:3, letters[1:3]))
+> y <- list(NULL, NULL, x)
+> z <- y
+> z[[1]] <- list(list(1, "a"), "hello")
+> z[[2]] <- 25
+> w <- x
+> attr(w, "special") <- list(1, 2, setNames(1:3, letters[2:4]))
+> z[[3]] <- w
+> alike(y, z)
+Error in alike(y, z) :
+  Logic Error: unexpected index type 1661633088; contact maintainer.
+```

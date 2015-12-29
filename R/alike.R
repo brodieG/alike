@@ -141,13 +141,13 @@
 #' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 
 alike <- function(target, current)
-  .Call(ALIKEC_alike_ext, target, current, parent.frame())
+  .Call(ALIKEC_alike_ext, target, current, substitute(current), parent.frame())
 
 #' @rdname alike
 #' @export
 
 .alike <- function(target, current, settings=alike_settings(env=parent.frame()))
-  .Call(ALIKEC_alike_fast1, target, current, settings)
+  .Call(ALIKEC_alike_fast1, target, current, substitute(current), settings)
 
 #' @keywords internal
 
@@ -159,8 +159,10 @@ alike <- function(target, current)
 
 alike_settings <- function(
   type.mode=0L, attr.mode=0L, lang.mode=0L, rec.mode=0L,
-  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE
+  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE,
+  width=-1L
 )
   list(
-    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode
+    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode,
+    width
   )

@@ -28,7 +28,6 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
 
   SEXP tar_form, cur_form, args;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
-  PROTECT(PROTECT(PROTECT(R_NilValue))); // About to create up to three SEXPs - we're toying with fire a bit here
 
   // Translate specials and builtins to formals, if possible
 
@@ -36,17 +35,19 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
     tar_type == SPECIALSXP || tar_type == BUILTINSXP ||
     cur_type == SPECIALSXP || cur_type == BUILTINSXP
   ) {
-    args = list2(ALIKEC_SYM_args, R_NilValue);
+    args = PROTECT(list2(ALIKEC_SYM_args, R_NilValue));
     SET_TYPEOF(args, LANGSXP);
-  }
+  } else PROTECT(R_NilValue);
+
   if(tar_type == SPECIALSXP || tar_type == BUILTINSXP) {
     SETCADR(args, target);
-    target = eval(args, R_BaseEnv);
-  }
+    target = PROTECT(eval(args, R_BaseEnv));
+  } else PROTECT(R_NilValue);
+
   if(cur_type == SPECIALSXP || cur_type == BUILTINSXP) {
     SETCADR(args, current);
-    current = eval(args, R_BaseEnv);
-  }
+    current = PROTECT(eval(args, R_BaseEnv));
+  } else PROTECT(R_NilValue);
   // Cycle through all formals
 
   int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1, dots_cur = 0;

@@ -34,7 +34,21 @@ unitizer_sect("lists", {
 
   alike(lst.4, lst)     # should match
   alike(lst, lst.4)     # should not match because template has more detail
-} )
+
+  # Named lists
+
+  lst.5 <- list(1, list(a = 1, b = 2, c = list(d = 1)))
+  lst.6 <- list(1, list(a = 1, b = 2, c = list(d = "hello")))
+  lst.5.1 <- list(1, list(a = 1, b = 2, `c d` = list(d = 1)))
+  lst.6.1 <- list(1, list(a = 1, b = 2, `c d` = list(d = "hello")))
+
+  alike(lst.5, lst.6)
+  alike(lst.6, lst.5)
+
+  alike(lst.5.1, lst.6.1)
+  alike(lst.6.1, lst.5.1)
+
+})
 unitizer_sect("NULL values as wildcards", {
   alike(NULL, 1:3)                  # not a wild card at top level
   alike(list(NULL), list(1:3))      # but yes when nested

@@ -268,74 +268,6 @@ unitizer_sect("All attributes, strict", {
     attr.mode=2
   )
 } )
-unitizer_sect("Match Calls", {
-  alike:::match_call_alike(quote(var(y=1:10, runif(10))), baseenv())
-  env0 <- new.env()
-  env0$var <- function(yollo, zambia) NULL
-  alike:::match_call_alike(quote(var(y=1:10, runif(10))), env0)
-})
-unitizer_sect("Calls", {
-  c0 <- quote(fun(a, b, a, 25))
-  c1 <- quote(fun(x, y, x, "hello"))
-  c2 <- quote(fun(x, y, z, "hello"))
-  c3 <- quote(FUN(x, y, x, 1.01))
-  c4 <- quote(fun(x, y, x, z))
-  c5 <- quote(fun(a + b + a, FUN(z, a + 1)))
-  c6 <- quote(fun(x + y + x, FUN(w, x + 2)))
-  c7 <- quote(fun(x + y + x, FUN(w, y + 2)))
-  c8 <- quote(fun(x + y + x, FUN(w, x - 2)))
-  c9 <- quote(fun(x + y + x, FUN(w, x + "hello")))
-
-  alike:::lang_alike(c0, c1, NULL)  # TRUE
-  alike:::lang_alike(c0, c2, NULL)  # no, inconsistent
-  alike:::lang_alike(c0, c3, NULL)  # no, wrong fun name
-  alike:::lang_alike(c0, c4, NULL)  # extra symbol
-  alike:::lang_alike(c5, c6, NULL)  # TRUE
-  alike:::lang_alike(c5, c7, NULL)  # inconsistent
-  alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
-  alike:::lang_alike(c5, c9, NULL)  # TRUE
-
-  fun <- function(abc, bcd, efg) NULL
-
-  ca <- quote(fun(a, b, a))
-  cb <- quote(fun(x, e=x, y))
-
-  alike:::lang_alike(ca, cb, NULL)      # shouldn't match without match.call
-  alike:::lang_alike(cb, ca, NULL)      # false, different error
-  alike:::lang_alike(ca, cb)            # TRUE, should match
-
-  # test nested match.call
-
-  cc <- quote(fun(a, b, fun(b=1)))
-  cd <- quote(fun(a, b, fun(c=1)))
-
-  alike:::lang_alike(cc, cd)
-
-  # NULL in target matches anything
-
-  ce <- quote(fun(a, b, NULL))
-
-  alike:::lang_alike(cc, ce)  # FALSE
-  alike:::lang_alike(ce, cc)  # TRUE
-
-  # Formulas
-
-  f0 <- y ~ x + 1
-  f1 <- a ~ b + 1
-  f2 <- a ~ b + 2
-  f3 <- y ~ x + log(x) + z - 1
-  f4 <- a ~ b + log(b) + c - 1
-  f5 <- a ~ b + log(c) + b - 1
-  f6 <- a ~ b + ln(b) + c - 1
-  f7 <- a ~ b + log(b) + c + 1
-
-  alike:::lang_alike(f0, f1, NULL)        # TRUE
-  alike:::lang_alike(f0, f2, NULL)        # FALSE
-  alike:::lang_alike(f3, f4, NULL)        # TRUE
-  alike:::lang_alike(f3, f5, NULL)        # FALSE
-  alike:::lang_alike(f3, f6, NULL)        # FALSE
-  alike:::lang_alike(f3, f7, NULL)        # FALSE
-})
 unitizer_sect("Closures", {
   alike:::fun_alike(print, print.data.frame)  # TRUE, methods should always match generics
   alike:::fun_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
@@ -376,22 +308,26 @@ unitizer_sect("Closures", {
   alike:::fun_alike(`[`, substitute)      # FALSE, argless specials
   alike:::fun_alike(`[`, `&&`)          # TRUE, argless specials
 })
-unitizer_sect("Deparse", {
-  l0 <- quote(
-    a + b + fun(x + funz(
-      matrix_over[25, 32]) + transform(iris, x = Sepal.Width * 3) /
-      the_donkey_ate_a_carrot %in% {
-        paste0(
-          match(letter, LETTERS),
-          c("hello there")
-  ) } ) )
-  alike:::dep_alike(l0, -1)
-  alike:::dep_alike(l0, 1)
-  alike:::dep_alike(l0, 2)
-})
 unitizer_sect("Env Track", {
   el.1 <- replicate(5, new.env())
   el.2 <- el.1[c(1, 1, 2, 3, 4, 1, 2, 3, 5, 1)]
   alike:::env_track(el.1, 1L)  # first env a freebie, so should be 1
   alike:::env_track(el.2, 1L)
+} )
+unitizer_sect("valid names", {
+  alike:::is_valid_name("hello")
+  alike:::is_valid_name(".hello")
+  alike:::is_valid_name("123")
+  alike:::is_valid_name("hello there")
+  alike:::is_valid_name("h1ello")
+  alike:::is_valid_name("_hello")
+  alike:::is_valid_name(".1fail")
+  alike:::is_valid_name("NULL")
+  alike:::is_valid_name("FALSE")
+} )
+unitizer_sect("Is dfish", {
+  df1 <- list(a=1:10, b=letters[1:10])
+  df2 <- list(a=1:10, b=letters[1:9])
+  alike:::is_dfish(df1)
+  alike:::is_dfish(df2)
 } )
