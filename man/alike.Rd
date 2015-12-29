@@ -12,7 +12,7 @@ alike(target, current)
 
 alike_settings(type.mode = 0L, attr.mode = 0L, lang.mode = 0L,
   rec.mode = 0L, env = parent.frame(), fuzzy.int.max.len = 100L,
-  suppress.warnings = FALSE)
+  suppress.warnings = FALSE, width = -1L)
 }
 \arguments{
 \item{target}{the template to compare the object to}
