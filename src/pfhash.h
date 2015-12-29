@@ -19,10 +19,8 @@ lifted directly from: http://powerfield-software.com/?p=615 under license:
 
     #include <R.h>
     #include <Rinternals.h>
-/*
     #include <ctype.h>
     #include <stdint.h>
-*/
 
     typedef struct sPfHashNode {
         char *key;
