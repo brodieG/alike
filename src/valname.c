@@ -1,5 +1,6 @@
 #include "Rinternals.h"
 #include "alike.h"
+#include "wctype.h"
 
 extern int R_Is_Running;
 extern Rboolean mbcslocale;
