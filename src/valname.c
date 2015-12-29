@@ -1,3 +1,4 @@
+#include "Rinternals.h"
 #include "alike.h"
 
 extern int R_Is_Running;
