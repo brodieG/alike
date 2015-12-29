@@ -49,6 +49,9 @@ testing language objects}
 \item{fuzzy.int.max.len}{see same parameter for \code{\link{type_alike}}}
 
 \item{suppress.warnings}{logical(1L)}
+
+\item{width}{to use when deparsing expressions; defaults to
+\code{getOption("width")}}
 }
 \value{
 TRUE if target and current are alike, character(1L) describing why

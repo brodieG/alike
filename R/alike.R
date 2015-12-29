@@ -60,6 +60,8 @@
 #'   used only when looking up functions to \code{\link{match.call}} when
 #'   testing language objects
 #' @param suppress.warnings logical(1L)
+#' @param width to use when deparsing expressions; defaults to
+#'   \code{getOption("width")}
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
 #' @examples
