@@ -5,10 +5,6 @@ language: r
 compiler: clang
 
 r_binary_packages:
-  - testthat
-  - devtools
-  - knitr
-  - markdown
 
 warnings_are_errors: true
 
@@ -18,10 +14,6 @@ cran: http://cran.rstudio.com/
 
 r_github_packages:
   - brodieG/cstringr
-  - jimhester/covr@no_try
-
-after_success:
-  - Rscript -e 'covr::codecov(quiet=FALSE, ...=list(quiet=FALSE))'
 
 # notifications:
 #   email:
