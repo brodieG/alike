@@ -2,10 +2,6 @@
 
 language: r
 
-compiler: clang
-
-r_binary_packages:
-
 warnings_are_errors: true
 
 sudo: required
