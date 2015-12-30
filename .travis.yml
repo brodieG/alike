@@ -12,8 +12,6 @@ sudo: required
 
 cran: http://cran.rstudio.com/
 
-r_github_packages:
-  - brodieG/cstringr
 
 # notifications:
 #   email:
