@@ -529,7 +529,8 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 ) {
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
-    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) && 
+    curr_sub != R_NilValue
   )
     error("Logic Error; `curr_sub` must be language.");
 
@@ -667,7 +668,8 @@ SEXP ALIKEC_alike_ext(
   }
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
-    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
+    curr_sub != R_NilValue
   )
     error(
       "Logic Error; `curr_sub` must be language."
