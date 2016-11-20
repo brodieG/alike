@@ -529,7 +529,8 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 ) {
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
-    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) && 
+    curr_sub != R_NilValue
   )
     error("Logic Error; `curr_sub` must be language.");
 
@@ -660,14 +661,15 @@ Main external interface, no settings
 SEXP ALIKEC_alike_ext(
   SEXP target, SEXP current, SEXP curr_sub, SEXP env
 ) {
-  if(TYPEOF(env) != ENVSXP)
+  if(TYPEOF(env) != ENVSXP) {
     error(
-      "Logic Error; `env` argument should be environment; contact maintainer."
+      "Logic Error; `env` argument should be environment, is %d; contact maintainer.", TYPEOF(env)
     );
-
+  }
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
-    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1)
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
+    curr_sub != R_NilValue
   )
     error(
       "Logic Error; `curr_sub` must be language."

@@ -12,7 +12,7 @@ alike(target, current)
 
 alike_settings(type.mode = 0L, attr.mode = 0L, lang.mode = 0L,
   rec.mode = 0L, env = parent.frame(), fuzzy.int.max.len = 100L,
-  suppress.warnings = FALSE)
+  suppress.warnings = FALSE, width = -1L)
 }
 \arguments{
 \item{target}{the template to compare the object to}
@@ -49,6 +49,9 @@ testing language objects}
 \item{fuzzy.int.max.len}{see same parameter for \code{\link{type_alike}}}
 
 \item{suppress.warnings}{logical(1L)}
+
+\item{width}{to use when deparsing expressions; defaults to
+\code{getOption("width")}}
 }
 \value{
 TRUE if target and current are alike, character(1L) describing why

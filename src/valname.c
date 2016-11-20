@@ -1,6 +1,9 @@
+#include <R.h>
+#include <Rinternals.h>
 #include "alike.h"
+#include <wctype.h>
 
-extern int R_Is_Running;
+// extern int R_Is_Running;
 extern Rboolean mbcslocale;
 /* A version that reports failure as an error */
 /*
@@ -14,7 +17,7 @@ size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
   used = mbrtowc(wc, s, n, ps);
   if((int) used < 0) {
     /* This gets called from the menu setup in RGui */
-    if (!R_Is_Running) return (size_t)-1;
+    // if (!R_Is_Running) return (size_t)-1;
     /* let's try to print out a readable version */
     error("invalid multibyte string at");
   }
