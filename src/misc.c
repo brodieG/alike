@@ -197,8 +197,8 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
     SEXP prompt_continue = PROTECT(ALIKEC_getopt("continue"));
 
     if(
-      !TYPEOF(prompt_val) == STRSXP || !TYPEOF(prompt_continue) == STRSXP ||
-      asChar(prompt_val) == NA_STRING || asChar(prompt_continue) == NA_STRING
+      TYPEOF(prompt_val) != STRSXP || TYPEOF(prompt_continue) != STRSXP ||
+      asChar(prompt_val) != NA_STRING || asChar(prompt_continue) != NA_STRING
     ) {
       dep_prompt = "> ";
       dep_continue = "+ ";
@@ -219,8 +219,7 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
   for(i = 0; i < lines; i++) {
     const char * dep_pad = "";
     const char * dep_err = CHAR(STRING_ELT(obj, i));
-    if(!i) dep_pad = dep_prompt;
-    else dep_pad = dep_continue;
+    if(!i) dep_pad = dep_prompt; else dep_pad = dep_continue;
     res = CSR_smprintf6(
       ALIKEC_MAX_CHAR, "%s%s%s%s%s", res, dep_pad, dep_err,
       i == lines - 1 && lines < line_max ? "..." : "",
