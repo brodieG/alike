@@ -604,7 +604,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     }
     const char * call_char, * call_pre = "", * call_post = "";
     if(multi_line) {
-      call_pre = "Expression:\n";
+      call_pre = "";
       call_char = ALIKEC_pad(curr_sub_dep, -1, 2);
       call_post = "";
     } else {
