@@ -529,7 +529,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 ) {
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
-    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) && 
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
     curr_sub != R_NilValue
   )
     error("Logic Error; `curr_sub` must be language.");
@@ -563,64 +563,13 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       SETCAR(VECTOR_ELT(wrap, 1), curr_sub);
       curr_sub = VECTOR_ELT(wrap, 0);
     }
-    // Handle case where expression is a binary operator; in these cases we need
-    // to wrap calls in parens so that any subsequent indices we use make sense,
-    // though in reality we need to improve this so that we only use parens when
-    // strictly needed
+    // Deparse and format the call
 
-    SEXP curr_fin = curr_sub;
-    SEXP curr_fin_alt = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
-    int is_an_op = 0;
-
-    if(TYPEOF(curr_sub) == LANGSXP) {
-      SEXP call = CAR(curr_sub);
-      if(TYPEOF(call) == SYMSXP) {
-        const char * call_sym = CHAR(PRINTNAME(call));
-        int i = 1;
-        if(
-          !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
-          !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
-          !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
-          !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
-          !strcmp("&&", call_sym) || !strcmp("~", call_sym)
-        ) is_an_op = 1;
-        if(!is_an_op && call_sym[0] == '%') {
-          // check for %xx% operators
-          while(call_sym[i] && i < 1024) i++;
-          if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
-        }
-        if(is_an_op) {
-          curr_fin = curr_fin_alt;
-    } } }
-    SEXP curr_sub_dep = PROTECT(ALIKEC_deparse_width(curr_fin, set.width));
-
-    // Handle the different deparse scenarios
-
-    int multi_line = 1;
-    const char * dep_chr = CHAR(asChar(curr_sub_dep));
-
-    if(XLENGTH(curr_sub_dep) == 1) {
-      if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= set.width - 2) multi_line = 0;
-    }
-    const char * call_char, * call_pre = "", * call_post = "";
-    if(multi_line) {
-      call_pre = "";
-      call_char = ALIKEC_pad(curr_sub_dep, -1, 2);
-      call_post = "";
-    } else {
-      if(asLogical(getAttrib(rec_ind, ALIKEC_SYM_syntacticnames))) {
-        call_pre = "`";
-        call_post = "` ";
-      } else {
-        call_pre = "{";
-        call_post = "} ";
-      }
-      call_char = dep_chr;
-    }
-    res_out.call = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%s%s%s%s", call_pre, call_char, call_post, ""
+    res_out.call = ALIKEC_pad_or_quote(
+      curr_sub, set.width,
+      asLogical(getAttrib(rec_ind, ALIKEC_SYM_syntacticnames))
     );
-    UNPROTECT(3);
+    UNPROTECT(1);
   }
   UNPROTECT(1);
   return res_out;

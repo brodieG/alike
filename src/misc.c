@@ -231,6 +231,114 @@ SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
   return mkString(ALIKEC_pad(obj, asInteger(lines), asInteger(pad)));
 }
 /*
+ * Checks whether any names in the language object are non-syntactic and as such
+ * should probably not be escaped with backticks.
+ *
+ * We only recurse through language elements because if we have a non language
+ * element we're pretty much guaranteed the diplay will be more than one line,
+ * and at that point we don't care about syntactic or not because we won't be
+ * trying to wrap stuff in backticks.
+ */
+
+int ALIKEC_syntactic_names(SEXP lang) {
+  int syntactic = 1;
+  SEXP cur_lang;
+  for(cur_lang = lang; cur_lang != R_NilValue; cur_lang = CDR(cur_lang)) {
+    SEXP cur_elem = CAR(cur_lang);
+    if(TYPEOF(cur_elem) == LANGSXP) {
+      syntactic = ALIKEC_syntactic_names(cur_elem);
+    } else if (TYPEOF(cur_elem) == SYMSXP) {
+      syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(cur_elem)));
+    }
+    if(!syntactic) break;
+  }
+  return syntactic;
+}
+/*
+ * Deparse a call and quote it, or if it is too long to quote, put on it's own
+ * lines and offset otherwise
+ *
+ * @param lang a language object to deparse and turn into character
+ * @param width screen width, use -1 to use `getOption('width')`
+ * @param syntactic whether the names in the language object are syntactic or
+ *   not.  If there are some that are not, we do not want to quote with
+ *   backticks as that gets confusing.  Instead we use braces.  Set to 0 if
+ *   there are non-syntactic names, 1 if there are not, and -1 to auto-detect.
+ *   Note that this only matters if the language expression deparses to no more
+ *   than one line.
+ */
+const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
+
+  switch(syntactic) {
+    case -1: syntactic = ALIKEC_syntactic_names(lang); break;
+    case 0:
+    case 1: break;
+    default:
+      error("Logic Error: unexpected `syntactic` value; contat maintainer");
+  }
+  // Handle case where expression is a binary operator; in these cases we need
+  // to wrap calls in parens so that any subsequent indices we use make sense,
+  // though in reality we need to improve this so that we only use parens when
+  // strictly needed
+
+  SEXP curr_fin = lang;
+  SEXP curr_fin_alt = PROTECT(lang2(ALIKEC_SYM_paren_open, lang));
+  int is_an_op = 0;
+
+  if(TYPEOF(lang) == LANGSXP) {
+    SEXP call = CAR(lang);
+    if(TYPEOF(call) == SYMSXP) {
+      const char * call_sym = CHAR(PRINTNAME(call));
+      int i = 1;
+      if(
+        !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
+        !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
+        !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
+        !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
+        !strcmp("&&", call_sym) || !strcmp("~", call_sym)
+      ) is_an_op = 1;
+      if(!is_an_op && call_sym[0] == '%') {
+        // check for %xx% operators
+        while(call_sym[i] && i < 1024) i++;
+        if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
+      }
+      if(is_an_op) {
+        curr_fin = curr_fin_alt;
+  } } }
+  SEXP lang_dep = PROTECT(ALIKEC_deparse_width(curr_fin, width));
+
+  // Handle the different deparse scenarios
+
+  int multi_line = 1;
+  const char * dep_chr = CHAR(asChar(lang_dep));
+
+  if(XLENGTH(lang_dep) == 1) {
+    if(CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR) <= width - 2) multi_line = 0;
+  }
+  const char * call_char, * call_pre = "", * call_post = "";
+  if(multi_line) {
+    call_pre = "";
+    call_char = ALIKEC_pad(lang_dep, -1, 2);
+    call_post = "";
+  } else {
+    // In case there are non syntactic names in the call, use braces instead of
+    // backticks to avoid possible confusion
+
+    if(syntactic) {
+      call_pre = "`";
+      call_post = "` ";
+    } else {
+      call_pre = "{";
+      call_post = "} ";
+    }
+    call_char = dep_chr;
+  }
+  UNPROTECT(2);
+  return CSR_smprintf4(
+    ALIKEC_MAX_CHAR, "%s%s%s%s", call_pre, call_char, call_post, ""
+  );
+}
+/*
 deparse into character
 
 @param width_cutoff to use as `width.cutoff` param to `deparse`
