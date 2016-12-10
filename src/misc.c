@@ -161,7 +161,7 @@ SEXP ALIKEC_deparse_width(SEXP obj, int width) {
 
   if(width < 62) dep_cutoff = width - 2;
   else dep_cutoff = 60;
-  if(dep_cutoff < 20) dep_cutoff = 60;
+  if(dep_cutoff < 20) dep_cutoff = 20;
   return ALIKEC_deparse(obj, dep_cutoff);
 }
 SEXP ALIKEC_deparse_ext(SEXP obj, SEXP width_cutoff) {
