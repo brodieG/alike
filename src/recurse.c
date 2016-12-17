@@ -115,7 +115,13 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
           break;
         case 1:
           ind_size =
-            CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
+            CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR);
+          if(!ind_size)
+            error("%s%s",
+              "Logic Error: could not compute index size because it exceeded ",
+              "ALIKEC_MAX_CHAR; contact maintainer."
+            );
+          ind_size += 2;
           break;
         default: {
           error(

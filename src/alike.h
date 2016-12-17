@@ -77,7 +77,7 @@
 
   // - Constants --------------------------------------------------------------
 
-  #define ALIKEC_MAX_CHAR 10000
+  #define ALIKEC_MAX_CHAR 50000
   #define ALIKEC_MAX_ENVS 65536
 
   // - Main Funs --------------------------------------------------------------
