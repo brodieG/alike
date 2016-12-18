@@ -120,11 +120,7 @@ const char * ALIKEC_deparse_oneline(
 
   const char * res, * dep_line = CHAR(asChar(ALIKEC_deparse_core(obj, 500)));
   size_t dep_len = CSR_strmlen(dep_line, ALIKEC_MAX_CHAR);
-  if(!dep_len)
-    error("%s%s",
-      "Logic Error: exceeded ALIKEC_MAX_CHAR while deparsing object; contact ",
-      "maintainer."
-    )
+
   if(dep_len > max_chars) {
     // truncate string and use '..' at the end
 
@@ -320,12 +316,6 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
 
   if(XLENGTH(lang_dep) == 1) {
     size_t dep_chr_len = CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR);
-    if(!dep_chr_len) {
-      error("%s%s",
-        "Logic Error: exceeded ALIKEC_MAX_CHAR while deparsing object; contact ",
-        "maintainer (2)."
-      )
-    }
     if(dep_chr_len <= width - 2) multi_line = 0;
   }
   const char * call_char, * call_pre = "", * call_post = "";
