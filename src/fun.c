@@ -61,7 +61,6 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   ) {
     tar_tag = TAG(tar_form);
     cur_tag = TAG(cur_form);
-    // Rprintf("checking %s vs %s\n", CHAR(PRINTNAME(tar_tag)), CHAR(PRINTNAME(cur_tag)));
     if(dots && dots_last) dots_reset = 1;
     if(!dots && tar_tag == R_DotsSymbol) dots = dots_last = 1;
     if(!dots_cur && cur_tag == R_DotsSymbol) dots_cur = 1;
