@@ -46,6 +46,9 @@ dep_oneline<- function(obj, max.chars=20L, keep.at.end=0L)
 pad <- function(obj, lines=-1, pad=-1)
   .Call(ALIKEC_pad, obj, lines, pad)
 
+pad_or_quote <- function(obj, width=-1L, syntactic=-1L)
+  .Call(ALIKEC_pad_or_quote, obj, width, syntactic)
+
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
 
