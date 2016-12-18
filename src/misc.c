@@ -240,23 +240,24 @@ SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
  * should probably not be escaped with backticks.
  *
  * We only recurse through language elements because if we have a non language
- * element we're pretty much guaranteed the diplay will be more than one line,
- * and at that point we don't care about syntactic or not because we won't be
- * trying to wrap stuff in backticks.
+ * element that would require recursing (e.g. list) we're pretty much guaranteed
+ * the diplay will be more than one line, and at that point we don't care about
+ * syntactic or not because we won't be trying to wrap stuff in backticks.
  */
 
 int ALIKEC_syntactic_names(SEXP lang) {
   int syntactic = 1;
   SEXP cur_lang;
-  for(cur_lang = lang; cur_lang != R_NilValue; cur_lang = CDR(cur_lang)) {
-    SEXP cur_elem = CAR(cur_lang);
-    if(TYPEOF(cur_elem) == LANGSXP) {
-      syntactic = ALIKEC_syntactic_names(cur_elem);
-    } else if (TYPEOF(cur_elem) == SYMSXP) {
-      syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(cur_elem)));
-    }
-    if(!syntactic) break;
-  }
+  if(TYPEOF(lang) == LANGSXP) {
+    for(cur_lang = lang; cur_lang != R_NilValue; cur_lang = CDR(cur_lang)) {
+      SEXP cur_elem = CAR(cur_lang);
+      if(TYPEOF(cur_elem) == LANGSXP) {
+        syntactic = ALIKEC_syntactic_names(cur_elem);
+      } else if (TYPEOF(cur_elem) == SYMSXP) {
+        syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(cur_elem)));
+      }
+      if(!syntactic) break;
+  } }
   return syntactic;
 }
 /*
