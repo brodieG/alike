@@ -345,10 +345,8 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
  * external version for testing
  */
 SEXP ALIKEC_pad_or_quote_ext(SEXP lang, SEXP width, SEXP syntactic) {
-  Rprintf("About to pad\n");
   const char * padded =
     ALIKEC_pad_or_quote(lang, INTEGER(width)[0], INTEGER(syntactic)[0]);
-  Rprintf("%s\n", padded);
   return mkString(padded);
 }
 
