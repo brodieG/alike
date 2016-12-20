@@ -252,9 +252,15 @@ int ALIKEC_syntactic_names(SEXP lang) {
       } else if (TYPEOF(cur_elem) == SYMSXP) {
         syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(cur_elem)));
       }
-      if(!syntactic) break;
+      if(!syntactic){
+        PrintValue(cur_elem);
+        break;
+      }
   } }
   return syntactic;
+}
+SEXP ALIKEC_syntactic_names_exp(SEXP lang) {
+  return ScalarLogical(ALIKEC_syntactic_names(lang));
 }
 /*
  * Deparse a call and quote it, or if it is too long to quote, put on it's own

@@ -73,6 +73,8 @@ alike_test <- function(obj)
 alike_test2 <- function(target, current)
   .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
 
+syntactic_names <- function(lang) .Call(ALIKEC_syntactic_names, lang)
+
 #' @keywords internal
 
 alike_test3 <- function(target, current)

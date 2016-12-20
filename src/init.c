@@ -8,6 +8,7 @@ R_CallMethodDef callMethods[] = {
   {"alike_fast2", (DL_FUNC) &ALIKEC_alike_fast2, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
+  {"syntactic_names", (DL_FUNC) &ALIKEC_syntactic_names_exp, 1},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
   {"test", (DL_FUNC) &ALIKEC_test, 1},
   {"test2", (DL_FUNC) &ALIKEC_test2, 2},
