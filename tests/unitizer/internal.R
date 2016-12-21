@@ -331,3 +331,10 @@ unitizer_sect("Is dfish", {
   alike:::is_dfish(df1)
   alike:::is_dfish(df2)
 } )
+unitizer_sect("syntactic", {
+  alike:::syntactic_names(quote(hello))
+  alike:::syntactic_names(quote(`hello there`))
+  alike:::syntactic_names(quote(1 + 1))
+  alike:::syntactic_names(quote(1 %hello there% 1))
+  alike:::syntactic_names(quote(1 + `hello there`))
+})

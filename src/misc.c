@@ -232,6 +232,33 @@ SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
   return mkString(ALIKEC_pad(obj, asInteger(lines), asInteger(pad)));
 }
 /*
+ * Check whether a language call is an operator call
+ */
+int ALIKEC_is_an_op(SEXP lang) {
+  int is_an_op = 0;
+  if(TYPEOF(lang) == LANGSXP) {
+    SEXP call = CAR(lang);
+    if(TYPEOF(call) == SYMSXP) {
+      const char * call_sym = CHAR(PRINTNAME(call));
+      int i = 1;
+      if(
+        !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
+        !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
+        !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
+        !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
+        !strcmp("&&", call_sym) || !strcmp("~", call_sym)
+      ) is_an_op = 1;
+
+      if(!is_an_op && call_sym[0] == '%') {
+        // check for %xx% operators
+        while(call_sym[i] && i < 1024) i++;
+        if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
+      }
+    }
+  }
+  return is_an_op;
+}
+/*
  * Checks whether any names in the language object are non-syntactic and as such
  * should probably not be escaped with backticks.
  *
@@ -243,20 +270,22 @@ SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
 
 int ALIKEC_syntactic_names(SEXP lang) {
   int syntactic = 1;
+  int first = 1;
   SEXP cur_lang;
   if(TYPEOF(lang) == LANGSXP) {
     for(cur_lang = lang; cur_lang != R_NilValue; cur_lang = CDR(cur_lang)) {
       SEXP cur_elem = CAR(cur_lang);
-      if(TYPEOF(cur_elem) == LANGSXP) {
-        syntactic = ALIKEC_syntactic_names(cur_elem);
-      } else if (TYPEOF(cur_elem) == SYMSXP) {
-        syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(cur_elem)));
+      if(first) {
+        // Ok to have an operator call
+        first = 0;
+        if(ALIKEC_is_an_op(cur_lang)) continue;
       }
-      if(!syntactic){
-        PrintValue(cur_elem);
-        break;
-      }
-  } }
+      syntactic = ALIKEC_syntactic_names(cur_elem);
+      if(!syntactic) break;
+    }
+  } else if (TYPEOF(lang) == SYMSXP) {
+    syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(lang)));
+  }
   return syntactic;
 }
 SEXP ALIKEC_syntactic_names_exp(SEXP lang) {
@@ -291,28 +320,10 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
 
   SEXP curr_fin = lang;
   SEXP curr_fin_alt = PROTECT(lang2(ALIKEC_SYM_paren_open, lang));
-  int is_an_op = 0;
 
-  if(TYPEOF(lang) == LANGSXP) {
-    SEXP call = CAR(lang);
-    if(TYPEOF(call) == SYMSXP) {
-      const char * call_sym = CHAR(PRINTNAME(call));
-      int i = 1;
-      if(
-        !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
-        !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
-        !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
-        !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
-        !strcmp("&&", call_sym) || !strcmp("~", call_sym)
-      ) is_an_op = 1;
-      if(!is_an_op && call_sym[0] == '%') {
-        // check for %xx% operators
-        while(call_sym[i] && i < 1024) i++;
-        if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
-      }
-      if(is_an_op) {
-        curr_fin = curr_fin_alt;
-  } } }
+  int is_an_op = ALIKEC_is_an_op(lang);
+  if(is_an_op) curr_fin = curr_fin_alt;
+
   SEXP lang_dep = PROTECT(ALIKEC_deparse_width(curr_fin, width));
 
   // Handle the different deparse scenarios
