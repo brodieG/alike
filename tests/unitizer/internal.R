@@ -337,4 +337,6 @@ unitizer_sect("syntactic", {
   alike:::syntactic_names(quote(1 + 1))
   alike:::syntactic_names(quote(1 %hello there% 1))
   alike:::syntactic_names(quote(1 + `hello there`))
+  alike:::syntactic_names(quote(-(1:3)))
+  alike:::syntactic_names(quote(c(-1:1, NA_integer_)))
 })

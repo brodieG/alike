@@ -246,7 +246,9 @@ int ALIKEC_is_an_op(SEXP lang) {
         !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
         !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
         !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
-        !strcmp("&&", call_sym) || !strcmp("~", call_sym)
+        !strcmp("&&", call_sym) || !strcmp("~", call_sym) ||
+        !strcmp(":", call_sym) || !strcmp("$", call_sym) ||
+        !strcmp("[", call_sym) || !strcmp("[[", call_sym)
       ) is_an_op = 1;
 
       if(!is_an_op && call_sym[0] == '%') {
@@ -258,6 +260,23 @@ int ALIKEC_is_an_op(SEXP lang) {
   }
   return is_an_op;
 }
+/*
+ * Check whether a language call is to an operator or to other special symbols
+ * that are not syntactic but don't require escaping
+ */
+int ALIKEC_no_esc_needed(SEXP lang) {
+  int no_esc = 0;
+  if(TYPEOF(lang) == LANGSXP) {
+    SEXP call = CAR(lang);
+    if(TYPEOF(call) == SYMSXP) {
+      const char * call_sym = CHAR(PRINTNAME(call));
+      if(!strcmp("(", call_sym) || !strcmp("{", call_sym)) no_esc = 1;
+    }
+  }
+  no_esc += ALIKEC_is_an_op(lang);
+  return no_esc;
+}
+
 /*
  * Checks whether any names in the language object are non-syntactic and as such
  * should probably not be escaped with backticks.
@@ -278,7 +297,7 @@ int ALIKEC_syntactic_names(SEXP lang) {
       if(first) {
         // Ok to have an operator call
         first = 0;
-        if(ALIKEC_is_an_op(cur_lang)) continue;
+        if(ALIKEC_no_esc_needed(cur_lang)) continue;
       }
       syntactic = ALIKEC_syntactic_names(cur_elem);
       if(!syntactic) break;
