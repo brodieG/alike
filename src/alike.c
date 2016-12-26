@@ -552,7 +552,21 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
     if(TYPEOF(VECTOR_ELT(rec_ind, 0)) == LANGSXP) {
+      // Need to check if our call could become ambigous with the indexing
+      // element (e.g. `1 + x[[1]][[2]]` should be `(1 + x)[[1]][[2]]`
+
+      // Handle case where expression is a binary operator; in these cases we
+      // need to wrap calls in parens so that any subsequent indices we use make
+      // sense, though in reality we need to improve this so that we only use
+      // parens when strictly needed
+
+      if(ALIKEC_is_an_op(curr_sub)) {
+        curr_sub = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
+      } else {
+        PROTECT(R_NilValue);
+      }
       SETCAR(VECTOR_ELT(rec_ind, 1), curr_sub);
+      UNPROTECT(1);
       curr_sub = VECTOR_ELT(rec_ind, 0);
     }
     // Merge the wrap call with the original call so we can get stuff like

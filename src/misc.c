@@ -332,18 +332,7 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
     default:
       error("Logic Error: unexpected `syntactic` value; contat maintainer");
   }
-  // Handle case where expression is a binary operator; in these cases we need
-  // to wrap calls in parens so that any subsequent indices we use make sense,
-  // though in reality we need to improve this so that we only use parens when
-  // strictly needed
-
-  SEXP curr_fin = lang;
-  SEXP curr_fin_alt = PROTECT(lang2(ALIKEC_SYM_paren_open, lang));
-
-  int is_an_op = ALIKEC_is_an_op(lang);
-  if(is_an_op) curr_fin = curr_fin_alt;
-
-  SEXP lang_dep = PROTECT(ALIKEC_deparse_width(curr_fin, width));
+  SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang, width));
 
   // Handle the different deparse scenarios
 
@@ -372,7 +361,7 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
     }
     call_char = dep_chr;
   }
-  UNPROTECT(2);
+  UNPROTECT(1);
   return CSR_smprintf4(
     ALIKEC_MAX_CHAR, "%s%s%s%s", call_pre, call_char, call_post, ""
   );

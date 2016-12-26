@@ -154,6 +154,7 @@
   SEXP ALIKEC_deparse_oneline_ext(
     SEXP obj, SEXP max_chars, SEXP keep_at_end
   );
+  int ALIKEC_is_an_op(SEXP lang);
   const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic);
   SEXP ALIKEC_deparse_width(SEXP obj, int width);
   SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
