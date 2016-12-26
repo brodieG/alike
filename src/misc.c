@@ -248,7 +248,8 @@ int ALIKEC_is_an_op(SEXP lang) {
         !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
         !strcmp("&&", call_sym) || !strcmp("~", call_sym) ||
         !strcmp(":", call_sym) || !strcmp("$", call_sym) ||
-        !strcmp("[", call_sym) || !strcmp("[[", call_sym)
+        !strcmp("[", call_sym) || !strcmp("[[", call_sym) ||
+        !strcmp("!", call_sym)
       ) is_an_op = 1;
 
       if(!is_an_op && call_sym[0] == '%') {
