@@ -104,8 +104,8 @@ abstract.lm <- function(x, ...) {
 #' Experimental Abstraction Method for GGPlot
 #'
 #' Not entirely sure this can ever work well since so much of \code{ggplot} is
-#' done with \code{proto} objects and those do not really use meta data, which makes
-#' \code{alike} rather useless.
+#' done with \code{proto} objects and those do not really use meta data, which
+#' makes \code{alike} rather useless.
 #'
 #' @keywords internal
 #' @export
@@ -118,7 +118,7 @@ abstract.ggplot <- function(x, ...) {
 #' @rdname abstract
 #' @export
 
-abstract.environment <- function(x, ...) if(!is.object(x)) emptyenv() else x
+abstract.environment <- function(x, ...) x
 
 #' Abstract Time Series
 #'
