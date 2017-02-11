@@ -28,23 +28,46 @@ struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
   };
 }
 /*
-Other struct initialization functions
-*/
-SEXP ALIKEC_res_msg_def(const char * msg) {
-  SEXP res_msg = PROTECT(allocVector(VECSXP, 2));
+ * Construct the default result
+ *
+ * target is the string describing what something is supposed to be, written
+ * such that if you prepend 'should' it make sense, e.g. ("be integer", or "have
+ * names").
+ *
+ * actual is the string describing what something is
+ */
+SEXP ALIKEC_res_msg_def(const char * target, const char * actual) {
+  SEXP res = PROTECT(allocVector(VECSXP, 2));
+  SEXP res_msg = PROTECT(allocVector(STRSXP, 2));
 
-  SET_VECTOR_ELT(res_msg, 0, mkString(msg));          // message
-  SET_VECTOR_ELT(res_msg, 1, allocVector(VECSXP, 2)); // wrap
+  SET_STRING_ELT(res_msg, 0, mkChar(target));
+  SET_STRING_ELT(res_msg, 1, mkChar(actual));
+
+  SET_VECTOR_ELT(res, 0, res_msg);                // message
+  SET_VECTOR_ELT(res, 1, allocVector(VECSXP, 2)); // wrap
 
   SEXP res_names = PROTECT(allocVector(STRSXP, 2));
   SET_STRING_ELT(res_names, 0, mkChar("message"));
   SET_STRING_ELT(res_names, 1, mkChar("wrap"));
 
-  setAttrib(res_msg, R_NamesSymbol, res_names);
-  UNPROTECT(2);
+  setAttrib(res, R_NamesSymbol, res_names);
+  UNPROTECT(3);
 
-  return res_msg;
+  return res;
 }
+/*
+ * Create a SEXP out of an ALIKEC_res_strings struct
+ */
+SEXP ALIKEC_res_strings_to_SEXP(struct ALIKEC_res_strings strings) {
+  SEXP res = PROTECT(allocVector(STRSXP, 2));
+  SET_VECTOR_ELT(res, 0, mkChar(strings.target));
+  SET_VECTOR_ELT(res, 1, mkChar(strings.actual));
+  UNPROTECT(1);
+  return res;
+}
+/*
+Other struct initialization functions
+*/
 struct ALIKEC_res_sub ALIKEC_res_sub_def() {
   return (struct ALIKEC_res_sub) {
     .success=1,
@@ -97,7 +120,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       const char * msg_tmp = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%sbe S4", (s4_tar ? "" : "not "), "", "", ""
       );
-      res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp));
+      res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp, ""));
     } else {
       SEXP klass, klass_attrib;
       SEXP s, t;
@@ -134,7 +157,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           ALIKEC_MAX_CHAR, "inherit from S4 class \"%s\" (package: %s)",
           CHAR(asChar(klass)), CHAR(asChar(klass_attrib)), "", ""
         );
-        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp));
+        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp), "");
       } else PROTECT(R_NilValue);
     }
     PROTECT(R_NilValue); // stack balance with next `else if`
@@ -153,7 +176,8 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
-    const char * msg_chr = "";
+    const char * msg_target = "";
+    const char * msg_actual = "";
 
     if(!res_attr.success) {
       // If top level error (class), make sure not overriden by others
@@ -189,7 +213,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err_fun = ALIKEC_fun_alike_internal(target, current);
       if(err_fun[0]) {
         err = 1;
-        msg_chr = err_fun;
+        msg_target = err_fun;
     } }
     // - Type ------------------------------------------------------------------
 

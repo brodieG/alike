@@ -43,6 +43,28 @@
     struct ALIKEC_env_track * envs;
     int gp;            // general purpose flag
   };
+
+  // Intermediate structure that will eventually be made part of the `message`
+  // component of ALIKEC_res
+
+  struct ALIKEC_res_strings {
+    const char * target;
+    const char * actual;
+  }
+  // We used a SEXP because it contains the error message, as well as the wrap
+  // component that we can use around the call (e.g "names(%s)[[1]]"), and the
+  // latter contains symbols
+  //
+  // The SEXP is of type VECSXP (i.e. list), and contains two elements.
+  //
+  // The first element is the message, which itself contains the "target"
+  // string, i.e. what the object should be, and the "actual", what it is.,
+  //
+  // The second is the wrap which is a two element list where the first element
+  // is the wrapping call, and the second (I think) is a pointer to the inside
+  // of the call which is where we will ultimately substitute the original call
+  // (not 100% certain of this; I'm writing these docs way after the fact...)
+
   struct ALIKEC_res {
     int success;
     SEXP message;
@@ -102,7 +124,7 @@
   // - Internal Funs ----------------------------------------------------------
 
   SEXPTYPE ALIKEC_typeof_internal(SEXP object);
-  const char * ALIKEC_type_alike_internal(
+  struct ALIKEC_res_strings ALIKEC_type_alike_internal(
     SEXP target, SEXP current, int mode, R_xlen_t max_len
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);

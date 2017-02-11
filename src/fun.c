@@ -114,7 +114,10 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
       } else if(cur_mismatch) {
         arg_mod = "not ";
         arg_name = CHAR(PRINTNAME(TAG(cur_form)));
-      } else error("Logic Error: unexpected closure arg outcome; contact maintainer");
+      } else 
+        error(
+            "Logic Error: unexpected closure arg outcome; contact maintainer"
+            );
       res = (const char *) CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%shave argument `%s` %s", arg_mod, arg_name, arg_type,
         ""
