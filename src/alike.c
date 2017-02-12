@@ -224,9 +224,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
       err_type = ALIKEC_type_alike_internal(
         target, current, set.type_mode, set.fuzzy_int_max_len
       );
-      if(err_type[0]) {
+      if(err_type.target[0]) {
         err = 1;
-        msg_chr = err_type;
+        msg_target = err_type.target;
+        msg_actual = err_type.actual;
     } }
     // - Length ----------------------------------------------------------------
 
@@ -249,14 +250,19 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
         if(is_df) {
-          msg_chr = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have %s column%s (has %s)",
-            err_tok1, tar_len == (R_xlen_t) 1 ? "" : "s", err_tok2,  ""
+          msg_target = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "have %s column%s",
+            err_tok1, tar_len == (R_xlen_t) 1 ? "" : "s", "",  ""
           );
+          msg_actual = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "has %s", err_tok2,  "", "", ""
+          )
         } else {
-          msg_chr = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "be length %s (is %s)",
-            err_tok1,  err_tok2,  "", ""
+          msg_target = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "be length %s", err_tok1,  "",  "", ""
+          );
+          msg_actual = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "(is %s)", err_tok2,  "", "", ""
           );
         }
       } else if (
@@ -271,18 +277,22 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check the first column only
 
         err = 1;
-        msg_chr = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have %s row%s (has %s)",
+        msg_target = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "have %s row%s",
           CSR_len_as_chr(tar_first_el_len),
-          tar_first_el_len == (R_xlen_t) 1 ? "" : "s",
-          CSR_len_as_chr(cur_first_el_len), ""
-    );} }
+          tar_first_el_len == (R_xlen_t) 1 ? "" : "s", "", ""
+        );
+        msg_actual = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "has %s",
+          CSR_len_as_chr(cur_first_el_len), "", "", ""
+        );
+    } }
     // If no normal, errors, use the attribute error
 
     if(!err && err_attr) {
       res.message = PROTECT(res_attr.message);
-    } else if(err && msg_chr[0]) {
-      res.message = PROTECT(ALIKEC_res_msg_def(msg_chr));
+    } else if(err && msg_target[0]) {
+      res.message = PROTECT(ALIKEC_res_msg_def(msg_target, msg_actual));
     } else {
       PROTECT(R_NilValue);
     }
@@ -528,9 +538,8 @@ struct ALIKEC_res ALIKEC_alike_internal(
 
     res.success = 0;
     res.message = ALIKEC_res_msg_def(
-      CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "be \"NULL\" (is \"%s\")",
-        type2char(TYPEOF(current)), "", "", ""
+      "be \"NULL\"", CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "is \"%s\"", type2char(TYPEOF(current)), "", "", ""
     ) );
   } else {
     // Recursively check object
@@ -561,7 +570,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
   struct ALIKEC_res_fin res_out = {
-    .message = "", .call = ""
+    .target = "", .actual="", .call = ""
   };
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
@@ -572,7 +581,9 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Get indices, and sub in the current substituted expression if they
     // exist
 
-    res_out.message = CHAR(asChar(VECTOR_ELT(res.message, 0)));
+    res_out.actual = CHAR(asChar(VECTOR_ELT(res.actual, 0)));
+    res_out.target = CHAR(asChar(VECTOR_ELT(res.target, 1)));
+
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
     if(TYPEOF(VECTOR_ELT(rec_ind, 0)) == LANGSXP) {

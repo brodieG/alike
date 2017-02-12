@@ -427,9 +427,10 @@ Convert convention of zero length string == TRUE to SEXP
 */
 
 SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
-  if(res.message[0]) {
+  if(res.actual[0]) {
     const char * res_str = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%sshould %s", res.call, res.message, "", ""
+      ALIKEC_MAX_CHAR,
+      "%sshould %s (%s)", res.call, res.actual, res.target, ""
     );
     return(mkString(res_str));
   }

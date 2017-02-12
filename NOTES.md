@@ -614,3 +614,9 @@ Argument `x` should be character (is integer)
 Error in alike(y, z) :
   Logic Error: unexpected index type 1661633088; contact maintainer.
 ```
+
+## Status
+
+I think most of the `res.message` stuff is now transitioned to the two element
+format; now need to change the recipient function to merge those back together
+and expose another one that will return the pieces apart.

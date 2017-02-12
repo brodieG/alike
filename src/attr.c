@@ -789,15 +789,19 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
           ALIKEC_MAX_CHAR, "%shave attribute \"%s\"",
           tae_type == NILSXP ? "not " : "",
           CHAR(PRINTNAME(attr_sym)), "", ""
-    ) ) );
+        ), ""
+    ) );
   } else if(tae_type != cae_type) {
     res.success = 0;
     res.message = PROTECT(
       ALIKEC_res_msg_def(
         CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be %s (is %s)", type2char(tae_type),
-          type2char(cae_type), "", ""
-    ) ) );
+          ALIKEC_MAX_CHAR, "be %s", type2char(tae_type), "", "", ""
+        ),
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "is %s", type2char(cae_type), "", "", ""
+        )
+    ) );
     SEXP wrap = PROTECT(ALIKEC_attr_wrap(attr_sym, R_NilValue));
     SET_VECTOR_ELT(res.message, 1, wrap);
     UNPROTECT(1);
@@ -807,9 +811,12 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
       res.message = PROTECT(
         ALIKEC_res_msg_def(
           CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "be %s (is %s)", CSR_len_as_chr(tae_val_len),
-            CSR_len_as_chr(cae_val_len), "", ""
-      ) ) );
+            ALIKEC_MAX_CHAR, "be %s", CSR_len_as_chr(tae_val_len), "", "", ""
+          ),
+          CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "is %s", CSR_len_as_chr(cae_val_len), "", "", ""
+          )
+      ) );
       SEXP wrap = PROTECT(ALIKEC_attr_wrap(attr_sym, R_NilValue));
       SET_VECTOR_ELT(
         wrap, 0,
@@ -876,7 +883,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     sec_attr = tar_attr;
     if(set.attr_mode == 2) {
       errs[7].success = 0;
-      errs[7].message = PROTECT(ALIKEC_res_msg_def("have attributes"));
+      errs[7].message = PROTECT(ALIKEC_res_msg_def("have attributes", ""));
     } else PROTECT(R_NilValue);
   } else {
     prim_attr = tar_attr;
@@ -885,8 +892,9 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
       errs[7].success = 0;
       errs[7].message = PROTECT(
         ALIKEC_res_msg_def(
+          "not have attributes",
           CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "not have attributes (has %s attributes)",
+            ALIKEC_MAX_CHAR, "has %s attributes",
             CSR_len_as_chr(xlength(cur_attr)), "", "", ""
       ) ) );
       SET_VECTOR_ELT(
@@ -973,7 +981,8 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
           CSR_smprintf4(
             ALIKEC_MAX_CHAR, "%shave attribute \"%s\"",
             (cur_attr_el == R_NilValue ? "" : "not "), tx, "", ""
-      ) ) );
+          ), ""
+      ) );
       ps++;
     }
     cur_attr_el_val = cur_attr_el != R_NilValue ? CAR(cur_attr_el) : R_NilValue;

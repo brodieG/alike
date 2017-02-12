@@ -18,7 +18,8 @@
     int type;               // 0 is numeric, 1 is character
   };
   struct ALIKEC_res_fin {
-    const char * message;
+    const char * target;
+    const char * actual;
     const char * call;
   };
   // Keep track of environments in recursion to make sure we don't get into a
