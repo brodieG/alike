@@ -103,9 +103,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
   SEXPTYPE tar_type, cur_type;
 
   int err = 0, err_attr = 0;
-  const char * err_tok1, * err_tok2, * err_fun, * msg_tmp, * err_type;
+  const char * err_tok1, * err_tok2, * err_fun, * msg_tmp;
   err_tok1 = err_tok2 = err_fun = msg_tmp = "";
 
+  struct ALIKEC_res_strings err_type;
   struct ALIKEC_res res = ALIKEC_res_def();
 
   tar_type = TYPEOF(target);
@@ -157,7 +158,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           ALIKEC_MAX_CHAR, "inherit from S4 class \"%s\" (package: %s)",
           CHAR(asChar(klass)), CHAR(asChar(klass_attrib)), "", ""
         );
-        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp), "");
+        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp, ""));
       } else PROTECT(R_NilValue);
     }
     PROTECT(R_NilValue); // stack balance with next `else if`
@@ -256,7 +257,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
           );
           msg_actual = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "has %s", err_tok2,  "", "", ""
-          )
+          );
         } else {
           msg_target = CSR_smprintf4(
             ALIKEC_MAX_CHAR, "be length %s", err_tok1,  "",  "", ""
@@ -435,7 +436,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
           res.success = 0;
           UNPROTECT(1);
           res.message =
-            PROTECT(ALIKEC_res_msg_def("be the global environment"));
+            PROTECT(ALIKEC_res_msg_def("be the global environment", ""));
         } else {
           SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
           R_xlen_t tar_name_len = XLENGTH(tar_names), i;
@@ -456,7 +457,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
                   CSR_smprintf4(
                     ALIKEC_MAX_CHAR, "contain variable `%s`",
                     CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
-              ) ) );
+                  ), ""
+              ) );
               UNPROTECT(1); // unprotect var_name
               break;
             } else {
@@ -492,7 +494,8 @@ struct ALIKEC_res ALIKEC_alike_rec(
               CSR_smprintf4(
                 ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
                 CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
-          ) ) );
+              ), ""
+          ) );
           res.success = 0;
           break;
         } else {
@@ -581,8 +584,8 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Get indices, and sub in the current substituted expression if they
     // exist
 
-    res_out.actual = CHAR(asChar(VECTOR_ELT(res.actual, 0)));
-    res_out.target = CHAR(asChar(VECTOR_ELT(res.target, 1)));
+    res_out.actual = CHAR(asChar(VECTOR_ELT(res.message, 0)));
+    res_out.target = CHAR(asChar(VECTOR_ELT(res.message, 1)));
 
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 

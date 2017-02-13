@@ -92,7 +92,7 @@ struct ALIKEC_res_sub ALIKEC_alike_attr(
   if(!res.success) {
     res_sub.success = 0;
     res_sub.message = PROTECT(
-      ALIKEC_res_msg_def("be `alike` the corresponding element in target")
+      ALIKEC_res_msg_def("be `alike` the corresponding element in target", "")
     );
     // if(attr_attr) {
     //   wrap_call = PROTECT(
@@ -133,7 +133,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   const char * cur_class;
   const char * tar_class;
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
-  res.message = PROTECT(ALIKEC_res_msg_def(""));
+  res.message = PROTECT(ALIKEC_res_msg_def("", ""));
 
   tar_class_len = XLENGTH(target);
   cur_class_len = XLENGTH(current);
@@ -280,24 +280,27 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
   if(class_err_string[0]) {
     res.success = 0;
     res.lvl = 1;
-    res.message = ALIKEC_res_msg_def(class_err_string);
+    res.message = ALIKEC_res_msg_def(class_err_string, "");
     return res;
   }
   // Normal dim checking
 
   if(current == R_NilValue) {
     res.success = 0;
-    res.message = ALIKEC_res_msg_def("have a \"dim\" attribute");
+    res.message = ALIKEC_res_msg_def("have a \"dim\" attribute", "");
     return res;
   }
   if(target_len != current_len) {
     res.success = 0;
     res.message = ALIKEC_res_msg_def(
       CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "have %s dimension%s (has %s)",
+        ALIKEC_MAX_CHAR, "have %s dimension%s",
         CSR_len_as_chr(target_len), target_len == (R_xlen_t) 1 ? "" : "s",
-        CSR_len_as_chr(current_len), ""
-    ) );
+        "", ""
+      ),
+      CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "has %s", CSR_len_as_chr(current_len), "", "", ""
+    ));
     return res;
   }
   R_xlen_t attr_i;
@@ -332,10 +335,13 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
       res.success = 0;
       res.message = ALIKEC_res_msg_def(
         CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have %s%s %s (has %s)",
-          (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2,
-          CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i]))
-      ) );
+          ALIKEC_MAX_CHAR, "have %s%s %s",
+          (const char *) err_dim1, tar_dim_chr, (const char *) err_dim2, ""
+        ),
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "has %s",
+          CSR_len_as_chr((R_xlen_t)(INTEGER(current)[attr_i])), "", "", ""
+      ));
       return res;
   } }
   return ALIKEC_alike_attr(target, current, R_DimSymbol, set, 1);
@@ -419,7 +425,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
     } else if (tar_type == INTSXP) {
       if(!R_compute_identical(target, current, 16)){
         res_sub.success = 0;
-        res_sub.message = ALIKEC_res_msg_def("be identical to target");
+        res_sub.message = ALIKEC_res_msg_def("be identical to target", "");
       }
     } else if (tar_type == STRSXP) {
       // Only determine what name is wrong if we know there is a mismatch since we
@@ -437,8 +443,10 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
             res_sub.message = PROTECT(
               ALIKEC_res_msg_def(
                 CSR_smprintf4(
-                  ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
-                  tar_name_val, cur_name_val, "", ""
+                  ALIKEC_MAX_CHAR, "be \"%s\"", tar_name_val, "", "", ""
+                ),
+                CSR_smprintf4(
+                    ALIKEC_MAX_CHAR, "is \"%s\"", cur_name_val, "", "", ""
             ) ) );
             SEXP wrap = PROTECT(allocVector(VECSXP, 2));
             SET_VECTOR_ELT(wrap, 0,
@@ -495,7 +503,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
   if(sec == R_NilValue) {
     res.success = 0;
-    res.message = ALIKEC_res_msg_def("have a \"dimnames\" attribute");
+    res.message = ALIKEC_res_msg_def("have a \"dimnames\" attribute", "");
     return res;
   }
   SEXP prim_names = getAttrib(prim, R_NamesSymbol);
@@ -563,7 +571,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           res.success = 0;
           res.message = PROTECT(
             ALIKEC_res_msg_def(
-              "be `alike` the corresponding element in target."
+              "be `alike` the corresponding element in target", ""
           ) );
           SEXP wrap = PROTECT(ALIKEC_compare_dimnames_wrap(prim_tag));
           SET_VECTOR_ELT(res.message, 1, wrap);
@@ -578,7 +586,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
     // missing attribute
     res.success = 0;
     res.message = PROTECT(
-      ALIKEC_res_msg_def("not be missing")
+      ALIKEC_res_msg_def("not be missing", "")
     );
     SEXP wrap = PROTECT(ALIKEC_compare_dimnames_wrap(prim_tag));
     SET_VECTOR_ELT(res.message, 1, wrap);
@@ -693,8 +701,12 @@ struct ALIKEC_res_sub ALIKEC_compare_ts(
         res.message = PROTECT(
           ALIKEC_res_msg_def(
             CSR_smprintf4(
-              ALIKEC_MAX_CHAR, "be %s (is %s)", tar_num, cur_num, "", ""
-        ) ) );
+              ALIKEC_MAX_CHAR, "be %s", tar_num, "", "", ""
+            ),
+            CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "is %s", cur_num, "", "", ""
+            )
+        ) );
         SEXP wrap = PROTECT(allocVector(VECSXP, 2));
         SET_VECTOR_ELT(
           wrap, 0, lang3(
@@ -1105,10 +1117,14 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     errs[7].message = PROTECT(
       ALIKEC_res_msg_def(
         CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have %s attribute%s (has %s)",
-          CSR_len_as_chr(prim_attr_count), prim_attr_count != 1 ? "s" : "",
-          CSR_len_as_chr(sec_attr_count), ""
-    ) ) );
+          ALIKEC_MAX_CHAR, "have %s attribute%s",
+          CSR_len_as_chr(prim_attr_count),
+          prim_attr_count != 1 ? "s" : "", "", ""
+        ),
+        CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "has %s", CSR_len_as_chr(sec_attr_count), "", "", ""
+        )
+    ) );
     ps++;
   }
   // Now determine which error to throw, if any

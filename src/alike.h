@@ -51,7 +51,7 @@
   struct ALIKEC_res_strings {
     const char * target;
     const char * actual;
-  }
+  };
   // We used a SEXP because it contains the error message, as well as the wrap
   // component that we can use around the call (e.g "names(%s)[[1]]"), and the
   // latter contains symbols
@@ -130,7 +130,7 @@
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  SEXP ALIKEC_res_msg_def(const char * msg);
+  SEXP ALIKEC_res_msg_def(const char * actual, const char * target);
   struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
@@ -152,6 +152,7 @@
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
   SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current);
   SEXP ALIKEC_pad_or_quote_ext(SEXP lang, SEXP width, SEXP syntactic);
+  SEXP ALIKEC_res_strings_to_SEXP(struct ALIKEC_res_strings strings);
 
   // - Utility Funs -----------------------------------------------------------
 

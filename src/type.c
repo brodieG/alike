@@ -13,7 +13,8 @@ struct ALIKEC_res_strings ALIKEC_type_alike_internal(
   tar_type_raw = TYPEOF(target);
   cur_type_raw = TYPEOF(current);
 
-  res = (struct ALIKEC_res_msg) {.target="", .actual=""};
+  struct ALIKEC_res_strings res =
+    (struct ALIKEC_res_strings) {.target="", .actual=""};
 
   if(tar_type_raw == cur_type_raw) return res;
 
@@ -52,7 +53,7 @@ struct ALIKEC_res_strings ALIKEC_type_alike_internal(
   } else {
     what = type2char(tar_type);
   }
-  return (struct ALIKEC_res_msg) {
+  return (struct ALIKEC_res_strings) {
     .target=CSR_smprintf4(ALIKEC_MAX_CHAR, "be type \"%s\"", what, "", "", ""),
     .actual=type2char(cur_type)
   };
@@ -72,8 +73,8 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
   res = ALIKEC_type_alike_internal(
     target, current, asInteger(mode), asInteger(max_len)
   );
-  if(res.message[0]) {
-    return(ALIKEC_res_strings_to_SEXP(res))
+  if(res.target[0]) {
+    return(ALIKEC_res_strings_to_SEXP(res));
   } else {
     return ScalarLogical(1);
   }
@@ -81,8 +82,8 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
 SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
   struct ALIKEC_res_strings res;
   res = ALIKEC_type_alike_internal(target, current, 0, 100);
-  if(res.message[0]) {
-    return(ALIKEC_res_strings_to_SEXP(res))
+  if(res.target[0]) {
+    return(ALIKEC_res_strings_to_SEXP(res));
   } else {
     return ScalarLogical(1);
   }
