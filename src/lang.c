@@ -496,7 +496,7 @@ struct ALIKEC_res_sub ALIKEC_lang_alike_internal(
   } else {
     res.success = 0;
     res.message = PROTECT(
-      ALIKEC_res_msg_def(CHAR(asChar(VECTOR_ELT(lang_res, 1))))
+      ALIKEC_res_msg_def(CHAR(asChar(VECTOR_ELT(lang_res, 1))), "")
     );
     // Deal with wrap
 
