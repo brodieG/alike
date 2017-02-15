@@ -55,7 +55,9 @@ struct ALIKEC_res_strings ALIKEC_type_alike_internal(
   }
   return (struct ALIKEC_res_strings) {
     .target=CSR_smprintf4(ALIKEC_MAX_CHAR, "be type \"%s\"", what, "", "", ""),
-    .actual=type2char(cur_type)
+    .actual=CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "is \"%s\"", type2char(cur_type), "", "", ""
+    )
   };
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {

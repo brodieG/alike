@@ -263,7 +263,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
             ALIKEC_MAX_CHAR, "be length %s", err_tok1,  "",  "", ""
           );
           msg_actual = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "(is %s)", err_tok2,  "", "", ""
+            ALIKEC_MAX_CHAR, "is %s", err_tok2,  "", "", ""
           );
         }
       } else if (
@@ -584,8 +584,8 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Get indices, and sub in the current substituted expression if they
     // exist
 
-    res_out.actual = CHAR(asChar(VECTOR_ELT(res.message, 0)));
-    res_out.target = CHAR(asChar(VECTOR_ELT(res.message, 1)));
+    res_out.actual = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 0));
+    res_out.target = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 1));
 
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 

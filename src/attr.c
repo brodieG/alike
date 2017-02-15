@@ -166,29 +166,43 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
         SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
 
         SET_VECTOR_ELT(res.message, 1, wrap);
-        SET_VECTOR_ELT(res.message, 0,
-          mkString(
-            CSR_smprintf4(
-              ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
-              tar_class, cur_class, "", ""
-        ) ) );
+        SET_STRING_ELT(
+          VECTOR_ELT(res.message, 0), 0,
+          mkChar(
+            CSR_smprintf4(ALIKEC_MAX_CHAR, "be \"%s\"", tar_class, "", "", "")
+        ) );
+        SET_STRING_ELT(
+          VECTOR_ELT(res.message, 0), 1,
+          mkChar(
+            CSR_smprintf4(ALIKEC_MAX_CHAR, "is \"%s\"", cur_class, "", "", "")
+        ) );
         UNPROTECT(2);
       } else {
-        SET_VECTOR_ELT(res.message, 0, mkString(
-          CSR_smprintf4(
-            ALIKEC_MAX_CHAR,  "be class \"%s\" (is \"%s\")",
-            tar_class, cur_class, "", ""
-  ) ) ); } } }
+        SET_STRING_ELT(
+          VECTOR_ELT(res.message, 0), 0,
+            mkChar(
+              CSR_smprintf4(
+                ALIKEC_MAX_CHAR,  "be class \"%s\"", tar_class, "", "", ""
+        ) ) );
+        SET_STRING_ELT(
+          VECTOR_ELT(res.message, 0), 1,
+            mkChar(
+              CSR_smprintf4(
+                ALIKEC_MAX_CHAR,  "is \"%s\"", cur_class, "", "", ""
+        ) ) );
+  } } }
   // Check to make sure have enough classes
 
   if(res.success) {
     if(tar_class_len > cur_class_len) {
       res.success = 0;
-      SET_VECTOR_ELT(res.message, 0, mkString(
-        CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "inherit from class \"%s\"",
-          CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
-  ) ) ); } }
+      SET_STRING_ELT(
+        VECTOR_ELT(res.message, 0),  0,
+        mkChar(
+          CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "inherit from class \"%s\"",
+            CHAR(STRING_ELT(target, tar_class_i)), "", "", ""
+  ) ) );} }
   // Make sure class attributes are alike
 
   if(res.success) {
@@ -241,46 +255,69 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
   current_len_cap = current_len > (R_xlen_t) 3 ? (R_xlen_t) 3 : current_len;
 
   struct ALIKEC_res_sub res = ALIKEC_res_sub_def();
-  const char * class_err_string = "";
-  const char * class_err_base = "be %s (is %s)";
+  const char * class_err_target = "";
+  const char * class_err_actual = "";
+  const char * class_err_base_target = "be %s";
+  const char * class_err_base_actual = "is %s";
 
   if(target_len_cap > 1 && isVectorAtomic(tar_obj)) {
     if(current == R_NilValue) {  // current is matrix/array
-      class_err_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, class_err_base,
+      class_err_target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_target,
         target_len_cap > 2 ? "array" : "matrix",
-        CHAR(asChar(ALIKEC_mode(cur_obj))), "", ""
+        "", "", ""
+      );
+      class_err_actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_actual,
+        CHAR(asChar(ALIKEC_mode(cur_obj))), "", "", ""
       );
     } else if(isVectorAtomic(cur_obj) && current_len_cap != target_len_cap) {
       // target is matrix/array
-      class_err_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, class_err_base,
-        target_len_cap > 2 ? "array" : "matrix",
+      class_err_target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_target,
+        target_len_cap > 2 ? "array" : "matrix", "", "", ""
+      );
+      class_err_actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_actual,
         current_len_cap == 2 ?
           "matrix" : (current_len_cap == 1 ? "vector" : "array"),
-        "", ""
+        "", "", ""
       );
     } else if(!isVectorAtomic(current)) {
-      class_err_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, class_err_base,
-        CHAR(asChar(ALIKEC_mode(tar_obj))), type2char(TYPEOF(cur_obj)), "", ""
-    );}
+      class_err_target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_target,
+        CHAR(asChar(ALIKEC_mode(tar_obj))), "", "", ""
+      );
+      class_err_actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_actual,
+        type2char(TYPEOF(cur_obj)), "", "", ""
+      );
+    }
   } else if (current_len_cap > 1 && isVectorAtomic(cur_obj)) {
     if(isVectorAtomic(tar_obj)) {
-      class_err_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, class_err_base, CHAR(asChar(ALIKEC_mode(tar_obj))),
-        current_len_cap == 2 ? "matrix" : "array", "", ""
+      class_err_target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_target,
+        CHAR(asChar(ALIKEC_mode(tar_obj))), "", "", ""
+      );
+      class_err_actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_actual,
+        current_len_cap == 2 ? "matrix" : "array", "", "", ""
       );
     } else {
-      class_err_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, class_err_base, CHAR(asChar(ALIKEC_mode(tar_obj))),
-        CHAR(asChar(ALIKEC_mode(cur_obj))), "", ""
-    );}
+      class_err_target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_target,
+        CHAR(asChar(ALIKEC_mode(tar_obj))), "", "", ""
+      );
+      class_err_actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, class_err_base_actual,
+        CHAR(asChar(ALIKEC_mode(cur_obj))), "", "", ""
+      );
+    }
   }
-  if(class_err_string[0]) {
+  if(class_err_target[0]) {
     res.success = 0;
     res.lvl = 1;
-    res.message = ALIKEC_res_msg_def(class_err_string, "");
+    res.message = ALIKEC_res_msg_def(class_err_target, class_err_actual);
     return res;
   }
   // Normal dim checking
