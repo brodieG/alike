@@ -1,5 +1,11 @@
 These are internal developer notes; don't expect any of it to make much sense.
 
+## Status
+
+`res.message` stuff transitioned to two element version, but actually need to
+change it to be four element, and expose a function that returns the
+dissasembled message so that it can be put together later.
+
 ## C Benchmarking
 
 ### Assessing General Overhead
@@ -615,8 +621,3 @@ Error in alike(y, z) :
   Logic Error: unexpected index type 1661633088; contact maintainer.
 ```
 
-## Status
-
-I think most of the `res.message` stuff is now transitioned to the two element
-format; now need to change the recipient function to merge those back together
-and expose another one that will return the pieces apart.
