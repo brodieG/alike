@@ -200,6 +200,7 @@
   struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track);
   struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track);
   SEXP ALIKEC_syntactic_names_exp(SEXP lang);
+  SEXP ALIKEC_sort_msg(SEXP msgs);
 
   // - Imported Funs ----------------------------------------------------------
 

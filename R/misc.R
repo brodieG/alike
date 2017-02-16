@@ -80,6 +80,8 @@ syntactic_names <- function(lang) .Call(ALIKEC_syntactic_names, lang)
 alike_test3 <- function(target, current)
   .Call(ALIKEC_test2, target, current)
 
+msg_sort <- function(messages)
+  .Call(ALIKEC_msg_sort, messages)
 
 #' Pre-calculated Precision Level
 #'

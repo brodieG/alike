@@ -29,7 +29,10 @@ int ALIKEC_merge_comp(const void *p, const void *q) {
  */
 
 SEXP ALIKEC_sort_msg(SEXP msgs) {
-  if(TYPEOF(msgs) != VECSXP) error("Expected list argument");
+  if(TYPEOF(msgs) != VECSXP) {
+    Rprintf("%s\n", type2char(TYPEOF(msgs)));
+    error("Expected list argument");
+  }
 
   R_xlen_t vec_len = xlength(msgs), i;
 

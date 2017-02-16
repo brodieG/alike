@@ -346,3 +346,8 @@ unitizer_sect("Pad or Quote", {
   alike:::pad_or_quote(quote(1 + 1))
   alike:::pad_or_quote(quote(!anyNA(1 + 1)))
 })
+unitizer_sect("Merge messages", {
+  alike:::msg_sort(list(letters[4:1], letters[1:4]))
+  # second element plays no role in sort
+  alike:::msg_sort(list(c("a", "a", "z", "b"), c("a", "z", "b", "b")))
+})
