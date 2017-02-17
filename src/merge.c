@@ -30,10 +30,8 @@ int ALIKEC_merge_comp(const void *p, const void *q) {
 
 SEXP ALIKEC_sort_msg(SEXP msgs) {
   if(TYPEOF(msgs) != VECSXP) {
-    Rprintf("%s\n", type2char(TYPEOF(msgs)));
-    error("Expected list argument");
+    error("Expected list argument, got %s", type2char(TYPEOF(msgs)));
   }
-
   R_xlen_t vec_len = xlength(msgs), i;
 
   struct ALIKEC_sort_dat * sort_dat =
@@ -73,10 +71,88 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
  */
 
 SEXP ALIKEC_merge_msg(SEXP msgs) {
-  // 1. combine all strings into one for comparison
-  // 2. and put them into a pointer array
-  // 3. sort the pointers
-  // 4. walk down the list combining until you get a difference
+
+  R_xlen_t len = XLENGTH(msgs);
+  SEXP res;
+
+
+  if(len > 1) {
+    // 1. Sort the strings (really only need to do this if longer than 3, but oh
+    // well
+
+    SEXP msg_sort = PROTECT(ALIKEC_sort_msg(msgs));
+    R_xlen_t groups = 1;
+
+    // Determine how many groups of similar things there are in our list
+
+    for(R_xlen_t i=1; i < len; i++) {
+      SEXP v_elt = VECTOR_ELT(msg_sort, i);
+      SEXP v_elt_prev = VECTOR_ELT(msg_sort, i - 1);
+      if(
+        strcomp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prev, 0))) ||
+        strcomp(CHAR(STRING_ELT(v_elt, 2)), CHAR(STRING_ELT(v_elt_prev, 2))) ||
+        strcomp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prev, 3)))
+      ) {
+        ++groups;
+      }
+    }
+    // If we need to condense the list, then allocate it, otherwise just return
+    // the original list
+
+    if(groups < len) {
+      res = PROTECT(allocVector(VECSXP, groups));
+      R_xlen_t k = 0;      // count the index in our result vector
+      R_xlen_t j = 0;      // count how many elements in group
+      // this will be the concatented second value in our vectors
+
+      const char * target = CHAR(asChar(VECTOR_ELT(msg_sort), 0));
+
+      for(R_xlen_t i=1; i < len; i++) {
+
+        SEXP v_elt = VECTOR_ELT(msg_sort, i);
+        SEXP v_elt_prv = VECTOR_ELT(msg_sort, i - 1);
+
+        if(
+          strcomp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prv, 0))) ||
+          strcomp(CHAR(STRING_ELT(v_elt, 2)), CHAR(STRING_ELT(v_elt_prv, 2))) ||
+          strcomp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prv, 3)))
+        ) {
+          SET_VECTOR_ELT(res, k, duplicate(v_elt));
+          if(j) {  // there are merged values
+            SEXP v_elt_dup = VECTOR_ELT(res, k);
+            target = CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "%s, or %s",
+              target, CHAR(STRING_ELT(v_elt, 1)), "", ""
+            )
+            SET_STRING_ELT(v_elt_dup, 2, target);
+          }
+          j = 0;
+          ++k;
+        } else {
+          //  we have two elements that are the same, need to merge them
+
+          target = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "%s, %s", target, CHAR(STRING_ELT(v_elt, 1)), "",
+            ""
+          );
+        }
+        ++j;
+      }
+    } else {
+      res = PROTECT(msgs); // stack balance
+    }
+      //
+    // While strings are the same as the prior one, concatenate the contents of
+    // the second element in the vector string
+
+    UNPROTECT(1);
+  } else res = msgs;
+
+
+
+
+
+
   return msgs;
 
 }
