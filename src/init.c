@@ -30,6 +30,7 @@ R_CallMethodDef callMethods[] = {
   {"abstract_ts", (DL_FUNC) &ALIKEC_abstract_ts, 2},
   {"env_track", (DL_FUNC) &ALIKEC_env_track_test, 2},
   {"msg_sort", (DL_FUNC) &ALIKEC_sort_msg, 1},
+  {"msg_merge", (DL_FUNC) &ALIKEC_merge_msg, 1},
   {NULL, NULL, 0}
 };
 

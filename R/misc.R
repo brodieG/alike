@@ -83,6 +83,9 @@ alike_test3 <- function(target, current)
 msg_sort <- function(messages)
   .Call(ALIKEC_msg_sort, messages)
 
+msg_merge <- function(messages)
+  .Call(ALIKEC_msg_merge, messages)
+
 #' Pre-calculated Precision Level
 #'
 #' Used to limit overhead of calls the require use of

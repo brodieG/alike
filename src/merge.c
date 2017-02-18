@@ -25,7 +25,10 @@ int ALIKEC_merge_comp(const void *p, const void *q) {
   return(strcmp(a.string, b.string));
 }
 /*
- * Sort a list of 4 length character vectors by the 1st, 3rd, and 4th elements
+ * Sort a list of 5 length character vectors by the 1st, 2nd, 4th, and 5th
+ * elements
+ *
+ * Example: c("`names(letters)`", "be", "character", "is", "integer")
  */
 
 SEXP ALIKEC_sort_msg(SEXP msgs) {
@@ -39,15 +42,17 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
 
   for(i = 0; i < vec_len; i++) {
     SEXP str_elt = VECTOR_ELT(msgs, i);
-    if(TYPEOF(str_elt) != STRSXP || XLENGTH(str_elt) != 4)
+    if(TYPEOF(str_elt) != STRSXP || XLENGTH(str_elt) != 5)
       error(
         "Internal Error: unexpected string format to merge; contact maintainer"
       );
     sort_dat[i] = (struct ALIKEC_sort_dat) {
+      // delimiters to minimize susceptibility to frame shift, but obviously not
+      // a guarantee
       CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%s %s %s",
-        CHAR(STRING_ELT(str_elt, 0)), CHAR(STRING_ELT(str_elt, 2)),
-        CHAR(STRING_ELT(str_elt, 3)), ""
+        ALIKEC_MAX_CHAR, "%s <:> %s <:> %s <:> %s",
+        CHAR(STRING_ELT(str_elt, 0)), CHAR(STRING_ELT(str_elt, 1)),
+        CHAR(STRING_ELT(str_elt, 3)), CHAR(STRING_ELT(str_elt, 4))
       ),
       i
     };
@@ -87,11 +92,12 @@ SEXP ALIKEC_merge_msg(SEXP msgs) {
 
     for(R_xlen_t i=1; i < len; i++) {
       SEXP v_elt = VECTOR_ELT(msg_sort, i);
-      SEXP v_elt_prev = VECTOR_ELT(msg_sort, i - 1);
+      SEXP v_elt_prv = VECTOR_ELT(msg_sort, i - 1);
       if(
-        strcomp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prev, 0))) ||
-        strcomp(CHAR(STRING_ELT(v_elt, 2)), CHAR(STRING_ELT(v_elt_prev, 2))) ||
-        strcomp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prev, 3)))
+        strcmp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prv, 0))) ||
+        strcmp(CHAR(STRING_ELT(v_elt, 1)), CHAR(STRING_ELT(v_elt_prv, 1))) ||
+        strcmp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prv, 3))) ||
+        strcmp(CHAR(STRING_ELT(v_elt, 4)), CHAR(STRING_ELT(v_elt_prv, 4)))
       ) {
         ++groups;
       }
@@ -105,54 +111,56 @@ SEXP ALIKEC_merge_msg(SEXP msgs) {
       R_xlen_t j = 0;      // count how many elements in group
       // this will be the concatented second value in our vectors
 
-      const char * target = CHAR(asChar(VECTOR_ELT(msg_sort), 0));
+      const char * target;
 
-      for(R_xlen_t i=1; i < len; i++) {
+      for(R_xlen_t i=0; i < len; i++) {
 
-        SEXP v_elt = VECTOR_ELT(msg_sort, i);
-        SEXP v_elt_prv = VECTOR_ELT(msg_sort, i - 1);
+        SEXP v_elt_nxt = R_NilValue, v_elt = VECTOR_ELT(msg_sort, i);
 
-        if(
-          strcomp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prv, 0))) ||
-          strcomp(CHAR(STRING_ELT(v_elt, 2)), CHAR(STRING_ELT(v_elt_prv, 2))) ||
-          strcomp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prv, 3)))
-        ) {
-          SET_VECTOR_ELT(res, k, duplicate(v_elt));
-          if(j) {  // there are merged values
-            SEXP v_elt_dup = VECTOR_ELT(res, k);
+        if(i < len - 1) {
+          v_elt_nxt = VECTOR_ELT(msg_sort, i + 1);
+        }
+        // Note, we'll only ever acces v_let_nxt if we're not at the last value
+        // in the loop so it is okay for it to be R_NilValue in that iteration
+
+        int next_diff = (i == len - 1) ||
+          strcmp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_nxt, 0))) ||
+          strcmp(CHAR(STRING_ELT(v_elt, 1)), CHAR(STRING_ELT(v_elt_nxt, 1))) ||
+          strcmp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_nxt, 3))) ||
+          strcmp(CHAR(STRING_ELT(v_elt, 4)), CHAR(STRING_ELT(v_elt_nxt, 4)));
+
+        if(next_diff) {
+          SEXP v_elt_d = duplicate(v_elt);
+          SET_VECTOR_ELT(res, k, v_elt_d);
+
+          // append with, "or" if necessary and write
+
+          if(j) {
             target = CSR_smprintf4(
               ALIKEC_MAX_CHAR, "%s, or %s",
-              target, CHAR(STRING_ELT(v_elt, 1)), "", ""
-            )
-            SET_STRING_ELT(v_elt_dup, 2, target);
+              target, CHAR(STRING_ELT(v_elt_d, 2)), "", ""
+            );
+            SET_STRING_ELT(v_elt_d, 2, mkChar(target));
           }
           j = 0;
           ++k;
         } else {
-          //  we have two elements that are the same, need to merge them
+          // more than one value, but not done yet
 
-          target = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "%s, %s", target, CHAR(STRING_ELT(v_elt, 1)), "",
-            ""
-          );
+          if(j) {
+            target = CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "%s, %s",
+              target, CHAR(STRING_ELT(v_elt, 2)), "", ""
+            );
+          } else target = CHAR(STRING_ELT(v_elt, 2));
+          ++j;
         }
-        ++j;
       }
     } else {
       res = PROTECT(msgs); // stack balance
     }
-      //
-    // While strings are the same as the prior one, concatenate the contents of
-    // the second element in the vector string
+  } else res = PROTECT(PROTECT(msgs)); // stack balance
 
-    UNPROTECT(1);
-  } else res = msgs;
-
-
-
-
-
-
-  return msgs;
-
+  UNPROTECT(2);
+  return res;
 }
