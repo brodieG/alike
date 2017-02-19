@@ -296,13 +296,13 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check the first column only
 
         err = 1;
-        msg_tar_pre = "have"
+        msg_tar_pre = "have";
         msg_target = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "%s row%s",
           CSR_len_as_chr(tar_first_el_len),
           tar_first_el_len == (R_xlen_t) 1 ? "" : "s", "", ""
         );
-        msg_act_pre = "has"
+        msg_act_pre = "has";
         msg_actual = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "%s",
           CSR_len_as_chr(cur_first_el_len), "", "", ""
@@ -474,14 +474,15 @@ struct ALIKEC_res ALIKEC_alike_rec(
             if(var_cur_val == R_UnboundValue) {
               res.success = 0;
               UNPROTECT(1);
-              res.message= PROTECT(
+              res.message=PROTECT(
                 ALIKEC_res_msg_def(
                   "contain",
                   CSR_smprintf4(
                     ALIKEC_MAX_CHAR, "variable `%s`",
                     CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
-                  ), ""
-                ), "", ""
+                  ),
+                  "", ""
+                )
               );
               UNPROTECT(1); // unprotect var_name
               break;
@@ -519,8 +520,9 @@ struct ALIKEC_res ALIKEC_alike_rec(
               CSR_smprintf4(
                 ALIKEC_MAX_CHAR, "name \"%s\" at pairlist index [[%s]]",
                 CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
-              ), ""
-            ), "", ""
+              ),
+              "", ""
+            )
           );
           res.success = 0;
           break;

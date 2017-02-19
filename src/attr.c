@@ -170,26 +170,26 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
         SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
         UNPROTECT(2);
 
-        SET_STRING_ELT(msg_strings, 0, mkChar("be"))
+        SET_STRING_ELT(msg_strings, 0, mkChar("be"));
         SET_STRING_ELT(
           msg_strings, 1, mkChar(
             CSR_smprintf4(ALIKEC_MAX_CHAR, "\"%s\"", tar_class, "", "", "")
-        ) )
-        SET_STRING_ELT(msg_strings, 2, mkChar("is"))
+        ) );
+        SET_STRING_ELT(msg_strings, 2, mkChar("is"));
         SET_STRING_ELT(
           msg_strings, 3,
           mkChar(
             CSR_smprintf4(ALIKEC_MAX_CHAR, "\"%s\"", cur_class, "", "", "")
         ) );
       } else {
-        SET_STRING_ELT(msg_strings, 0, mkChar("be"))
+        SET_STRING_ELT(msg_strings, 0, mkChar("be"));
         SET_STRING_ELT(
-            msg_strings, 1
+            msg_strings, 1,
             mkChar(
               CSR_smprintf4(
                 ALIKEC_MAX_CHAR,  "class \"%s\"", tar_class, "", "", ""
         ) ) );
-        SET_STRING_ELT(msg_strings, 2, mkChar("is"))
+        SET_STRING_ELT(msg_strings, 2, mkChar("is"));
         SET_STRING_ELT(
           msg_strings, 3,
             mkChar(
@@ -202,7 +202,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   if(res.success) {
     if(tar_class_len > cur_class_len) {
       res.success = 0;
-      SET_STRING_ELT(VECTOR_ELT(res.message, 0),  1, mkChar("inherit"))
+      SET_STRING_ELT(VECTOR_ELT(res.message, 0),  1, mkChar("inherit"));
       SET_STRING_ELT(
         VECTOR_ELT(res.message, 0),  1,
         mkChar(
@@ -459,8 +459,8 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
           ) {
             res_sub.success=0;
             res_sub.message = PROTECT(
-              "be",
               ALIKEC_res_msg_def(
+                "be",
                 CSR_smprintf4(
                   ALIKEC_MAX_CHAR, "\"%s\"", tar_name_val, "", "", ""
                 ),
@@ -822,7 +822,7 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal_simple(
       ALIKEC_res_msg_def(
         CSR_smprintf4(
           ALIKEC_MAX_CHAR, "%shave",
-          tae_type == NILSXP ? "not " : "", "", ""
+          tae_type == NILSXP ? "not " : "", "", "", ""
         ),
         CSR_smprintf4(
           ALIKEC_MAX_CHAR, "attribute \"%s\"",

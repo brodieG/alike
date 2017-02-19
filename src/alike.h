@@ -80,7 +80,7 @@
   struct ALIKEC_res_lang {
     int success;
     struct ALIKEC_rec_track rec;
-    struct ALIKE_res_strings msg_strings;
+    struct ALIKEC_res_strings msg_strings;
   };
   // Structure used for functions called by 'alike_obj', main difference with
   // the return value of 'alike_obj' is 'indices', since that is a more complex

@@ -171,11 +171,11 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
         res.msg_strings.tar_pre = "be";
         res.msg_strings.target = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "`%s`", rev_symb, "", "", ""
-        )
+        );
         res.msg_strings.act_pre = "is";
         res.msg_strings.actual = CSR_smprintf4(
           ALIKEC_MAX_CHAR, "`%s`", csc_text, "", "", ""
-        )
+        );
       }
     } else res.success = 1;
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
