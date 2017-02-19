@@ -30,18 +30,29 @@ struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
 /*
  * Construct the default result
  *
- * target is the string describing what something is supposed to be, written
- * such that if you prepend 'should' it make sense, e.g. ("be integer", or "have
- * names").
+ * `tar_pre` string to prepend before target
+ * `target` what the object should be
+ * `act_pre` string to prepend before actual
+ * `actual` what the object is
  *
- * actual is the string describing what something is
+ * An example of the four strings:
+ *
+ * tar_pre: "be", target: "integer", act_pre: "is", actual: character
+ *
+ * This can then be assembled into "should be integer (is character)" or
+ * potentially collapsed with other messages with `ALIKE_merge_msg`.
  */
-SEXP ALIKEC_res_msg_def(const char * target, const char * actual) {
+SEXP ALIKEC_res_msg_def(
+  const char * tar_pre, const char * target,
+  const char * act_pre, const char * actual
+) {
   SEXP res = PROTECT(allocVector(VECSXP, 2));
-  SEXP res_msg = PROTECT(allocVector(STRSXP, 2));
+  SEXP res_msg = PROTECT(allocVector(STRSXP, 4));
 
-  SET_STRING_ELT(res_msg, 0, mkChar(target));
-  SET_STRING_ELT(res_msg, 1, mkChar(actual));
+  SET_STRING_ELT(res_msg, 0, mkChar(tar_pre));
+  SET_STRING_ELT(res_msg, 1, mkChar(target));
+  SET_STRING_ELT(res_msg, 2, mkChar(act_pre));
+  SET_STRING_ELT(res_msg, 3, mkChar(actual));
 
   SET_VECTOR_ELT(res, 0, res_msg);                // message
   SET_VECTOR_ELT(res, 1, allocVector(VECSXP, 2)); // wrap
@@ -59,9 +70,11 @@ SEXP ALIKEC_res_msg_def(const char * target, const char * actual) {
  * Create a SEXP out of an ALIKEC_res_strings struct
  */
 SEXP ALIKEC_res_strings_to_SEXP(struct ALIKEC_res_strings strings) {
-  SEXP res = PROTECT(allocVector(STRSXP, 2));
-  SET_VECTOR_ELT(res, 0, mkChar(strings.target));
-  SET_VECTOR_ELT(res, 1, mkChar(strings.actual));
+  SEXP res = PROTECT(allocVector(STRSXP, 4));
+  SET_VECTOR_ELT(res, 0, mkChar(strings.tar_pre));
+  SET_VECTOR_ELT(res, 1, mkChar(strings.target));
+  SET_VECTOR_ELT(res, 2, mkChar(strings.act_pre));
+  SET_VECTOR_ELT(res, 3, mkChar(strings.actual));
   UNPROTECT(1);
   return res;
 }
@@ -119,9 +132,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(s4_tar + s4_cur == 1) {
       err = 1;
       const char * msg_tmp = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%sbe S4", (s4_tar ? "" : "not "), "", "", ""
+        ALIKEC_MAX_CHAR, "%sbe", (s4_tar ? "" : "not "), "", "", ""
       );
-      res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp, ""));
+      res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp, "S4", "", ""));
     } else {
       SEXP klass, klass_attrib;
       SEXP s, t;
@@ -155,10 +168,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(!inherits) {
         err = 1;
         const char * msg_tmp = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "inherit from S4 class \"%s\" (package: %s)",
+          ALIKEC_MAX_CHAR, "S4 class \"%s\" (package: %s)",
           CHAR(asChar(klass)), CHAR(asChar(klass_attrib)), "", ""
         );
-        res.message = PROTECT(ALIKEC_res_msg_def(msg_tmp, ""));
+        res.message = PROTECT(
+          ALIKEC_res_msg_def("inherit from", msg_tmp, "", "")
+        );
       } else PROTECT(R_NilValue);
     }
     PROTECT(R_NilValue); // stack balance with next `else if`
@@ -177,7 +192,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     is_df = res_attr.df;
     err_lvl = res_attr.lvl;
+
+    const char * msg_tar_pre= "";
     const char * msg_target = "";
+    const char * msg_act_pre = "";
     const char * msg_actual = "";
 
     if(!res_attr.success) {
@@ -278,13 +296,15 @@ struct ALIKEC_res ALIKEC_alike_obj(
         // check the first column only
 
         err = 1;
+        msg_tar_pre = "have"
         msg_target = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have %s row%s",
+          ALIKEC_MAX_CHAR, "%s row%s",
           CSR_len_as_chr(tar_first_el_len),
           tar_first_el_len == (R_xlen_t) 1 ? "" : "s", "", ""
         );
+        msg_act_pre = "has"
         msg_actual = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "has %s",
+          ALIKEC_MAX_CHAR, "%s",
           CSR_len_as_chr(cur_first_el_len), "", "", ""
         );
     } }
@@ -293,7 +313,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
     if(!err && err_attr) {
       res.message = PROTECT(res_attr.message);
     } else if(err && msg_target[0]) {
-      res.message = PROTECT(ALIKEC_res_msg_def(msg_target, msg_actual));
+      res.message = PROTECT(
+        ALIKEC_res_msg_def(msg_tar_pre, msg_target, msg_act_pre, msg_actual)
+      );
     } else {
       PROTECT(R_NilValue);
     }
@@ -436,7 +458,7 @@ struct ALIKEC_res ALIKEC_alike_rec(
           res.success = 0;
           UNPROTECT(1);
           res.message =
-            PROTECT(ALIKEC_res_msg_def("be the global environment", ""));
+            PROTECT(ALIKEC_res_msg_def("be", "the global environment", "", ""));
         } else {
           SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
           R_xlen_t tar_name_len = XLENGTH(tar_names), i;
@@ -454,11 +476,13 @@ struct ALIKEC_res ALIKEC_alike_rec(
               UNPROTECT(1);
               res.message= PROTECT(
                 ALIKEC_res_msg_def(
+                  "contain",
                   CSR_smprintf4(
-                    ALIKEC_MAX_CHAR, "contain variable `%s`",
+                    ALIKEC_MAX_CHAR, "variable `%s`",
                     CHAR(asChar(STRING_ELT(tar_names, i))), "", "", ""
                   ), ""
-              ) );
+                ), "", ""
+              );
               UNPROTECT(1); // unprotect var_name
               break;
             } else {
@@ -491,11 +515,13 @@ struct ALIKEC_res ALIKEC_alike_rec(
           UNPROTECT(1);
           res.message= PROTECT(
             ALIKEC_res_msg_def(
+              "have",
               CSR_smprintf4(
-                ALIKEC_MAX_CHAR, "have name \"%s\" at pairlist index [[%s]]",
+                ALIKEC_MAX_CHAR, "name \"%s\" at pairlist index [[%s]]",
                 CHAR(asChar(tar_tag_chr)), CSR_len_as_chr(i + 1), "", ""
               ), ""
-          ) );
+            ), "", ""
+          );
           res.success = 0;
           break;
         } else {
@@ -541,8 +567,8 @@ struct ALIKEC_res ALIKEC_alike_internal(
 
     res.success = 0;
     res.message = ALIKEC_res_msg_def(
-      "be \"NULL\"", CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "is \"%s\"", type2char(TYPEOF(current)), "", "", ""
+      "be", "\"NULL\"", "is", CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(TYPEOF(current)), "", "", ""
     ) );
   } else {
     // Recursively check object

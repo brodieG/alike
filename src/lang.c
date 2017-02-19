@@ -7,7 +7,7 @@ struct ALIKEC_res_lang ALIKEC_res_lang_init() {
   return (struct ALIKEC_res_lang) {
     .success = 1,
     .rec = ALIKEC_rec_def(),
-    .chr_msg = ""
+    .msg_strings = {"", "", "", ""}
   };
 }
 /*
@@ -163,27 +163,39 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
     }
     if(strcmp(tar_abs, cur_abs)) {
       if(*tar_varnum > *cur_varnum) {
-        res.chr_msg = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "not be `%s`", csc_text, "",
-          "", ""
+        res.msg_strings.tar_pre = "not be";
+        res.msg_strings.target = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "`%s`", csc_text, "", "", ""
         );
       } else {
-        res.chr_msg = CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "be `%s` (is `%s`)",
-          rev_symb, csc_text, "", ""
-        );
+        res.msg_strings.tar_pre = "be";
+        res.msg_strings.target = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "`%s`", rev_symb, "", "", ""
+        )
+        res.msg_strings.act_pre = "is";
+        res.msg_strings.actual = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "`%s`", csc_text, "", "", ""
+        )
       }
     } else res.success = 1;
   } else if (tsc_type == LANGSXP && csc_type != LANGSXP) {
-    res.chr_msg =  CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be a call to `%s` (is \"%s\")",
-      ALIKEC_deparse_chr(CAR(target), -1), type2char(csc_type),
-      "", ""
+    res.msg_strings.tar_pre = "be";
+    res.msg_strings.target = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "a call to `%s`",
+      ALIKEC_deparse_chr(CAR(target), -1), "", "", ""
+    );
+    res.msg_strings.act_pre = "is";
+    res.msg_strings.actual = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(csc_type), "", "", ""
     );
   } else if (tsc_type != LANGSXP && csc_type == LANGSXP) {
-    res.chr_msg = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "be \"%s\" (is \"%s\")",
-      type2char(tsc_type), type2char(csc_type), "", ""
+    res.msg_strings.tar_pre = "be";
+    res.msg_strings.target = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(tsc_type), "", "", ""
+    );
+    res.msg_strings.act_pre = "is";
+    res.msg_strings.actual = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(csc_type), "", "", ""
     );
   } else if (tsc_type == LANGSXP) {
     // Note how we pass cur_par and not current so we can modify cur_par
@@ -193,9 +205,13 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
       cur_varnum, formula, match_call, match_env, set, rec
     );
   } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
-    res.chr_msg = CSR_smprintf4(
-      ALIKEC_MAX_CHAR,
-      "be \"%s\" (is \"%s\")", type2char(tsc_type), type2char(csc_type), "", ""
+    res.msg_strings.tar_pre = "be";
+    res.msg_strings.target = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(tsc_type), "", "", ""
+    );
+    res.msg_strings.act_pre = "is";
+    res.msg_strings.actual = CSR_smprintf4(
+      ALIKEC_MAX_CHAR, "\"%s\"", type2char(csc_type), "", "", ""
     );
   } else if (formula && !R_compute_identical(target, current, 16)) {
     // Maybe this shouldn't be "identical", but too much of a pain in the butt
@@ -203,7 +219,9 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
 
     // could have constant vs. language here, right?
 
-    res.chr_msg =  "have identical constant values";
+    res.msg_strings.tar_pre = "have";
+    res.msg_strings.target = "identical constant values";
+
   } else res.success = 1;
 
   // Deal with index implications of skiping parens
@@ -265,11 +283,17 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
     if(tar_fun != R_NilValue && tar_fun != cur_fun) {
       res.success = 0;
       res.rec = ALIKEC_rec_ind_num(res.rec, 1);
-      res.chr_msg = CSR_smprintf4(
-        ALIKEC_MAX_CHAR,
-        "be a call to `%s` (is a call to `%s`)",
-        ALIKEC_deparse_chr(CAR(target), -1),
-        ALIKEC_deparse_chr(CAR(current), -1), "", ""
+
+      res.msg_strings.tar_pre = "be";
+      res.msg_strings.target = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "a call to `%s`",
+        ALIKEC_deparse_chr(CAR(target), -1), "", "", ""
+      );
+
+      res.msg_strings.act_pre = "is";
+      res.msg_strings.actual = CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "a call to `%s`",
+        ALIKEC_deparse_chr(CAR(current), -1), "", "", ""
       );
     } else if (CDR(target) != R_NilValue) {
       // Zero length calls match anything, so only come here if target is not
@@ -319,10 +343,11 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
                 "", "", ""
           );} }
           res.success = 0;
-          res.chr_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have argument `%s` %s",
-            CHAR(PRINTNAME(TAG(tar_sub))),
-            prev_tag_msg, "", ""
+
+          res.msg_strings.tar_pre = "have";
+          res.msg_strings.target = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "argument `%s` %s",
+            CHAR(PRINTNAME(TAG(tar_sub))), prev_tag_msg, "", ""
           );
         } else {
           // Note that `lang_obj_compare` kicks off recursion as well, and
@@ -364,9 +389,13 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             cur_sub = CDR(cur_sub);
           }
           res.success = 0;
-          res.chr_msg = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have %s arguments (has %s)",
-            CSR_len_as_chr(tar_len), CSR_len_as_chr(cur_len),  "", ""
+          res.msg_strings.tar_pre = "have";
+          res.msg_strings.target = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "%s arguments", CSR_len_as_chr(tar_len), "", "", ""
+          );
+          res.msg_strings.act_pre = "has";
+          res.msg_strings.actual = CSR_smprintf4(
+            ALIKEC_MAX_CHAR, "%s", CSR_len_as_chr(cur_len), "", "", ""
         );}
       }
       target = current = R_NilValue;
@@ -466,7 +495,7 @@ SEXP ALIKEC_lang_alike_core(
   if(!res.success) {
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
-    SET_VECTOR_ELT(res_fin, 1, mkString(res.chr_msg));
+    SET_VECTOR_ELT(res_fin, 1, ALIKEC_res_strings_to_SEXP(res.msg_strings));
     SET_VECTOR_ELT(res_fin, 2, CAR(curr_cpy_par));
     SET_VECTOR_ELT(res_fin, 3, VECTOR_ELT(rec_ind, 0));
     SET_VECTOR_ELT(res_fin, 4, VECTOR_ELT(rec_ind, 1));
@@ -495,9 +524,8 @@ struct ALIKEC_res_sub ALIKEC_lang_alike_internal(
     PROTECT(res.message);  // stack balance
   } else {
     res.success = 0;
-    res.message = PROTECT(
-      ALIKEC_res_msg_def(CHAR(asChar(VECTOR_ELT(lang_res, 1))), "")
-    );
+    res.message = PROTECT(VECTOR_ELT(lang_res, 1));
+
     // Deal with wrap
 
     SEXP lang_ind = VECTOR_ELT(lang_res, 3);

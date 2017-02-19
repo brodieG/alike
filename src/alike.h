@@ -49,7 +49,9 @@
   // component of ALIKEC_res
 
   struct ALIKEC_res_strings {
+    const char * tar_pre;
     const char * target;
+    const char * act_pre;
     const char * actual;
   };
   // We used a SEXP because it contains the error message, as well as the wrap
@@ -78,7 +80,7 @@
   struct ALIKEC_res_lang {
     int success;
     struct ALIKEC_rec_track rec;
-    const char * chr_msg;
+    struct ALIKE_res_strings msg_strings;
   };
   // Structure used for functions called by 'alike_obj', main difference with
   // the return value of 'alike_obj' is 'indices', since that is a more complex
@@ -130,7 +132,10 @@
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  SEXP ALIKEC_res_msg_def(const char * actual, const char * target);
+  SEXP ALIKEC_res_msg_def(
+    const char * tar_pre, const char * target,
+    const char * act_pre, const char * actual
+  );
   struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
