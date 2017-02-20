@@ -116,10 +116,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
   SEXPTYPE tar_type, cur_type;
 
   int err = 0, err_attr = 0;
-  const char * err_tok1, * err_tok2, * err_fun, * msg_tmp;
-  err_tok1 = err_tok2 = err_fun = msg_tmp = "";
+  const char * err_tok1, * err_tok2, * msg_tmp;
+  err_tok1 = err_tok2 = msg_tmp = "";
 
-  struct ALIKEC_res_strings err_type;
+  struct ALIKEC_res_strings err_type, err_fun;
   struct ALIKEC_res res = ALIKEC_res_def();
 
   tar_type = TYPEOF(target);

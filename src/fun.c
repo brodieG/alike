@@ -28,9 +28,8 @@ struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
 
   SEXP tar_form, cur_form, args;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
-  struct ALIKEC_res_strings res = {
-    "", "", "", ""
-  }
+  struct ALIKEC_res_strings res = {"", "", "", ""};
+
   // Translate specials and builtins to formals, if possible
 
   if(
@@ -99,7 +98,7 @@ struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   // We have a mismatch; produce error message
 
   int cur_mismatch = cur_form != R_NilValue && last_match != R_DotsSymbol;
-  if(res[0] == '\0' && (tar_form != R_NilValue || !tag_match || cur_mismatch)) {
+  if(res.target && (tar_form != R_NilValue || !tag_match || cur_mismatch)) {
     if(dots && !dots_cur) {
       res.tar_pre = "have";
       res.target = "a `...` argument";
@@ -125,9 +124,9 @@ struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
           "Logic Error: unexpected closure arg outcome; contact maintainer"
         );
       res.tar_pre =
-        CSR_smprintf4(ALIKEC_MAX_CHAR, "%shave", arg_mod, "", "", "")
+        CSR_smprintf4(ALIKEC_MAX_CHAR, "%shave", arg_mod, "", "", "");
       res.target =  CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "argument `%s` %s", arg_name, arg_type, "". ""
+        ALIKEC_MAX_CHAR, "argument `%s` %s", arg_name, arg_type, "", ""
   );} }
   // Success
 
