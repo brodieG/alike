@@ -621,7 +621,6 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     // Get indices, and sub in the current substituted expression if they
     // exist
 
-    Rprintf("woohoo %d\n", res.success);
     res_out.tar_pre= CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 0));
     res_out.target = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 1));
 

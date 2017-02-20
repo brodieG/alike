@@ -434,7 +434,7 @@ SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
       res.call, res.tar_pre, res.target, res.act_pre, res.actual, ""
     );
     return(mkString(res_str));
-  } else if (res.actual[0]) {
+  } else if (res.target[0]) {
     const char * res_str = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "%sshould %s %s", res.call, res.tar_pre, res.target,  ""
     );

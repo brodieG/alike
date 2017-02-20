@@ -495,7 +495,12 @@ SEXP ALIKEC_lang_alike_core(
   if(!res.success) {
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
-    SET_VECTOR_ELT(res_fin, 1, ALIKEC_res_strings_to_SEXP(res.msg_strings));
+    SET_VECTOR_ELT(
+      res_fin, 1,
+      ALIKEC_res_msg_def(
+        res.msg_strings.tar_pre, res.msg_strings.target,
+        res.msg_strings.act_pre, res.msg_strings.actual
+    ) );
     SET_VECTOR_ELT(res_fin, 2, CAR(curr_cpy_par));
     SET_VECTOR_ELT(res_fin, 3, VECTOR_ELT(rec_ind, 0));
     SET_VECTOR_ELT(res_fin, 4, VECTOR_ELT(rec_ind, 1));
