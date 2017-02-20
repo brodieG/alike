@@ -168,6 +168,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
 
         SET_VECTOR_ELT(wrap, 0, wrap_call);
         SET_VECTOR_ELT(wrap, 1, CDR(CADR(wrap_call)));
+        SET_VECTOR_ELT(res.message, 1, wrap);
         UNPROTECT(2);
 
         SET_STRING_ELT(msg_strings, 0, mkChar("be"));
