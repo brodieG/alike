@@ -53,12 +53,15 @@ struct ALIKEC_res_strings ALIKEC_type_alike_internal(
   } else {
     what = type2char(tar_type);
   }
-  return (struct ALIKEC_res_strings) {
-    .target=CSR_smprintf4(ALIKEC_MAX_CHAR, "be type \"%s\"", what, "", "", ""),
-    .actual=CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "is \"%s\"", type2char(cur_type), "", "", ""
-    )
-  };
+  struct ALIKEC_res_strings res_fin;
+  res_fin.tar_pre = "be";
+  res_fin.target=
+    CSR_smprintf4(ALIKEC_MAX_CHAR, "type \"%s\"", what, "", "", "");
+  res_fin.act_pre = "is";
+  res_fin.actual = CSR_smprintf4(
+    ALIKEC_MAX_CHAR, "\"%s\"", type2char(cur_type), "", "", ""
+  );
+  return res_fin;
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
   SEXPTYPE mod_type, max_len_type;

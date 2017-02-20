@@ -71,10 +71,10 @@ SEXP ALIKEC_res_msg_def(
  */
 SEXP ALIKEC_res_strings_to_SEXP(struct ALIKEC_res_strings strings) {
   SEXP res = PROTECT(allocVector(STRSXP, 4));
-  SET_VECTOR_ELT(res, 0, mkChar(strings.tar_pre));
-  SET_VECTOR_ELT(res, 1, mkChar(strings.target));
-  SET_VECTOR_ELT(res, 2, mkChar(strings.act_pre));
-  SET_VECTOR_ELT(res, 3, mkChar(strings.actual));
+  SET_STRING_ELT(res, 0, mkChar(strings.tar_pre));
+  SET_STRING_ELT(res, 1, mkChar(strings.target));
+  SET_STRING_ELT(res, 2, mkChar(strings.act_pre));
+  SET_STRING_ELT(res, 3, mkChar(strings.actual));
   UNPROTECT(1);
   return res;
 }
@@ -600,19 +600,22 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
-  struct ALIKEC_res_fin res_out = {
+  TJKUstruct ALIKEC_res_fin res_out = {
     .target = "", .actual="", .call = ""
   };
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
   // how wide the error is; if the error is short enough we can include it
   // inline; otherwise we need to modify how we display it
+  Rprintf("hello %d\n", res.success);
 
   if(!res.success) {
     // Get indices, and sub in the current substituted expression if they
     // exist
 
+    Rprintf("woohoo %d\n", res.success);
     res_out.actual = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 0));
+
     res_out.target = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 1));
 
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
