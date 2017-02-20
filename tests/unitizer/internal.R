@@ -347,7 +347,18 @@ unitizer_sect("Pad or Quote", {
   alike:::pad_or_quote(quote(!anyNA(1 + 1)))
 })
 unitizer_sect("Merge messages", {
-  alike:::msg_sort(list(letters[4:1], letters[1:4]))
-  # second element plays no role in sort
-  alike:::msg_sort(list(c("a", "a", "z", "b"), c("a", "z", "b", "b")))
+  alike:::msg_sort(list(letters[5:1], letters[1:5]))
+  # third element plays no role in sort
+  alike:::msg_sort(list(c("a", "a", "a", "z", "b"), c("a", "a", "z", "b", "b")))
+
+  msgs <- list(
+    c("`my_var`", "be", "integer", "is", "character"),
+    c("`my_var`", "have", "3 columns", "has", "1"),
+    c("`length(names(my_var))`", "be", "2", "is", "4"),
+    c("`my_var`", "be", "\"NULL\"", "is", "character"),
+    c("`attr(my_var)`", "be", "\"NULL\"", "is", "list"),
+    c("`my_var`", "be", "matrix", "is", "character"),
+    c("`length(names(my_var))`", "be", "3", "is", "4")
+  )
+  alike:::msg_merge(msgs)
 })

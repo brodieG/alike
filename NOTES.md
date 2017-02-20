@@ -2,9 +2,10 @@ These are internal developer notes; don't expect any of it to make much sense.
 
 ## Status
 
-`res.message` stuff transitioned to two element version, but actually need to
-change it to be four element, and expose a function that returns the
-dissasembled message so that it can be put together later.
+Starting transition of `res.message` to four element bit.  Right now dealing
+with the language return value, which for whatever reason isn't in the standard
+format.  Need to figure out how to get it to return in the standard SEXP message
+form.
 
 ## C Benchmarking
 
