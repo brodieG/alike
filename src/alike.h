@@ -18,7 +18,9 @@
     int type;               // 0 is numeric, 1 is character
   };
   struct ALIKEC_res_fin {
+    const char * tar_pre;
     const char * target;
+    const char * act_pre;
     const char * actual;
     const char * call;
   };

@@ -22,13 +22,15 @@ fun(a, b, e, f, ..., g, c, e)
 
 */
 
-const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
+struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   if(!isFunction(target) || !isFunction(current))
     error("Arguments must be functions.");
 
   SEXP tar_form, cur_form, args;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
-
+  struct ALIKEC_res_strings res = {
+    "", "", "", ""
+  }
   // Translate specials and builtins to formals, if possible
 
   if(
@@ -53,7 +55,7 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1, dots_cur = 0;
   R_xlen_t tar_args = 0;
   SEXP last_match = R_NilValue, tar_tag, cur_tag;
-  const char * res = "";
+
   for(
     tar_form = FORMALS(target), cur_form = FORMALS(current);
     tar_form != R_NilValue && cur_form != R_NilValue;
@@ -66,8 +68,9 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
     if(!dots_cur && cur_tag == R_DotsSymbol) dots_cur = 1;
     if(tar_tag == cur_tag) {
       if(CAR(tar_form) != R_MissingArg && CAR(cur_form) == R_MissingArg) {
-        res = (const char *) CSR_smprintf4(
-          ALIKEC_MAX_CHAR, "have a default value for argument `%s`",
+        res.tar_pre = "have";
+        res.target = CSR_smprintf4(
+          ALIKEC_MAX_CHAR, "a default value for argument `%s`",
           CHAR(PRINTNAME(tar_tag)), "", "", ""
         );
         break;
@@ -90,16 +93,19 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
       } } }
       if(!tag_match) break;
     }
-    if(dots_reset) dots_last = 0;  // Need to know loop right after tar_form is dots
+    // Need to know loop right after tar_form is dots
+    if(dots_reset) dots_last = 0;
   }
   // We have a mismatch; produce error message
 
   int cur_mismatch = cur_form != R_NilValue && last_match != R_DotsSymbol;
   if(res[0] == '\0' && (tar_form != R_NilValue || !tag_match || cur_mismatch)) {
     if(dots && !dots_cur) {
-      res = "have a `...` argument";
+      res.tar_pre = "have";
+      res.target = "a `...` argument";
     } else if (!tar_args && tar_form == R_NilValue) {
-      res = "not have any arguments";
+      res.tar_pre = "not have";
+      res.target = "any arguments";
     } else {
       const char * arg_type = "as first argument";
       const char * arg_name;
@@ -114,13 +120,14 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
       } else if(cur_mismatch) {
         arg_mod = "not ";
         arg_name = CHAR(PRINTNAME(TAG(cur_form)));
-      } else 
+      } else
         error(
           "Logic Error: unexpected closure arg outcome; contact maintainer"
         );
-      res = (const char *) CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%shave argument `%s` %s", arg_mod, arg_name, arg_type,
-        ""
+      res.tar_pre =
+        CSR_smprintf4(ALIKEC_MAX_CHAR, "%shave", arg_mod, "", "", "")
+      res.target =  CSR_smprintf4(
+        ALIKEC_MAX_CHAR, "argument `%s` %s", arg_name, arg_type, "". ""
   );} }
   // Success
 
@@ -128,7 +135,7 @@ const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
   return res;
 }
 SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current) {
-  const char * res = ALIKEC_fun_alike_internal(target, current);
-  if(strlen(res)) return mkString(res);
+  struct ALIKEC_res_strings res = ALIKEC_fun_alike_internal(target, current);
+  if(res.target[0]) return ALIKEC_res_strings_to_SEXP(res);
   return(ScalarLogical(1));
 }

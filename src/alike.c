@@ -230,9 +230,12 @@ struct ALIKEC_res ALIKEC_alike_obj(
 
     if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
       err_fun = ALIKEC_fun_alike_internal(target, current);
-      if(err_fun[0]) {
+      if(err_fun.target[0]) {
         err = 1;
-        msg_target = err_fun;
+        msg_tar_pre = err_fun.tar_pre;
+        msg_target = err_fun.target;
+        msg_act_pre = err_fun.act_pre;
+        msg_actual = err_fun.actual;
     } }
     // - Type ------------------------------------------------------------------
 
@@ -245,7 +248,9 @@ struct ALIKEC_res ALIKEC_alike_obj(
       );
       if(err_type.target[0]) {
         err = 1;
+        msg_tar_pre = err_type.tar_pre;
         msg_target = err_type.target;
+        msg_act_pre = err_type.act_pre;
         msg_actual = err_type.actual;
     } }
     // - Length ----------------------------------------------------------------
@@ -269,19 +274,23 @@ struct ALIKEC_res ALIKEC_alike_obj(
         err_tok1 = CSR_len_as_chr(tar_len);
         err_tok2 = CSR_len_as_chr(cur_len);
         if(is_df) {
+          msg_tar_pre = "have";
           msg_target = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "have %s column%s",
+            ALIKEC_MAX_CHAR, "%s column%s",
             err_tok1, tar_len == (R_xlen_t) 1 ? "" : "s", "",  ""
           );
+          msg_act_pre = "has";
           msg_actual = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "has %s", err_tok2,  "", "", ""
+            ALIKEC_MAX_CHAR, "%s", err_tok2,  "", "", ""
           );
         } else {
+          msg_tar_pre = "be";
           msg_target = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "be length %s", err_tok1,  "",  "", ""
+            ALIKEC_MAX_CHAR, "length %s", err_tok1,  "",  "", ""
           );
+          msg_act_pre = "is";
           msg_actual = CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "is %s", err_tok2,  "", "", ""
+            ALIKEC_MAX_CHAR, "%s", err_tok2,  "", "", ""
           );
         }
       } else if (
@@ -600,23 +609,24 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
 
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
-  TJKUstruct ALIKEC_res_fin res_out = {
-    .target = "", .actual="", .call = ""
+  struct ALIKEC_res_fin res_out = {
+    .tar_pre = "", .target="", .act_pre="", .actual="", .call = ""
   };
   // Have an error, need to populate the object by deparsing the relevant
   // expression.  One issue here is we want different treatment depending on
   // how wide the error is; if the error is short enough we can include it
   // inline; otherwise we need to modify how we display it
-  Rprintf("hello %d\n", res.success);
 
   if(!res.success) {
     // Get indices, and sub in the current substituted expression if they
     // exist
 
     Rprintf("woohoo %d\n", res.success);
-    res_out.actual = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 0));
-
+    res_out.tar_pre= CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 0));
     res_out.target = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 1));
+
+    res_out.act_pre = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 2));
+    res_out.actual = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 3));
 
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
 
