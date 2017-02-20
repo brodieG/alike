@@ -607,12 +607,10 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
     if(do_continue) continue;
     // missing attribute
     res.success = 0;
-    res.message = PROTECT(
-      ALIKEC_res_msg_def("not be", "missing", "", "")
-    );
+    res.message = PROTECT(ALIKEC_res_msg_def("not be", "missing", "", ""));
     SEXP wrap = PROTECT(ALIKEC_compare_dimnames_wrap(prim_tag));
     SET_VECTOR_ELT(res.message, 1, wrap);
-    UNPROTECT(1);  // <- should be 2?
+    UNPROTECT(2);
     return res;
   }
   // Compare actual dimnames attr
