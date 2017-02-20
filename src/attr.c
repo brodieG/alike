@@ -203,7 +203,7 @@ struct ALIKEC_res_sub ALIKEC_compare_class(
   if(res.success) {
     if(tar_class_len > cur_class_len) {
       res.success = 0;
-      SET_STRING_ELT(VECTOR_ELT(res.message, 0),  1, mkChar("inherit"));
+      SET_STRING_ELT(VECTOR_ELT(res.message, 0),  0, mkChar("inherit"));
       SET_STRING_ELT(
         VECTOR_ELT(res.message, 0),  1,
         mkChar(
