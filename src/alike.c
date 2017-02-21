@@ -724,7 +724,7 @@ SEXP ALIKEC_alike_ext(
 /*
 Secondary external interface, main difference is that it returns length 5 character vectors for the errors instead of length 1 so that the return values can be used with ALIKEC_merge_msg.
 */
-SEXP ALIKEC_alike_ext(
+SEXP ALIKEC_alike_ext2(
   SEXP target, SEXP current, SEXP curr_sub, SEXP env
 ) {
   if(TYPEOF(env) != ENVSXP) {
@@ -742,7 +742,7 @@ SEXP ALIKEC_alike_ext(
     );
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
-  return ALIKEC_string_or_true(
+  return ALIKEC_strsxp_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)
   );
 }

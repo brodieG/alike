@@ -115,6 +115,7 @@
     SEXP width
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
+  SEXP ALIKEC_alike_ext2(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
   SEXP ALIKEC_alike_fast1(
     SEXP target, SEXP current, SEXP curr_sub, SEXP settings
   );
@@ -211,6 +212,7 @@
   SEXP ALIKEC_syntactic_names_exp(SEXP lang);
   SEXP ALIKEC_sort_msg(SEXP msgs);
   SEXP ALIKEC_merge_msg(SEXP msgs);
+  SEXP ALIKEC_merge_msg_ext(SEXP msgs);
 
   // - Imported Funs ----------------------------------------------------------
 

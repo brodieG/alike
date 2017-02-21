@@ -26,7 +26,10 @@ int ALIKEC_merge_comp(const void *p, const void *q) {
 }
 /*
  * Sort a list of 5 length character vectors by the 1st, 2nd, 4th, and 5th
- * elements
+ * elements.
+ *
+ * Mixed in one length character vectors are also sorted but obviously by their
+ * entire value.  No other lenghts are allowed.
  *
  * Example: c("`names(letters)`", "be", "character", "is", "integer")
  */
@@ -42,18 +45,28 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
 
   for(i = 0; i < vec_len; i++) {
     SEXP str_elt = VECTOR_ELT(msgs, i);
-    if(TYPEOF(str_elt) != STRSXP || XLENGTH(str_elt) != 5)
+    if(
+      TYPEOF(str_elt) != STRSXP ||
+      (XLENGTH(str_elt) != 5 && XLENGTH(str_elt) != 1)
+    )
       error(
         "Internal Error: unexpected string format to merge; contact maintainer"
       );
-    sort_dat[i] = (struct ALIKEC_sort_dat) {
+    const char * sort_string = "";
+    if(XLENGTH(str_elt) == 1) {
+      sort_string = CHAR(asChar(str_elt));
+    } else {
       // delimiters to minimize susceptibility to frame shift, but obviously not
       // a guarantee
-      CSR_smprintf4(
+
+      sort_string = CSR_smprintf4(
         ALIKEC_MAX_CHAR, "%s <:> %s <:> %s <:> %s",
         CHAR(STRING_ELT(str_elt, 0)), CHAR(STRING_ELT(str_elt, 1)),
         CHAR(STRING_ELT(str_elt, 3)), CHAR(STRING_ELT(str_elt, 4))
-      ),
+      );
+    }
+    sort_dat[i] = (struct ALIKEC_sort_dat) {
+      sort_string,
       i
     };
   }
@@ -69,10 +82,12 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
 }
 
 /*
- * Combine length four character vectors where the first, third, and fourth
- * elements are identical.
+ * Combine length five length character vectors where the first, second,
+ * fourth and fifth fourth elements are identical.
  *
- * msgs a list of character vectors of the same length (4)
+ * msgs a list of character vectors of the same length.
+ *
+ * One length vectors are treated as unmergeable.
  */
 
 SEXP ALIKEC_merge_msg(SEXP msgs) {
@@ -94,6 +109,7 @@ SEXP ALIKEC_merge_msg(SEXP msgs) {
       SEXP v_elt = VECTOR_ELT(msg_sort, i);
       SEXP v_elt_prv = VECTOR_ELT(msg_sort, i - 1);
       if(
+        XLENGTH(v_elt) == 1 ||
         strcmp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_prv, 0))) ||
         strcmp(CHAR(STRING_ELT(v_elt, 1)), CHAR(STRING_ELT(v_elt_prv, 1))) ||
         strcmp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_prv, 3))) ||
@@ -120,10 +136,11 @@ SEXP ALIKEC_merge_msg(SEXP msgs) {
         if(i < len - 1) {
           v_elt_nxt = VECTOR_ELT(msg_sort, i + 1);
         }
-        // Note, we'll only ever acces v_let_nxt if we're not at the last value
+        // Note, we'll only ever acces v_elt_nxt if we're not at the last value
         // in the loop so it is okay for it to be R_NilValue in that iteration
 
         int next_diff = (i == len - 1) ||
+          XLENGTH(v_elt) == 1 ||
           strcmp(CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt_nxt, 0))) ||
           strcmp(CHAR(STRING_ELT(v_elt, 1)), CHAR(STRING_ELT(v_elt_nxt, 1))) ||
           strcmp(CHAR(STRING_ELT(v_elt, 3)), CHAR(STRING_ELT(v_elt_nxt, 3))) ||
@@ -163,4 +180,31 @@ SEXP ALIKEC_merge_msg(SEXP msgs) {
 
   UNPROTECT(2);
   return res;
+}
+/*
+ * additional layer just collapses the 5 lenght char vectors into one
+ */
+SEXP ALIKEC_merge_msg_ext(SEXP msgs) {
+  SEXP msg_c = PROTECT(duplicate(ALIKEC_merge_msg(msgs)));
+
+  R_xlen_t i;
+
+  for(i = 0; i < XLENGTH(msg_c); i++) {
+    SEXP v_elt = VECTOR_ELT(msg_c, i);
+    if(XLENGTH(v_elt) == 5) {
+      SET_VECTOR_ELT(
+        msg_c, i,
+        PROTECT(
+          mkString(
+            CSR_smprintf6(
+              ALIKEC_MAX_CHAR, "%sshould %s %s (%s %s)",
+              CHAR(STRING_ELT(v_elt, 0)), CHAR(STRING_ELT(v_elt, 1)),
+              CHAR(STRING_ELT(v_elt, 2)), CHAR(STRING_ELT(v_elt, 3)),
+              CHAR(STRING_ELT(v_elt, 4)), ""
+      ) ) ) );
+      UNPROTECT(1);
+    }
+  }
+  UNPROTECT(1);
+  return msg_c;
 }

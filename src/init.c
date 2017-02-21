@@ -4,6 +4,7 @@
 static const
 R_CallMethodDef callMethods[] = {
   {"alike_ext", (DL_FUNC) &ALIKEC_alike_ext, 4},
+  {"alike_ext2", (DL_FUNC) &ALIKEC_alike_ext2, 4},
   {"alike_fast1", (DL_FUNC) &ALIKEC_alike_fast1, 4},
   {"alike_fast2", (DL_FUNC) &ALIKEC_alike_fast2, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
@@ -68,12 +69,20 @@ void R_init_alike(DllInfo *info)
   CSR_len_chr_len = (size_t(*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_chr_len");
   CSR_strmlen = (size_t(*)(const char *, size_t)) R_GetCCallable("cstringr", "CSR_strmlen");
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+
   R_RegisterCCallable(
     "alike", "ALIKEC_pad_or_quote", (DL_FUNC) ALIKEC_pad_or_quote
   );
   R_RegisterCCallable("alike", "ALIKEC_pad", (DL_FUNC) ALIKEC_pad);
   R_RegisterCCallable("alike", "ALIKEC_alike_ext", (DL_FUNC) ALIKEC_alike_ext);
+  R_RegisterCCallable(
+    "alike", "ALIKEC_alike_ext2", (DL_FUNC) ALIKEC_alike_ext2
+  );
   R_RegisterCCallable("alike", "ALIKEC_deparse", (DL_FUNC) ALIKEC_deparse);
+  R_RegisterCCallable(
+    "alike", "ALIKEC_merge_msg", (DL_FUNC) ALIKEC_merge_msg_ext
+  );
+
   CSR_len_as_chr = (char * (*)(R_xlen_t)) R_GetCCallable("cstringr", "CSR_len_as_chr");
   CSR_strmcpy = (char * (*)(const char * str, size_t maxlen)) R_GetCCallable("cstringr", "CSR_strmcpy");
 }
