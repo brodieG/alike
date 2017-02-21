@@ -196,6 +196,7 @@
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin);
+  SEXP ALIKEC_strsxp_or_true(struct ALIKEC_res_fin);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
   int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs);

@@ -722,6 +722,31 @@ SEXP ALIKEC_alike_ext(
   );
 }
 /*
+Secondary external interface, main difference is that it returns length 5 character vectors for the errors instead of length 1 so that the return values can be used with ALIKEC_merge_msg.
+*/
+SEXP ALIKEC_alike_ext(
+  SEXP target, SEXP current, SEXP curr_sub, SEXP env
+) {
+  if(TYPEOF(env) != ENVSXP) {
+    error(
+      "Logic Error; `env` argument should be environment, is %d; contact maintainer.", TYPEOF(env)
+    );
+  }
+  if(
+    TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
+    !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
+    curr_sub != R_NilValue
+  )
+    error(
+      "Logic Error; `curr_sub` must be language."
+    );
+  struct ALIKEC_settings set = ALIKEC_set_def("");
+  set.env = env;
+  return ALIKEC_string_or_true(
+    ALIKEC_alike_wrap(target, current, curr_sub, set)
+  );
+}
+/*
 Semi-internal interface; used to be the main external one but no longer as we
 changed the interface, we now access this function via ALIKEC_alike_fast
 */
