@@ -86,6 +86,9 @@ msg_sort <- function(messages)
 msg_merge <- function(messages)
   .Call(ALIKEC_msg_merge, messages)
 
+alike_ext_2 <- function(target, current)
+  .Call(ALIKEC_alike_ext2, target, current, substitute(current), parent.frame())
+
 #' Pre-calculated Precision Level
 #'
 #' Used to limit overhead of calls the require use of
