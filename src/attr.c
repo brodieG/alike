@@ -292,7 +292,10 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
     res.success = 0;
     res.lvl = 1;
     res.message = ALIKEC_res_msg_def(
-      "be", class_err_target, "is", class_err_actual
+      "be",
+      CSR_smprintf4(ALIKEC_MAX_CHAR, "\"%s\"", class_err_target, "", "", ""),
+      "is",
+      CSR_smprintf4(ALIKEC_MAX_CHAR, "\"%s\"", class_err_actual, "", "", "")
     );
     return res;
   }
