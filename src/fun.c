@@ -49,6 +49,7 @@ struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
     SETCADR(args, current);
     current = PROTECT(eval(args, R_BaseEnv));
   } else PROTECT(R_NilValue);
+
   // Cycle through all formals
 
   int dots = 0, dots_last = 0, dots_reset = 0, tag_match = 1, dots_cur = 0;
