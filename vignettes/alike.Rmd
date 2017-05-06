@@ -134,9 +134,17 @@ Treating `NULL` inconsistenly depending on whether it is nested or not is a comp
 
 `alike` will check for self-referential loops in nested environments and prevent infinite recursion.  If you somehow introduce a self-referential structure in a template without using environments then `alike` will get stuck in an infinite recursion loop.
 
-### Language Objects
+### Language Objects, Formulas, and Functions
 
-Language objects are also compared recursively, but alikeness has a slightly different meaning for them:
+> Alikeness for these types of objects is a little harder to define.  We have
+> settled on somewhat arbitrary semantics, though hopefully they are intuitive.
+> These may change in the future as we gain experience using `alike` with these
+> types of objects.  This is particularly true of functions.
+
+Language objects are also compared recursively, but alikeness has a slightly
+different meaning for them:
+
+#### Language Objects
 
 ```{r}
 alike(quote(sum(a, b)), quote(sum(x, y)))   # calls are consistent
@@ -144,9 +152,14 @@ alike(quote(sum(a, b)), quote(sum(x, x)))   # calls are inconsistent
 alike(quote(mean(a, b)), quote(sum(x, y)))  # functions are different
 ```
 
-Since variables can contain anything we do not require them to match directly across calls.  In the examples above the second call fails because the template defines different variables for each argument, but the `current` object uses the same variable twice.  The third call fails because the functions are different and as such the calls are fundamentally different.
+Since variables can contain anything we do not require them to match directly
+across calls.  In the examples above the second call fails because the template
+defines different variables for each argument, but the `current` object uses the
+same variable twice.  The third call fails because the functions are different
+and as such the calls are fundamentally different.
 
-If a function is defined in the calling frame, `alike` will `match.call` it prior to testing alikeness:
+If a function is defined in the calling frame, `alike` will `match.call` it
+prior to testing alikeness:
 
 ```{r}
 fun <- function(a, b, c) NULL
@@ -154,14 +167,9 @@ alike(quote(fun(p, q, p)), quote(fun(y, x, x)))
 alike(quote(fun(p, q, p)), quote(fun(b=y, x, x)))  # `match.call` re-orders arguments
 ```
 
-Constants match any constants, but keep in mind that expressions like `1:10` or `c(1, 2, 3)` are calls to `:` and `c` respectively, not constants in the context of language objects.
-
-Formulas are treated like calls, except that constants must match:
-
-```{r}
-alike(y ~ x ^ 2, a ~ b ^ 2)
-alike(y ~ x ^ 2, a ~ b ^ 3)
-```
+Constants match any constants, but keep in mind that expressions like `1:10` or
+`c(1, 2, 3)` are calls to `:` and `c` respectively, not constants in the context
+of language objects.
 
 `NULL` is a wild card in calls as well:
 
@@ -176,24 +184,43 @@ Calls to `(` are ignored when comparing calls since parentheses are redundant in
 
 We concede that the rules for "alikeness" of language objects are arbitrary, but hope the outcomes of those rules is generally intuitive.  Unfortunately value and structure are somewhat intertwined for language objects so we must impose our own view of what is value and what is structure.
 
-### Functions
+#### Formulas
 
-Functions are `alike` if the signature of the `current` function can reasonably be interpreted as a valid method for the `target` function:
+Formulas are treated like calls, except that constants must match:
+
+```{r}
+alike(y ~ x ^ 2, a ~ b ^ 2)
+alike(y ~ x ^ 2, a ~ b ^ 3)
+```
+
+#### Functions
+
+Functions are `alike` if the signature of the `current` function can reasonably
+be interpreted as a valid method for the `target` function.  
 
 ```{r}
 alike(print, print.default)   # print can be the generic for print.default
 alike(print.default, print)   # but not vice versa
 ```
 
-A method of a generic must have all arguments present in the generic, with the same default values if those are defined.  If the generic contains `...` then the method may have additional arguments, but must also contain `...`.
+A method of a generic must have all arguments present in the generic, with the
+same default values if those are defined.  If the generic contains `...` then
+the method may have additional arguments, but must also contain `...`.
+
+> It is likely that in the future we will relax the requirements for
+> funciton alikeness to something closer to the requirements for language
+> objects.
 
 ### S4 and R5 (RC Objects)
 
-S4 and RC objects are considered alike if `current` inherits from `class(target)`.  Since these objects embed structural information in their definitions `alike` relies on class alone to estabilish alikeness.
+S4 and RC objects are considered alike if `current` inherits from
+`class(target)`.  Since these objects embed structural information in their
+definitions `alike` relies on class alone to estabilish alikeness.
 
 ### Pointer Objects
 
-Objects of the following types are actually references to specific memory locations:
+Objects of the following types are actually references to specific memory
+locations:
 
 * External Pointers
 * Weak References
