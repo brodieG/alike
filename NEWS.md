@@ -2,6 +2,7 @@ alike 1.2.0
 ===========
 
 * Deprecation
+* Fixes related to function comparison (#38, #37) and other misc (#36)
 
 alike 1.1.0
 ===========
