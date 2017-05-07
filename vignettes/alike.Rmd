@@ -215,7 +215,7 @@ the method may have additional arguments, but must also contain `...`.
 
 S4 and RC objects are considered alike if `current` inherits from
 `class(target)`.  Since these objects embed structural information in their
-definitions `alike` relies on class alone to estabilish alikeness.
+definitions `alike` relies on class alone to establish alikeness.
 
 ### Pointer Objects
 
@@ -232,7 +232,14 @@ These are typically attached as attributes to other objects that contain the inf
 
 ### Normal Attributes
 
-Much of the structure of an object is determined by attributes.  `alike` recursively compares object attributes and requires them to be `alike`, unless the attribute is a [special attribute](#special-attributes) or an environment.  Environments within attributes in the template must be matched by an environment, but nothing is checked about the environments to avoid expensive computations on objects that commonly include environments in their attributes (e.g. formulas); note this is different than the treatment of environments as actual objects.
+Much of the structure of an object is determined by attributes.  `alike`
+recursively compares object attributes and requires them to be `alike`, unless
+the attribute is a [special attribute](#special-attributes) or an environment.
+Environments within attributes in the template must be matched by an
+environment, but nothing is checked about the environments to avoid expensive
+computations on objects that commonly include environments in their attributes
+(e.g. formulas); note this is different than the treatment of environments as
+actual objects.
 
 Only attributes present in the template object are checked:
 
@@ -247,7 +254,16 @@ Attributes present in `current` but missing in `target` may be anything at all.
 
 #### Overview
 
-The special attributes are `names`, `row.names`, `dim`, `dimnames`, `class`, `tsp`, and `levels`.  These attributes are discussed in sections [2.2 and 2.3 of the R Language Definition](http://cran.r-project.org/doc/manuals/r-release/R-lang.html#Attributes), and have well defined and consistently applied semantics in R.  Since the semantics of these attributes are well known, we are able to define "alikeness" for them in a more granular way than we can for arbitrary attributes.
+The special attributes are `names`, `row.names`, `dim`, `dimnames`, `class`,
+`tsp`, and `levels`.  These attributes are discussed in sections [2.2
+and 2.3 of the R Language
+Definition](http://cran.r-project.org/doc/manuals/r-release/R-lang.html#Attributes),
+and have well defined and consistently applied semantics in R.  Since the
+semantics of these attributes are well known, we are able to define "alikeness"
+for them in a more granular way than we can for arbitrary attributes.
+
+We also consider `srcref` to be a special attribute.  This attribute is not
+checked.
 
 #### row.names and names
 
