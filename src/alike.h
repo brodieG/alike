@@ -18,7 +18,10 @@
     int type;               // 0 is numeric, 1 is character
   };
   struct ALIKEC_res_fin {
-    const char * message;
+    const char * tar_pre;
+    const char * target;
+    const char * act_pre;
+    const char * actual;
     const char * call;
   };
   // Keep track of environments in recursion to make sure we don't get into a
@@ -43,6 +46,30 @@
     struct ALIKEC_env_track * envs;
     int gp;            // general purpose flag
   };
+
+  // Intermediate structure that will eventually be made part of the `message`
+  // component of ALIKEC_res
+
+  struct ALIKEC_res_strings {
+    const char * tar_pre;
+    const char * target;
+    const char * act_pre;
+    const char * actual;
+  };
+  // We used a SEXP because it contains the error message, as well as the wrap
+  // component that we can use around the call (e.g "names(%s)[[1]]"), and the
+  // latter contains symbols
+  //
+  // The SEXP is of type VECSXP (i.e. list), and contains two elements.
+  //
+  // The first element is the message, which itself contains the "target"
+  // string, i.e. what the object should be, and the "actual", what it is.,
+  //
+  // The second is the wrap which is a two element list where the first element
+  // is the wrapping call, and the second (I think) is a pointer to the inside
+  // of the call which is where we will ultimately substitute the original call
+  // (not 100% certain of this; I'm writing these docs way after the fact...)
+
   struct ALIKEC_res {
     int success;
     SEXP message;
@@ -55,7 +82,7 @@
   struct ALIKEC_res_lang {
     int success;
     struct ALIKEC_rec_track rec;
-    const char * chr_msg;
+    struct ALIKEC_res_strings msg_strings;
   };
   // Structure used for functions called by 'alike_obj', main difference with
   // the return value of 'alike_obj' is 'indices', since that is a more complex
@@ -77,7 +104,7 @@
 
   // - Constants --------------------------------------------------------------
 
-  #define ALIKEC_MAX_CHAR 10000
+  #define ALIKEC_MAX_CHAR 50000
   #define ALIKEC_MAX_ENVS 65536
 
   // - Main Funs --------------------------------------------------------------
@@ -88,6 +115,7 @@
     SEXP width
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
+  SEXP ALIKEC_alike_ext2(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
   SEXP ALIKEC_alike_fast1(
     SEXP target, SEXP current, SEXP curr_sub, SEXP settings
   );
@@ -102,12 +130,15 @@
   // - Internal Funs ----------------------------------------------------------
 
   SEXPTYPE ALIKEC_typeof_internal(SEXP object);
-  const char * ALIKEC_type_alike_internal(
+  struct ALIKEC_res_strings ALIKEC_type_alike_internal(
     SEXP target, SEXP current, int mode, R_xlen_t max_len
   );
   SEXP ALIKEC_compare_attributes(SEXP target, SEXP current, SEXP attr_mode);
   SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current);
-  SEXP ALIKEC_res_msg_def(const char * msg);
+  SEXP ALIKEC_res_msg_def(
+    const char * tar_pre, const char * target,
+    const char * act_pre, const char * actual
+  );
   struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     SEXP target, SEXP current, struct ALIKEC_settings set
   );
@@ -125,9 +156,12 @@
     int formula, SEXP match_call, SEXP match_env, struct ALIKEC_settings set,
     struct ALIKEC_rec_track rec
   );
-  const char * ALIKEC_fun_alike_internal(SEXP target, SEXP current);
+  struct ALIKEC_res_strings
+    ALIKEC_fun_alike_internal(SEXP target, SEXP current);
   SEXP ALIKEC_fun_alike_ext(SEXP target, SEXP current);
   SEXP ALIKEC_compare_ts_ext(SEXP target, SEXP current);
+  SEXP ALIKEC_pad_or_quote_ext(SEXP lang, SEXP width, SEXP syntactic);
+  SEXP ALIKEC_res_strings_to_SEXP(struct ALIKEC_res_strings strings);
 
   // - Utility Funs -----------------------------------------------------------
 
@@ -153,6 +187,8 @@
   SEXP ALIKEC_deparse_oneline_ext(
     SEXP obj, SEXP max_chars, SEXP keep_at_end
   );
+  int ALIKEC_is_an_op(SEXP lang);
+  const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic);
   SEXP ALIKEC_deparse_width(SEXP obj, int width);
   SEXP ALIKEC_deparse(SEXP obj, int width_cutoff);
   const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad);
@@ -161,6 +197,7 @@
   SEXP ALIKEC_match_call(SEXP call, SEXP match_call, SEXP env);
   SEXP ALIKEC_findFun(SEXP symbol, SEXP rho);
   SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin);
+  SEXP ALIKEC_strsxp_or_true(struct ALIKEC_res_fin);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
   int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs);
@@ -172,6 +209,10 @@
   SEXP ALIKEC_is_dfish_ext(SEXP obj);
   struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track);
   struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track);
+  SEXP ALIKEC_syntactic_names_exp(SEXP lang);
+  SEXP ALIKEC_sort_msg(SEXP msgs);
+  SEXP ALIKEC_merge_msg(SEXP msgs);
+  SEXP ALIKEC_merge_msg_ext(SEXP msgs);
 
   // - Imported Funs ----------------------------------------------------------
 

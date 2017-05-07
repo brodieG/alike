@@ -13,10 +13,6 @@ re-allocation, 3 for success requiring re-allocation and copying
 
 int ALIKEC_env_stack_alloc(struct ALIKEC_env_track * envs) {
   int success = 1;
-  // Rprintf(
-  //   "Allocation\n\tsize: %d\n\tind: %d\n\tmult: %d\n\tinit: %d\n",
-  //   envs->stack_size, envs->stack_ind, envs->stack_mult, envs->stack_size_init
-  // );
   if(envs->stack_size <= envs->stack_ind) {
     int stack_size_old = envs->stack_size;
     envs->stack_size = envs->stack_size_init * 1 << envs->stack_mult;

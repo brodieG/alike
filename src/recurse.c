@@ -114,8 +114,7 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
           ind_size = CSR_len_chr_len(rec.indices[i].ind.num);
           break;
         case 1:
-          ind_size =
-            CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
+          ind_size = CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
           error(

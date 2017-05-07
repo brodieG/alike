@@ -331,3 +331,34 @@ unitizer_sect("Is dfish", {
   alike:::is_dfish(df1)
   alike:::is_dfish(df2)
 } )
+unitizer_sect("syntactic", {
+  alike:::syntactic_names(quote(hello))
+  alike:::syntactic_names(quote(`hello there`))
+  alike:::syntactic_names(quote(1 + 1))
+  alike:::syntactic_names(quote(1 %hello there% 1))
+  alike:::syntactic_names(quote(1 + `hello there`))
+  alike:::syntactic_names(quote(-(1:3)))
+  alike:::syntactic_names(quote(c(-1:1, NA_integer_)))
+  alike:::syntactic_names(quote(a == 25))
+  alike:::syntactic_names(quote(all(-1:1 > 0)))
+})
+unitizer_sect("Pad or Quote", {
+  alike:::pad_or_quote(quote(1 + 1))
+  alike:::pad_or_quote(quote(!anyNA(1 + 1)))
+})
+unitizer_sect("Merge messages", {
+  alike:::msg_sort(list(letters[5:1], letters[1:5]))
+  # third element plays no role in sort
+  alike:::msg_sort(list(c("a", "a", "a", "z", "b"), c("a", "a", "z", "b", "b")))
+
+  msgs <- list(
+    c("`my_var`", "be", "integer", "is", "character"),
+    c("`my_var`", "have", "3 columns", "has", "1"),
+    c("`length(names(my_var))`", "be", "2", "is", "4"),
+    c("`my_var`", "be", "\"NULL\"", "is", "character"),
+    c("`attr(my_var)`", "be", "\"NULL\"", "is", "list"),
+    c("`my_var`", "be", "matrix", "is", "character"),
+    c("`length(names(my_var))`", "be", "3", "is", "4")
+  )
+  alike:::msg_merge(msgs)
+})

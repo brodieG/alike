@@ -1,5 +1,12 @@
 These are internal developer notes; don't expect any of it to make much sense.
 
+## Status
+
+Starting transition of `res.message` to four element bit.  Right now dealing
+with the language return value, which for whatever reason isn't in the standard
+format.  Need to figure out how to get it to return in the standard SEXP message
+form.
+
 ## C Benchmarking
 
 ### Assessing General Overhead
@@ -614,3 +621,4 @@ Argument `x` should be character (is integer)
 Error in alike(y, z) :
   Logic Error: unexpected index type 1661633088; contact maintainer.
 ```
+

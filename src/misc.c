@@ -120,6 +120,7 @@ const char * ALIKEC_deparse_oneline(
 
   const char * res, * dep_line = CHAR(asChar(ALIKEC_deparse_core(obj, 500)));
   size_t dep_len = CSR_strmlen(dep_line, ALIKEC_MAX_CHAR);
+
   if(dep_len > max_chars) {
     // truncate string and use '..' at the end
 
@@ -161,7 +162,7 @@ SEXP ALIKEC_deparse_width(SEXP obj, int width) {
 
   if(width < 62) dep_cutoff = width - 2;
   else dep_cutoff = 60;
-  if(dep_cutoff < 20) dep_cutoff = 60;
+  if(dep_cutoff < 20) dep_cutoff = 20;
   return ALIKEC_deparse(obj, dep_cutoff);
 }
 SEXP ALIKEC_deparse_ext(SEXP obj, SEXP width_cutoff) {
@@ -197,8 +198,8 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
     SEXP prompt_continue = PROTECT(ALIKEC_getopt("continue"));
 
     if(
-      !TYPEOF(prompt_val) == STRSXP || !TYPEOF(prompt_continue) == STRSXP ||
-      asChar(prompt_val) == NA_STRING || asChar(prompt_continue) == NA_STRING
+      TYPEOF(prompt_val) != STRSXP || TYPEOF(prompt_continue) != STRSXP ||
+      asChar(prompt_val) != NA_STRING || asChar(prompt_continue) != NA_STRING
     ) {
       dep_prompt = "> ";
       dep_continue = "+ ";
@@ -219,8 +220,7 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
   for(i = 0; i < lines; i++) {
     const char * dep_pad = "";
     const char * dep_err = CHAR(STRING_ELT(obj, i));
-    if(!i) dep_pad = dep_prompt;
-    else dep_pad = dep_continue;
+    if(!i) dep_pad = dep_prompt; else dep_pad = dep_continue;
     res = CSR_smprintf6(
       ALIKEC_MAX_CHAR, "%s%s%s%s%s", res, dep_pad, dep_err,
       i == lines - 1 && lines < line_max ? "..." : "",
@@ -231,6 +231,153 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
 SEXP ALIKEC_pad_ext(SEXP obj, SEXP lines, SEXP pad) {
   return mkString(ALIKEC_pad(obj, asInteger(lines), asInteger(pad)));
 }
+/*
+ * Check whether a language call is an operator call
+ */
+int ALIKEC_is_an_op(SEXP lang) {
+  int is_an_op = 0;
+  if(TYPEOF(lang) == LANGSXP) {
+    SEXP call = CAR(lang);
+    if(TYPEOF(call) == SYMSXP) {
+      const char * call_sym = CHAR(PRINTNAME(call));
+      int i = 1;
+      if(
+        !strcmp("+", call_sym) || !strcmp("-", call_sym) ||
+        !strcmp("*", call_sym) || !strcmp("/", call_sym) ||
+        !strcmp("^", call_sym) || !strcmp("|", call_sym) ||
+        !strcmp("||", call_sym) || !strcmp("&", call_sym) ||
+        !strcmp("&&", call_sym) || !strcmp("~", call_sym) ||
+        !strcmp(":", call_sym) || !strcmp("$", call_sym) ||
+        !strcmp("[", call_sym) || !strcmp("[[", call_sym) ||
+        !strcmp("!", call_sym) || !strcmp("==", call_sym) ||
+        !strcmp("<", call_sym) || !strcmp("<=", call_sym) ||
+        !strcmp(">", call_sym) || !strcmp(">=", call_sym)
+      ) is_an_op = 1;
+
+      if(!is_an_op && call_sym[0] == '%') {
+        // check for %xx% operators
+        while(call_sym[i] && i < 1024) i++;
+        if(i < 1024 && i > 1 && call_sym[i - 1] == '%') is_an_op = 1;
+      }
+    }
+  }
+  return is_an_op;
+}
+/*
+ * Check whether a language call is to an operator or to other special symbols
+ * that are not syntactic but don't require escaping
+ */
+int ALIKEC_no_esc_needed(SEXP lang) {
+  int no_esc = 0;
+  if(TYPEOF(lang) == LANGSXP) {
+    SEXP call = CAR(lang);
+    if(TYPEOF(call) == SYMSXP) {
+      const char * call_sym = CHAR(PRINTNAME(call));
+      if(!strcmp("(", call_sym) || !strcmp("{", call_sym)) no_esc = 1;
+    }
+  }
+  no_esc += ALIKEC_is_an_op(lang);
+  return no_esc;
+}
+
+/*
+ * Checks whether any names in the language object are non-syntactic and as such
+ * should probably not be escaped with backticks.
+ *
+ * We only recurse through language elements because if we have a non language
+ * element that would require recursing (e.g. list) we're pretty much guaranteed
+ * the diplay will be more than one line, and at that point we don't care about
+ * syntactic or not because we won't be trying to wrap stuff in backticks.
+ */
+
+int ALIKEC_syntactic_names(SEXP lang) {
+  int syntactic = 1;
+  int first = 1;
+  SEXP cur_lang;
+  if(TYPEOF(lang) == LANGSXP) {
+    for(cur_lang = lang; cur_lang != R_NilValue; cur_lang = CDR(cur_lang)) {
+      SEXP cur_elem = CAR(cur_lang);
+      if(first) {
+        // Ok to have an operator call
+        first = 0;
+        if(ALIKEC_no_esc_needed(cur_lang)) continue;
+      }
+      syntactic = ALIKEC_syntactic_names(cur_elem);
+      if(!syntactic) break;
+    }
+  } else if (TYPEOF(lang) == SYMSXP) {
+    syntactic = ALIKEC_is_valid_name(CHAR(PRINTNAME(lang)));
+  }
+  return syntactic;
+}
+SEXP ALIKEC_syntactic_names_exp(SEXP lang) {
+  return ScalarLogical(ALIKEC_syntactic_names(lang));
+}
+/*
+ * Deparse a call and quote it, or if it is too long to quote, put on it's own
+ * lines and offset otherwise
+ *
+ * @param lang a language object to deparse and turn into character
+ * @param width screen width, use -1 to use `getOption('width')`
+ * @param syntactic whether the names in the language object are syntactic or
+ *   not.  If there are some that are not, we do not want to quote with
+ *   backticks as that gets confusing.  Instead we use braces.  Set to 0 if
+ *   there are non-syntactic names, 1 if there are not, and -1 to auto-detect.
+ *   Note that this only matters if the language expression deparses to no more
+ *   than one line.
+ */
+const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
+
+  switch(syntactic) {
+    case -1: syntactic = ALIKEC_syntactic_names(lang); break;
+    case 0:
+    case 1: break;
+    default:
+      error("Logic Error: unexpected `syntactic` value; contat maintainer");
+  }
+  SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang, width));
+
+  // Handle the different deparse scenarios
+
+  int multi_line = 1;
+  const char * dep_chr = CHAR(asChar(lang_dep));
+
+  if(XLENGTH(lang_dep) == 1) {
+    size_t dep_chr_len = CSR_strmlen(dep_chr, ALIKEC_MAX_CHAR);
+    if(dep_chr_len <= width - 2) multi_line = 0;
+  }
+  const char * call_char, * call_pre = "", * call_post = "";
+  if(multi_line) {
+    call_pre = "";
+    call_char = ALIKEC_pad(lang_dep, -1, 0);
+    call_post = "";
+  } else {
+    // In case there are non syntactic names in the call, use braces instead of
+    // backticks to avoid possible confusion
+
+    if(syntactic) {
+      call_pre = "`";
+      call_post = "` ";
+    } else {
+      call_pre = "{";
+      call_post = "} ";
+    }
+    call_char = dep_chr;
+  }
+  UNPROTECT(1);
+  return CSR_smprintf4(
+    ALIKEC_MAX_CHAR, "%s%s%s%s", call_pre, call_char, call_post, ""
+  );
+}
+/*
+ * external version for testing
+ */
+SEXP ALIKEC_pad_or_quote_ext(SEXP lang, SEXP width, SEXP syntactic) {
+  const char * padded =
+    ALIKEC_pad_or_quote(lang, INTEGER(width)[0], INTEGER(syntactic)[0]);
+  return mkString(padded);
+}
+
 /*
 deparse into character
 
@@ -280,13 +427,37 @@ Convert convention of zero length string == TRUE to SEXP
 */
 
 SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
-  if(res.message[0]) {
+  if(res.actual[0] && res.target[0]) {
+    const char * res_str = CSR_smprintf6(
+      ALIKEC_MAX_CHAR,
+      "%sshould %s %s (%s %s)",
+      res.call, res.tar_pre, res.target, res.act_pre, res.actual, ""
+    );
+    return(mkString(res_str));
+  } else if (res.target[0]) {
     const char * res_str = CSR_smprintf4(
-      ALIKEC_MAX_CHAR, "%sshould %s", res.call, res.message, "", ""
+      ALIKEC_MAX_CHAR, "%sshould %s %s", res.call, res.tar_pre, res.target,  ""
     );
     return(mkString(res_str));
   }
   return(ScalarLogical(1));
+}
+/*
+ * variation on ALIKEC_string_or_true that returns the full vector so we can use
+ * it with ALIKEC_merge_msg
+ */
+
+SEXP ALIKEC_strsxp_or_true(struct ALIKEC_res_fin res) {
+  if(res.target[0]) {
+    SEXP res_fin = PROTECT(allocVector(STRSXP, 5));
+    SET_STRING_ELT(res_fin, 0, mkChar(res.call));
+    SET_STRING_ELT(res_fin, 1, mkChar(res.tar_pre));
+    SET_STRING_ELT(res_fin, 2, mkChar(res.target));
+    SET_STRING_ELT(res_fin, 3, mkChar(res.act_pre));
+    SET_STRING_ELT(res_fin, 4, mkChar(res.actual));
+    UNPROTECT(1);
+    return(res_fin);
+  } else return(ScalarLogical(1));
 }
 /*
 Basic checks that `obj` could be a data frame; does not check class, only that

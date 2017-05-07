@@ -5,7 +5,7 @@ compare types, accounting for "integer like" numerics; empty string means
 success, otherwise outputs an a character string explaining why the types are
 not alike
 */
-const char * ALIKEC_type_alike_internal(
+struct ALIKEC_res_strings ALIKEC_type_alike_internal(
   SEXP target, SEXP current, int mode, R_xlen_t max_len
 ) {
   SEXPTYPE tar_type, cur_type, tar_type_raw, cur_type_raw;
@@ -13,8 +13,10 @@ const char * ALIKEC_type_alike_internal(
   tar_type_raw = TYPEOF(target);
   cur_type_raw = TYPEOF(current);
 
-  if(tar_type_raw == cur_type_raw)
-    return "";
+  struct ALIKEC_res_strings res =
+    (struct ALIKEC_res_strings) {.target="", .actual=""};
+
+  if(tar_type_raw == cur_type_raw) return res;
 
   if(
     mode == 0 && (
@@ -34,12 +36,12 @@ const char * ALIKEC_type_alike_internal(
     tar_type = tar_type_raw;
     cur_type = cur_type_raw;
   }
-  if(tar_type == cur_type) return "";
+  if(tar_type == cur_type) return res;
   if(
     cur_type == INTSXP && mode < 2 &&
     (tar_type == INTSXP || tar_type == REALSXP)
   ) {
-    return "";
+    return res;
   }
   const char * what;
   if(mode == 0 && int_like) {
@@ -51,14 +53,19 @@ const char * ALIKEC_type_alike_internal(
   } else {
     what = type2char(tar_type);
   }
-  return CSR_smprintf4(
-    ALIKEC_MAX_CHAR, "be type \"%s\" (is \"%s\")", what,
-    type2char(cur_type), "", ""
+  struct ALIKEC_res_strings res_fin;
+  res_fin.tar_pre = "be";
+  res_fin.target=
+    CSR_smprintf4(ALIKEC_MAX_CHAR, "type \"%s\"", what, "", "", "");
+  res_fin.act_pre = "is";
+  res_fin.actual = CSR_smprintf4(
+    ALIKEC_MAX_CHAR, "\"%s\"", type2char(cur_type), "", "", ""
   );
+  return res_fin;
 }
 SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
   SEXPTYPE mod_type, max_len_type;
-  const char * res;
+  struct ALIKEC_res_strings res;
 
   mod_type = TYPEOF(mode);
   max_len_type = TYPEOF(max_len);
@@ -71,17 +78,17 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
   res = ALIKEC_type_alike_internal(
     target, current, asInteger(mode), asInteger(max_len)
   );
-  if(strlen(res)) {
-    return(mkString(res));
+  if(res.target[0]) {
+    return(ALIKEC_res_strings_to_SEXP(res));
   } else {
     return ScalarLogical(1);
   }
 }
 SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
-  const char * res;
+  struct ALIKEC_res_strings res;
   res = ALIKEC_type_alike_internal(target, current, 0, 100);
-  if(strlen(res)) {
-    return(mkString(res));
+  if(res.target[0]) {
+    return(ALIKEC_res_strings_to_SEXP(res));
   } else {
     return ScalarLogical(1);
   }
