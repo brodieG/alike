@@ -1024,7 +1024,8 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     // No match only matters if target has attrs and is not `srcref`, or in
     // strict mode
 
-    int is_srcref = !strcmp(CHAR(PRINTNAME(tar_tag)), "srcref");
+    int is_srcref =
+      tar_tag != R_NilValue && !strcmp(CHAR(PRINTNAME(tar_tag)), "srcref");
     if(
       (
         (tar_attr_el == R_NilValue && set.attr_mode == 2) ||
