@@ -15,26 +15,14 @@ knitr::opts_chunk$set(
 ```
 # alike - Verify S3 Object Structure
 
-<table style="border: none; background-color: transparent; vertical-align: middle;">
-  <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
-      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=master'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">RC:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=rc'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://travis-ci.org/brodieG/alike'><img src='https://travis-ci.org/brodieG/alike.png?branch=development'></a>
-  <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
-      <a href='https://codecov.io/github/brodieG/alike?branch=master'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=master'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">RC:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://codecov.io/github/brodieG/alike?branch=rc'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=rc'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://codecov.io/github/brodieG/alike?branch=dev'><img src='https://codecov.io/github/brodieG/alike/coverage.svg?branch=development'></a>
-</table>
+[![](https://travis-ci.org/brodieG/alike.svg?branch=master)](https://travis-ci.org/brodieG/alike)
+[![](https://codecov.io/github/brodieG/alike/coverage.svg?branch=master)](https://codecov.io/github/brodieG/alike?branch=master)
+[![](http://www.r-pkg.org/badges/version/alike_not_published)](https://cran.r-project.org/package)
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it.](http://www.repostatus.org/badges/latest/unsupported.svg)](http://www.repostatus.org/#unsupported)
+
+> This project is being integrated into [vetr](https://github.com/brodieG/vetr).
+> Please submit but reports, feature requests, etc., on that project's home
+> page.
 
 **NOTE**: this is a snippet from the **[vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/alike/master/inst/doc/alike.html)**; we recommend you look at the actual vignette as it will show the evaluated R expressions and the links will work.
 
@@ -99,5 +87,6 @@ Currently this package is only available from github:
 
 ```
 library(devtools)
+install_github("brodieg/cstringr")  # required dependency
 install_github("brodieg/alike")
 ```
