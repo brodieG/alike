@@ -278,7 +278,18 @@ unitizer_sect("Functions", {
   alike(print, print.data.frame)              # TRUE
   alike(print.data.frame, print)              # FALSE
   alike(`&&`, function() NULL)                # TRUE
+
+  # check srcref issues
+
+  fun <- fun2 <- function() NULL
+  attributes(fun2) <- NULL
+
+  alike(fun, fun2)   # TRUE
+  .alike(fun, fun2, settings=alike_settings(attr.mode=2L))
+  .alike(fun2, fun, settings=alike_settings(attr.mode=1L))
+  .alike(fun2, fun, settings=alike_settings(attr.mode=2L))
 })
+
 # Subset of tests for version with settings
 
 unitizer_sect(".alike", {

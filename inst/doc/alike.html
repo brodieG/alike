@@ -8,6 +8,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <meta name="author" content="Brodie Gaslam" />
 
 
@@ -17,32 +19,46 @@
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
+div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
-</style>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 </style>
 
 
-<link href="data:text/css,%2F%2A%0AStyles%20primarily%20borrowed%20from%20rmarkdown%2Ftemplates%2Fhtml%5Fvignette%2Fresources%2Fvignette%2Ecss%0Aat%20a%20time%2012%2F2%2F2014%20when%20rmarkdown%20was%20%28and%20probably%20still%20is%29%20under%20the%20GPL%2D3%0Alicense%0A%2A%2F%0A%0Abody%20%7B%0A%20%20background%2Dcolor%3A%20%23fff%3B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20max%2Dwidth%3A%20700px%3B%0A%20%20overflow%3A%20visible%3B%0A%20%20padding%2Dleft%3A%202em%3B%0A%20%20padding%2Dright%3A%202em%3B%0A%20%20font%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0A%20%20font%2Dsize%3A%2014px%3B%0A%20%20line%2Dheight%3A%201%2E5%3B%0A%7D%0A%0A%23header%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0A%0A%23TOC%20%7B%0A%20%20clear%3A%20both%3B%0A%20%20%2F%2Amargin%3A%200%200%2010px%2010px%3B%2A%2F%0A%20%20padding%3A%204px%3B%0A%20%20width%3A%20100%25%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20border%2Dradius%3A%205px%3B%0A%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20font%2Dsize%3A%2013px%3B%0A%20%20line%2Dheight%3A%201%2E3%3B%0A%7D%0A%20%20%23TOC%20%2Etoctitle%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%20%20font%2Dsize%3A%2015px%3B%0A%20%20%20%20margin%2Dleft%3A%205px%3B%0A%20%20%7D%0A%0A%20%20%23TOC%20ul%20%7B%0A%20%20%20%20padding%2Dleft%3A%2040px%3B%0A%20%20%20%20margin%2Dleft%3A%20%2D1%2E5em%3B%0A%20%20%20%20margin%2Dtop%3A%205px%3B%0A%20%20%20%20margin%2Dbottom%3A%205px%3B%0A%20%20%7D%0A%20%20%23TOC%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dleft%3A%20%2D2em%3B%0A%20%20%7D%0A%20%20%23TOC%20li%20%7B%0A%20%20%20%20line%2Dheight%3A%2016px%3B%0A%20%20%7D%0A%0Atable%20%7B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dcolor%3A%20%23DDDDDD%3B%0A%20%20border%2Dstyle%3A%20outset%3B%0A%20%20border%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0A%20%20border%2Dwidth%3A%202px%3B%0A%20%20padding%3A%205px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%20%20line%2Dheight%3A%2018px%3B%0A%20%20padding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0A%20%20border%2Dleft%2Dstyle%3A%20none%3B%0A%20%20border%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Ap%20%7B%0A%20%20margin%3A%201em%200%3B%0A%7D%0A%0Ablockquote%20%7B%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20padding%3A%200%2E25em%200%2E75em%3B%0A%7D%0A%0Ahr%20%7B%0A%20%20border%2Dstyle%3A%20solid%3B%0A%20%20border%3A%20none%3B%0A%20%20border%2Dtop%3A%201px%20solid%20%23777%3B%0A%20%20margin%3A%2028px%200%3B%0A%7D%0A%0Adl%20%7B%0A%20%20margin%2Dleft%3A%200%3B%0A%7D%0A%20%20dl%20dd%20%7B%0A%20%20%20%20margin%2Dbottom%3A%2013px%3B%0A%20%20%20%20margin%2Dleft%3A%2013px%3B%0A%20%20%7D%0A%20%20dl%20dt%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%7D%0A%0Aul%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%7D%0A%20%20ul%20li%20%7B%0A%20%20%20%20list%2Dstyle%3A%20circle%20outside%3B%0A%20%20%7D%0A%20%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dbottom%3A%200%3B%0A%20%20%7D%0A%0Apre%2C%20code%20%7B%0A%20%20background%2Dcolor%3A%20%23eee%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20color%3A%20%23333%3B%0A%7D%0Apre%20%7B%0A%20%20white%2Dspace%3A%20pre%2Dwrap%3B%20%20%20%20%2F%2A%20Wrap%20long%20lines%20%2A%2F%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20margin%3A%205px%200px%3B%0A%20%20padding%3A%2010px%3B%0A%20%20font%2Dsize%3A%2085%25%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0A%20%20background%2Dcolor%3A%20%23eee%3B%0A%7D%0A%0Acode%20%7B%0A%20%20font%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%2C%20h1%20%3E%20code%2C%20h2%20%3E%20code%2C%20h3%20%3E%20code%2C%0Ah4%20%3E%20code%2C%20h5%20%3E%20code%2C%20h6%20%3E%20code%20%7B%0A%20%20padding%3A%202px%200px%3B%0A%20%20line%2Dheight%3A%201%3B%0A%20%20font%2Dweight%3A%20bold%3B%0A%7D%0Adiv%2Efigure%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0A%20%20background%2Dcolor%3A%20%23FFFFFF%3B%0A%20%20padding%3A%202px%3B%0A%20%20border%3A%201px%20solid%20%23DDDDDD%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20margin%3A%200%205px%3B%0A%7D%0A%0Ah1%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%20%20padding%2Dbottom%3A%203px%3B%0A%20%20font%2Dsize%3A%2035px%3B%0A%20%20line%2Dheight%3A%2040px%3B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23999%3B%0A%7D%0A%0Ah2%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23999%3B%0A%20%20padding%2Dtop%3A%205px%3B%0A%20%20padding%2Dbottom%3A%202px%3B%0A%20%20font%2Dsize%3A%20145%25%3B%0A%7D%0A%0Ah3%20%7B%0A%20%20padding%2Dtop%3A%205px%3B%0A%20%20font%2Dsize%3A%20120%25%3B%0A%7D%0A%0Ah4%20%7B%0A%20%20%2F%2Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%2A%2F%0A%20%20color%3A%20%23777%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Ah4%2Eauthor%2C%20h4%2Edate%20%7Bdisplay%3A%20none%3B%7D%0A%0Ah5%2C%20h6%20%7B%0A%20%20%2F%2Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%2A%2F%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Aa%20%7B%0A%20%20color%3A%20%232255dd%3B%0A%20%20font%2Dweight%3A%20bold%3B%0A%20%20text%2Ddecoration%3A%20none%3B%0A%7D%0A%20%20a%3Ahover%20%7B%0A%20%20%20%20color%3A%20%236666ff%3B%20%7D%0A%20%20a%3Avisited%20%7B%0A%20%20%20%20color%3A%20%23800080%3B%20%7D%0A%20%20a%3Avisited%3Ahover%20%7B%0A%20%20%20%20color%3A%20%23BB00BB%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%0A%2F%2A%20Class%20described%20in%20https%3A%2F%2Fbenjeffrey%2Ecom%2Fposts%2Fpandoc%2Dsyntax%2Dhighlighting%2Dcss%0A%20%20%20Colours%20from%20https%3A%2F%2Fgist%2Egithub%2Ecom%2Frobsimmons%2F1172277%20%2A%2F%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Keyword%20%2A%2F%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%2F%2A%20DataType%20%2A%2F%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%2F%2A%20DecVal%20%28decimal%20values%29%20%2A%2F%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20BaseN%20%2A%2F%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Float%20%2A%2F%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Char%20%2A%2F%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20String%20%2A%2F%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%2F%2A%20Comment%20%2A%2F%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%2F%2A%20OtherToken%20%2A%2F%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20AlertToken%20%2A%2F%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Function%20calls%20%2A%2F%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%2F%2A%20ErrorTok%20%2A%2F%0A" rel="stylesheet" type="text/css" />
+
+<link href="data:text/css;charset=utf-8,%0Abody%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E5%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0A%0Apadding%3A%204px%3B%0Awidth%3A%20100%25%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%201em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%2C%20h1%20%3E%20code%2C%20h2%20%3E%20code%2C%20h3%20%3E%20code%2C%0Ah4%20%3E%20code%2C%20h5%20%3E%20code%2C%20h6%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0Aline%2Dheight%3A%201%3B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Apadding%2Dbottom%3A%203px%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0Aborder%2Dbottom%3A%201px%20solid%20%23999%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23999%3B%0Apadding%2Dtop%3A%205px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Apadding%2Dtop%3A%205px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0A%0Acolor%3A%20%23777%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah4%2Eauthor%2C%20h4%2Edate%20%7Bdisplay%3A%20none%3B%7D%0Ah5%2C%20h6%20%7B%0A%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%2334b%3B%0A%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Adiv%23TOC%20a%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23700070%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%2C%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%236D6%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0Acode%20%7B%0Acolor%3A%20%23333%3B%0Aborder%2Dradius%3A%202px%3B%0Abackground%2Dcolor%3A%20%23eee%3B%0A%7D%0Apre%20%7B%0A%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0Aborder%2Dradius%3A%202px%3B%0Amargin%3A%205px%200px%3B%0Apadding%3A%203px%2015px%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Apre%2EsourceCode%20%7B%0Aborder%3A%201px%20solid%20%23CCC%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23EEE%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%3E%20code%20%7B%0Acolor%3A%20%23888%3B%0Abackground%2Dcolor%3A%20transparent%3B%0A%7D%0Apre%20%3E%20code%2EsourceCode%20%7B%0Acolor%3A%20%23444%3B%0Abackground%2Dcolor%3A%20transparent%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%7D%0A" rel="stylesheet" type="text/css" />
 
 </head>
 
@@ -50,178 +66,268 @@ code > span.er { color: #ff0000; font-weight: bold; }
 
 
 
-<div id="header">
-<h1 class="title">alike</h1>
+
+<h1 class="title toc-ignore">alike</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-</div>
+
 
 <div id="TOC">
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#templates">Templates</a><ul>
-<li><a href="#overview">Overview</a></li>
-<li><a href="#structure-wildcards">Structure Wildcards</a></li>
+<li><a href="#introduction">Introduction<a name="top"></a></a><ul>
+<li><a href="#what-is-alikeness">What is Alikeness?</a></li>
+<li><a href="#motivation">Motivation</a></li>
 </ul></li>
-<li><a href="#comparison-details">Comparison Details</a><ul>
-<li><a href="#overview-1">Overview</a></li>
+<li><a href="#object-comparison">Object Comparison</a><ul>
+<li><a href="#overview">Overview</a></li>
 <li><a href="#length-comparison">Length Comparison</a></li>
 <li><a href="#type-comparison">Type Comparison</a></li>
-<li><a href="#attribute-comparison">Attribute Comparison</a></li>
+<li><a href="#recursive-objects">Recursive Objects</a></li>
+<li><a href="#language-objects">Language Objects</a></li>
+<li><a href="#functions-1">Functions</a></li>
+<li><a href="#s4-and-r5-rc-objects">S4 and R5 (RC Objects)</a></li>
+<li><a href="#pointer-objects">Pointer Objects</a></li>
 </ul></li>
-<li><a href="#objects-that-might-be-treated-differently-in-future">Objects That Might Be Treated Differently in Future</a></li>
-<li><a href="#alike-as-an-s3-generic"><code>alike</code> as an S3 generic</a></li>
+<li><a href="#attribute-comparison">Attribute Comparison</a><ul>
+<li><a href="#normal-attributes">Normal Attributes</a></li>
+<li><a href="#special-attributes">Special Attributes</a></li>
+</ul></li>
+<li><a href="#modifying-comparison-behavior">Modifying Comparison Behavior</a></li>
+<li><a href="#creating-templates">Creating Templates</a><ul>
+<li><a href="#from-the-ground-up">From The Ground Up</a></li>
+<li><a href="#abstracting-existing-structures">Abstracting Existing Structures</a></li>
+</ul></li>
 <li><a href="#performance-considerations">Performance Considerations</a><ul>
-<li><a href="#overview-3">Overview</a></li>
-<li><a href="#alike"><code>.alike</code></a></li>
+<li><a href="#sample-timings">Sample Timings</a></li>
 <li><a href="#pre-defining-templates">Pre-defining Templates</a></li>
+</ul></li>
+<li><a href="#miscellaneous">Miscellaneous</a><ul>
+<li><a href="#alike-as-an-s3-generic"><code>alike</code> as an S3 generic</a></li>
 </ul></li>
 </ul>
 </div>
 
 <div id="introduction" class="section level2">
-<h2>Introduction</h2>
-<p><code>alike</code> is similar to <code>all.equal</code> from base R, except it focuses on comparing object structure rather than actual values:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(alike)
-<span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
+<h2>Introduction<a name="top"></a></h2>
+<div id="what-is-alikeness" class="section level3">
+<h3>What is Alikeness?</h3>
+<p><code>alike</code> is similar to <code>all.equal</code> from base R except it only compares object structure. As with <code>all.equal</code>, the first argument (<code>target</code>) must be matched by the second (<code>current</code>).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(alike)
+<span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">5</span>), <span class="dv">1</span>:<span class="dv">5</span>)      <span class="co"># different values, but same structure</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), letters[<span class="dv">1</span>:<span class="dv">5</span>])</code></pre>
-<pre><code>## [1] &quot;Type mismatch, expected \&quot;integer-like\&quot;, but got \&quot;character\&quot;&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">4</span>), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
-<pre><code>## [1] &quot;Length mismatch: expected 4 but got 5&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">5</span>), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">5</span>), <span class="dv">1</span>:<span class="dv">4</span>)      <span class="co"># wrong size</span></code></pre></div>
+<pre><code>## [1] &quot;`1:4` should be length 5 (is 4)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(<span class="dv">26</span>), letters) <span class="co"># same size, but different types</span></code></pre></div>
+<pre><code>## [1] &quot;`letters` should be type \&quot;integer-like\&quot; (is \&quot;character\&quot;)&quot;</code></pre>
+<p><code>alike</code> only compares structural elements that are defined in <code>target</code> (a.k.a. the template). This allows “wildcard” templates. For example, we consider length zero vectors to have undefined length so those match vectors of any length:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">5</span>)</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<p><code>alike</code> only compares the structure of the objects (e.g. type, length, class, attributes, etc.), which is how we can match <code>1:5</code> to <code>integer(5)</code> even though these have clearly different values.</p>
-<p><code>alike</code> will also compare recursive structures element by element, which allows things such as:</p>
-<pre class="sourceCode r"><code class="sourceCode r">df.tpl &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="kw">integer</span>(), <span class="dt">grade=</span><span class="kw">factor</span>(<span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
-df.correct &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">grade=</span><span class="kw">factor</span>(<span class="kw">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>), <span class="dt">levels=</span>LETTERS[<span class="dv">1</span>:<span class="dv">6</span>]))
-df.wrong &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">4</span>:<span class="dv">6</span>, <span class="dt">grade=</span><span class="kw">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>))
-
-<span class="kw">alike</span>(df.tpl, df.correct)</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">4</span>)</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(df.tpl, df.wrong)</code></pre>
-<pre><code>## [1] &quot;Mismatch at column `grade`: length mismatch for attribute \&quot;levels\&quot;: expected 6, but got 3&quot;</code></pre>
-<p><code>alike</code> will be used in <code>validate</code> to provide a template based mechanism for validating user inputs to functions, but can be used in any place that verifying object structure is useful.</p>
-<p>The rules governing what makes objects alike are complex to explain, but should result in intuitive outcomes. We recommend you look at the examples in the documentation for <code>alike</code> to get a sense for how <code>alike</code> works. If you want to understand the specifics, read on.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), letters)  <span class="co"># type is still defined and must match</span></code></pre></div>
+<pre><code>## [1] &quot;`letters` should be type \&quot;integer-like\&quot; (is \&quot;character\&quot;)&quot;</code></pre>
+<p>Similarly, if a template does not specify an attribute, objects with any value for that attribute will match:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(), <span class="kw">data.frame</span>())  <span class="co"># a data frame is a list with a attributes</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">data.frame</span>(), <span class="kw">list</span>())  <span class="co"># but a list does not have the data.frame attributes</span></code></pre></div>
+<pre><code>## [1] &quot;`list()` should be class \&quot;data.frame\&quot; (is \&quot;list\&quot;)&quot;</code></pre>
+<p>As an extension to the wildcard concept, we interpret partially specified <a href="#Special%20Attributes">core R attributes</a>. Here we allow any three column integer matrix to match:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mx.tpl &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>)          <span class="co"># partially specified matrix</span>
+<span class="kw">alike</span>(mx.tpl, <span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">12</span>), <span class="dt">nrow=</span><span class="dv">4</span>))  <span class="co"># any number of rows match</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(mx.tpl, <span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">12</span>), <span class="dt">nrow=</span><span class="dv">3</span>))  <span class="co"># but column count must match</span></code></pre></div>
+<pre><code>## [1] &quot;`matrix(sample(1:12), nrow = 3)` should have 3 columns (has 4)&quot;</code></pre>
+<p>or a data frame of arbitrary number of rows, but same column structure as <code>iris</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">iris.tpl &lt;-<span class="st"> </span>iris[<span class="dv">0</span>, ]                        <span class="co"># no rows, but structure is defined</span>
+<span class="kw">alike</span>(iris.tpl, iris[<span class="dv">1</span>:<span class="dv">10</span>, ])                <span class="co"># any number of rows match</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(iris.tpl, CO2)                         <span class="co"># but column structure must match</span></code></pre></div>
+<pre><code>## [1] &quot;`names(CO2)[1]` should be \&quot;Sepal.Length\&quot; (is \&quot;Plant\&quot;)&quot;</code></pre>
+<p>“alikeness” is complex to describe, but should be intuitive to grasp. We recommend you look at the examples in the documentation for <code>alike</code> to get a sense for alikeness. If you want to understand the specifics, read on.</p>
 </div>
-<div id="templates" class="section level2">
-<h2>Templates</h2>
+<div id="motivation" class="section level3">
+<h3>Motivation</h3>
+<p><code>alike</code> allows for template based validation of function arguments, and is used for that purpose by <code>validate</code>. S3 object templates represent structural requirements in a manner akin to prototypes in some OOP languages. Verifying the structural similarity of an S3 object as it enters our functions allows us to write simpler and more robust code. The S4 system does this and more, but S3 objects are still used extensively in R code.</p>
+<p>An alternative to template based validation is to directly check the structure of objects (e.g. <code>is.numeric(.) &amp;&amp; length(.) == .</code>). There are a few advantages to the template based approach:</p>
+<ul>
+<li>Often times it is simpler to define a template than to write out all the checks to confirm an object conforms to a particular structure</li>
+<li>We can generate the template from a known correct instance of an object and <a href="#Abstracting-Existing-Objects">abstract away</a> the elements that are not specific to the prototype (this is particularly valuable for otherwise complex objects)</li>
+<li>We can produce plainish-english interpretations of structural mismatches since we are dealing with a known limited set of comparisons</li>
+<li>Much of the code we would repeat in every function is encapsulated within <code>alike</code></li>
+</ul>
+</div>
+</div>
+<div id="object-comparison" class="section level2">
+<h2>Object Comparison</h2>
 <div id="overview" class="section level3">
 <h3>Overview</h3>
-<p>The basic concept behind <code>alike</code> is to allow the user to define templates to use as the <code>target</code> argument to compare against the <code>current</code> argument. Templates can specify as little or as much structure as desired, and <code>alike</code> will only compare the object against the aspects of the template that are defined. This is how we are able to define our matrix template in the introduction that only checks for the number of columns in an object.</p>
-<p>One implication of this is that <code>alike</code> is not “commutative”. Compare the following to our previous examples:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">nrow=</span><span class="dv">3</span>), <span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">ncol=</span><span class="dv">4</span>))</code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">ncol=</span><span class="dv">4</span>), <span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">nrow=</span><span class="dv">3</span>))   <span class="co"># reverse args</span></code></pre>
-<pre><code>## [1] &quot;column count mismatch: expected 4, but got 0&quot;</code></pre>
-<p>Our template now defines a non-zero length object so <code>current</code> must match its length.</p>
-</div>
-<div id="structure-wildcards" class="section level3">
-<h3>Structure Wildcards</h3>
-<p>In addition to zero length <code>target</code> matching any length <code>current</code>, any <code>NULL</code> values nested in <code>target</code> will match anything at all in current, but if <code>target</code> is <code>NULL</code> then current must be <code>NULL</code>:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">integer</span>(), <span class="dv">1</span>:<span class="dv">10</span>)               <span class="co"># zero length matches any length of same type</span></code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="ot">NULL</span>, mtcars)                  <span class="co"># NULL only matches NULL</span></code></pre>
-<pre><code>## [1] &quot;Type mismatch, expected \&quot;NULL\&quot;, but got \&quot;list\&quot;&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>), <span class="kw">list</span>(mtcars))      <span class="co"># but inside a list, NULL matches anything</span></code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars, iris))      <span class="co"># zero length list matches any list</span></code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars))  <span class="co"># two NULLs match two length list</span></code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, mtcars, iris))   <span class="co"># but not three length list</span></code></pre>
-<pre><code>## [1] &quot;Length mismatch: expected 2 but got 3&quot;</code></pre>
-<p>Treating <code>NULL</code> differently depending on whether it is nested or not is a compromise designed to make <code>alike</code> a better fit for argument validation. Arguments that are <code>NULL</code> by default are fairly common, so it is useful for <code>alike</code> to be able to determine whether something is <code>NULL</code>. At the same time, we need some mechanism for specifying arbitrary contents in lists of fixed length, so we allow <code>NULL</code> to act as a wildcard when nested inside other objects. This inconsistent treatment is rendered necessary by <code>NULL</code> being both a type and a zero length value (or a value-less type).</p>
-</div>
-</div>
-<div id="comparison-details" class="section level2">
-<h2>Comparison Details</h2>
-<div id="overview-1" class="section level3">
-<h3>Overview</h3>
-<p><code>alike</code> will compare the internal types of objects (see <code>base::typeof</code>), their lengths, and their attributes. Generally speaking objects are considered alike if they are of the same type, length, and have identical attributes, though there are exceptions we will discuss later.</p>
-<p><code>alike</code> will recurse through lists and do pairwise alikeness comparisons between the corresponding elements of the <code>target</code> and <code>current</code> lists. Among other things, this means that <code>alike</code> will compare the structures of the component vectors of <code>data.frame</code> as these are lists.</p>
+<p><code>alike</code> compares objects on <a href="#type-comparison">type</a>, <a href="length-comparison">length</a>, and attributes. Recursive structures are compared element by element. <a href="#language-objects">Language objects</a> and <a href="#functions">functions</a> are compared specially because the concept of a value within those is more complex (e.g., is the <code>+</code> in <code>x + y</code> just a value?).</p>
+<p>We will defer discussion of attribute comparison to the <a href="#attribute-comparison">attributes section</a>.</p>
 </div>
 <div id="length-comparison" class="section level3">
 <h3>Length Comparison</h3>
-<p><code>target</code> and <code>current</code> object lengths must be the same, unless the <code>target</code> object has length zero, in which case the <code>current</code> object can have any length. If your template does not need to restrict the length of an object then you would use a zero length element as the <code>target</code> object. Note the implication here is that you cannot create a template that requires the <code>current</code> object to have length zero, but this should be a rare requirement.</p>
+<p>Objects must be the same length to be <code>alike</code>, unless the template (<code>target</code>) is zero length, in which case the object may be any length. <a href="#environments">Environments</a> are an exception: we only require that all the elements present in <code>target</code> be present in <code>current</code>. Also, note that calls to <code>(</code> are ignored in <a href="#language-objects">language objects</a>, which may affect length computation.</p>
 </div>
 <div id="type-comparison" class="section level3">
 <h3>Type Comparison</h3>
-<p>Type comparison is done as if it were done using <code>typeof</code> with the notable exception that numerics and integers are treated specially. For example:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="dv">1</span>)     <span class="co"># note 1 is not integer</span></code></pre>
+<p>Type comparison is done on type (i.e. the <code>typeof</code>) with some adjustments to better align comparisons to “percieved” types as opposed to internal storage types.</p>
+<div id="numerics-and-integers" class="section level4">
+<h4>Numerics and Integers</h4>
+<p>We allow integer vectors to be considered numeric, and <a href="#fuzzylen">short</a> integer-like numerics to be treated as integers:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="dv">1</span>)     <span class="co"># `1` is not technically integer, but we treat it as such</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">is.integer</span>(<span class="dv">1</span>)</code></pre>
-<pre><code>## [1] FALSE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="fl">1.1</span>)   <span class="co"># 1.1 is not integer-like</span></code></pre>
-<pre><code>## [1] &quot;Type mismatch, expected \&quot;integer-like\&quot;, but got \&quot;double\&quot;&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="fl">1.1</span>, 1L)   <span class="co"># but integers can match numerics</span></code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(1L, <span class="fl">1.1</span>)   <span class="co"># 1.1 is not integer-like</span></code></pre></div>
+<pre><code>## [1] &quot;`1.1` should be type \&quot;integer-like\&quot; (is \&quot;double\&quot;)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="fl">1.1</span>, 1L)   <span class="co"># integers can match numerics</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<p><code>alike</code> treats integer-like numerics as integers. Additionally, integers can match numeric templates. If this is not the desired behavior you can use the <code>int.mode</code> parameter to engage a stricter comparison mode. While this feature may seem superfluous it avoids convolutions such as:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">is.numeric</span>(x) &amp;&amp;<span class="st"> </span><span class="kw">all.equal</span>(x, <span class="kw">floor</span>(x))</code></pre>
+<p>This feature is designed to simplify checks for integer-like numbers. The following two expressions are roughly equivalent:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">stopifnot</span>(<span class="kw">length</span>(x) ==<span class="st"> </span>1L &amp;&amp;<span class="st"> </span>(<span class="kw">is.integer</span>(x) ||<span class="st"> </span><span class="kw">is.numeric</span>(x) &amp;&amp;<span class="st"> </span><span class="kw">floor</span>(x) ==<span class="st"> </span>x))
+<span class="kw">stopifnot</span>(<span class="kw">alike</span>(<span class="kw">integer</span>(1L), x))</code></pre></div>
+<p><a name="fuzzylen"></a>Note that we only check numerics of length &lt;= 100 for integerness to avoid full scans on large vectors. We expect that the primary source of these integer-like numerics is hand input vectors (e.g. <code>c(1, 2, 3)</code>), so hopefully this compromise is not too limiting.</p>
 </div>
-<div id="attribute-comparison" class="section level3">
-<h3>Attribute Comparison</h3>
-<div id="overview-2" class="section level4">
+<div id="functions" class="section level4">
+<h4>Functions</h4>
+<p>Closures, builtins, and specials are all treated as a single type, even though internally they are stored as different types.</p>
+</div>
+</div>
+<div id="recursive-objects" class="section level3">
+<h3>Recursive Objects</h3>
+<p><code>alike</code> will recurse through lists (and by extension data frames), pairlists, expressions, and environments and will check pairwise alikeness between the corresponding elements of the <code>target</code> and <code>current</code> objects.</p>
+<p><a name="environments"></a>Environments have slightly different comparison rules in two respects:</p>
+<ul>
+<li>only the elements present in the template are checked, so <code>current</code> may have additional items</li>
+<li>if the template is the global environment, then <code>current</code> must be too (this is because the global environment is often littered with many objects, and explicitly comparing it to another environment could be computationally expensive)</li>
+</ul>
+<p><code>NULL</code> elements within templates in recursive objects are considered undefined and as such act like wildcards:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, letters))       <span class="co"># two NULLs match two length list</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>), <span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">10</span>, letters, iris)) <span class="co"># but not three length list</span></code></pre></div>
+<pre><code>## [1] &quot;`list(1:10, letters, iris)` should be length 2 (is 3)&quot;</code></pre>
+<p>Note that top level <code>NULL</code>s do not act as wildcards:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="ot">NULL</span>, <span class="dv">1</span>:<span class="dv">10</span>)                   <span class="co"># NULL only matches NULL</span></code></pre></div>
+<pre><code>## [1] &quot;`1:10` should be \&quot;NULL\&quot; (is \&quot;integer\&quot;)&quot;</code></pre>
+<p>Treating <code>NULL</code> inconsistenly depending on whether it is nested or not is a compromise designed to make <code>alike</code> a better fit for argument validation because arguments that are <code>NULL</code> by default are fairly common.</p>
+<p><code>alike</code> will check for self-referential loops in nested environments and prevent infinite recursion. If you somehow introduce a self-referential structure in a template without using environments then <code>alike</code> will get stuck in an infinite recursion loop.</p>
+</div>
+<div id="language-objects" class="section level3">
+<h3>Language Objects</h3>
+<p>Language objects are also compared recursively, but alikeness has a slightly different meaning for them:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">quote</span>(<span class="kw">sum</span>(a, b)), <span class="kw">quote</span>(<span class="kw">sum</span>(x, y)))   <span class="co"># calls are consistent</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">quote</span>(<span class="kw">sum</span>(a, b)), <span class="kw">quote</span>(<span class="kw">sum</span>(x, x)))   <span class="co"># calls are inconsistent</span></code></pre></div>
+<pre><code>## [1] &quot;`quote(sum(x, x))[[3]]` should not be `x`&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">quote</span>(<span class="kw">mean</span>(a, b)), <span class="kw">quote</span>(<span class="kw">sum</span>(x, y)))  <span class="co"># functions are different</span></code></pre></div>
+<pre><code>## [1] &quot;`quote(sum(x, y))[[1]]` should be a call to `mean` (is a call to `sum`)&quot;</code></pre>
+<p>Since variables can contain anything we do not require them to match directly across calls. In the examples above the second call fails because the template defines different variables for each argument, but the <code>current</code> object uses the same variable twice. The third call fails because the functions are different and as such the calls are fundamentally different.</p>
+<p>If a function is defined in the calling frame, <code>alike</code> will <code>match.call</code> it prior to testing alikeness:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fun &lt;-<span class="st"> </span>function(a, b, c) <span class="ot">NULL</span>
+<span class="kw">alike</span>(<span class="kw">quote</span>(<span class="kw">fun</span>(p, q, p)), <span class="kw">quote</span>(<span class="kw">fun</span>(y, x, x)))</code></pre></div>
+<pre><code>## [1] &quot;`quote(fun(y, x, x))$c` should be `y` (is `x`)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">quote</span>(<span class="kw">fun</span>(p, q, p)), <span class="kw">quote</span>(<span class="kw">fun</span>(<span class="dt">b=</span>y, x, x)))  <span class="co"># `match.call` re-orders arguments</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<p>Constants match any constants, but keep in mind that expressions like <code>1:10</code> or <code>c(1, 2, 3)</code> are calls to <code>:</code> and <code>c</code> respectively, not constants in the context of language objects.</p>
+<p>Formulas are treated like calls, except that constants must match:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(y ~<span class="st"> </span>x ^<span class="st"> </span><span class="dv">2</span>, a ~<span class="st"> </span>b ^<span class="st"> </span><span class="dv">2</span>)</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(y ~<span class="st"> </span>x ^<span class="st"> </span><span class="dv">2</span>, a ~<span class="st"> </span>b ^<span class="st"> </span><span class="dv">3</span>)</code></pre></div>
+<pre><code>## [1] &quot;`(a ~ b^3)[[3]][[3]]` should have identical constant values&quot;</code></pre>
+<p><code>NULL</code> is a wild card in calls as well:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(one.arg.tpl &lt;-<span class="st"> </span><span class="kw">as.call</span>(<span class="kw">list</span>(<span class="ot">NULL</span>, <span class="ot">NULL</span>)))</code></pre></div>
+<pre><code>##  language NULL(NULL)</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(one.arg.tpl, <span class="kw">quote</span>(<span class="kw">log</span>(<span class="dv">10</span>)))</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(one.arg.tpl, <span class="kw">quote</span>(<span class="kw">sd</span>(<span class="kw">runif</span>(<span class="dv">20</span>))))</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(one.arg.tpl, <span class="kw">quote</span>(<span class="kw">log</span>(<span class="dv">10</span>, <span class="dv">10</span>)))</code></pre></div>
+<pre><code>## [1] &quot;`quote(log(10, 10))` should have 1 arguments (has 2)&quot;</code></pre>
+<p>Calls to <code>(</code> are ignored when comparing calls since parentheses are redundant in call trees because the tree structure encodes operation precedence independent of operator precedence.</p>
+<p>We concede that the rules for “alikeness” of language objects are arbitrary, but hope the outcomes of those rules is generally intuitive. Unfortunately value and structure are somewhat intertwined for language objects so we must impose our own view of what is value and what is structure.</p>
+</div>
+<div id="functions-1" class="section level3">
+<h3>Functions</h3>
+<p>Functions are <code>alike</code> if the signature of the <code>current</code> function can reasonably be interpreted as a valid method for the <code>target</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(print, print.default)   <span class="co"># print can be the generic for print.default</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(print.default, print)   <span class="co"># but not vice versa</span></code></pre></div>
+<pre><code>## [1] &quot;`print` should have argument `digits` after argument `x`&quot;</code></pre>
+<p>A method of a generic must have all arguments present in the generic, with the same default values if those are defined. If the generic contains <code>...</code> then the method may have additional arguments, but must also contain <code>...</code>.</p>
+</div>
+<div id="s4-and-r5-rc-objects" class="section level3">
+<h3>S4 and R5 (RC Objects)</h3>
+<p>S4 and RC objects are considered alike if <code>current</code> inherits from <code>class(target)</code>. Since these objects embed structural information in their definitions <code>alike</code> relies on class alone to estabilish alikeness.</p>
+</div>
+<div id="pointer-objects" class="section level3">
+<h3>Pointer Objects</h3>
+<p>Objects of the following types are actually references to specific memory locations:</p>
+<ul>
+<li>External Pointers</li>
+<li>Weak References</li>
+<li>Byte codes</li>
+</ul>
+<p>These are typically attached as attributes to other objects that contain the information required to establish alikeness (e.g. <code>data.table</code>, byte-compiled functions), so we only check their type.</p>
+</div>
+</div>
+<div id="attribute-comparison" class="section level2">
+<h2>Attribute Comparison</h2>
+<div id="normal-attributes" class="section level3">
+<h3>Normal Attributes</h3>
+<p>Much of the structure of an object is determined by attributes. <code>alike</code> recursively compares object attributes and requires them to be <code>alike</code>, unless the attribute is a <a href="#special-attributes">special attribute</a> or an environment. Environments within attributes in the template must be matched by an environment, but nothing is checked about the environments to avoid expensive computations on objects that commonly include environments in their attributes (e.g. formulas); note this is different than the treatment of environments as actual objects.</p>
+<p>Only attributes present in the template object are checked:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">structure</span>(<span class="kw">logical</span>(1L), <span class="dt">a=</span><span class="kw">integer</span>(3L)), <span class="kw">structure</span>(<span class="ot">TRUE</span>, <span class="dt">a=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">b=</span>letters))</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">structure</span>(<span class="ot">TRUE</span>, <span class="dt">a=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">b=</span>letters), <span class="kw">structure</span>(<span class="kw">logical</span>(1L), <span class="dt">a=</span><span class="kw">integer</span>(3L)))</code></pre></div>
+<pre><code>## [1] &quot;`structure(logical(1L), a = integer(3L))` should have attribute \&quot;b\&quot;&quot;</code></pre>
+<p>Attributes present in <code>current</code> but missing in <code>target</code> may be anything at all.</p>
+</div>
+<div id="special-attributes" class="section level3">
+<h3>Special Attributes</h3>
+<div id="overview-1" class="section level4">
 <h4>Overview</h4>
-<p>Attributes present in <code>target</code> must be present in <code>current</code>, but <code>current</code> may have additional attributes not present in <code>target</code>. The attributes that overlap must be <code>identical</code>, with some important exceptions outlined below. You can engage stricter comparison modes with the <code>attr.mode</code> parameter. Note that length zero attributes in <code>target</code> do not match arbitrary length attributes in <code>current</code> except as detailed below.</p>
+<p>The special attributes are <code>names</code>, <code>row.names</code>, <code>dim</code>, <code>dimnames</code>, <code>class</code>, <code>tsp</code>, and <code>levels</code>. These attributes are discussed in sections <a href="http://cran.r-project.org/doc/manuals/r-release/R-lang.html#Attributes">2.2 and 2.3 of the R Language Definition</a>, and have well defined and consistently applied semantics in R. Since the semantics of these attributes are well known, we are able to define “alikeness” for them in a more granular way than we can for arbitrary attributes.</p>
 </div>
 <div id="row.names-and-names" class="section level4">
-<h4><code>row.names</code> and <code>names</code></h4>
+<h4>row.names and names</h4>
 <p>If present in <code>target</code>, then must be matched exactly by the corresponding attribute in <code>current</code>, except that:</p>
 <ul>
-<li>zero length character values (i.e. <code>&quot;&quot;</code>) in <code>target</code> <code>names</code>/<code>row.names</code> will match any character value in the corresponding position of the <code>current</code> <code>names</code>/<code>row.names</code></li>
-<li>zero length <code>target</code> attribute (i.e. <code>character(0L)</code>, contrast to above) will match any character <code>names</code>/<code>row.names</code></li>
+<li>zero length <code>target</code> <code>names</code>/<code>row.names</code> (i.e. <code>character(0L)</code>) will match any character <code>names</code>/<code>row.names</code></li>
+<li>a zero character <em>element</em> (i.e. <code>&quot;&quot;</code>) in a <code>target</code> <code>names</code>/<code>row.names</code> character vector will allow any value to match at the corresponding position of the <code>current</code> <code>names</code>/<code>row.names</code> vector</li>
 </ul>
-<p>These exceptions are necessary to allow you to partially specify names and dimensions:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># we use `structure` to circumvent default data.frame names</span>
-df.tpl &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">id=</span><span class="kw">integer</span>(), <span class="kw">numeric</span>(), <span class="kw">numeric</span>()), <span class="dt">class=</span><span class="st">&quot;data.frame&quot;</span>)
-df.dat1 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">id=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">x=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">y=</span><span class="kw">runif</span>(<span class="dv">3</span>))
-df.dat2 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">bogus=</span><span class="dv">1</span>:<span class="dv">3</span>, <span class="dt">x=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">y=</span><span class="kw">runif</span>(<span class="dv">3</span>))
-
-<span class="kw">alike</span>(df.tpl, df.dat1)</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">setNames</span>(<span class="kw">integer</span>(), <span class="kw">character</span>()), <span class="dv">1</span>:<span class="dv">3</span>)</code></pre></div>
+<pre><code>## [1] &quot;`names(1:3)` should be type \&quot;character\&quot; (is \&quot;NULL\&quot;)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">setNames</span>(<span class="kw">integer</span>(), <span class="kw">character</span>()), <span class="kw">c</span>(<span class="dt">a=</span><span class="dv">1</span>, <span class="dt">b=</span><span class="dv">2</span>, <span class="dt">c=</span><span class="dv">3</span>))</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">names</span>(df.tpl)</code></pre>
-<pre><code>## [1] &quot;id&quot; &quot;&quot;   &quot;&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">names</span>(df.dat1)</code></pre>
-<pre><code>## [1] &quot;id&quot; &quot;x&quot;  &quot;y&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rownames</span>(df.tpl)</code></pre>
-<pre><code>## character(0)</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rownames</span>(df.dat1)</code></pre>
-<pre><code>## [1] &quot;1&quot; &quot;2&quot; &quot;3&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(df.tpl, df.dat2)</code></pre>
-<pre><code>## [1] &quot;`names` mismatch: mismatch at index [[1]]: expected \&quot;id\&quot;, but got \&quot;bogus\&quot;&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">setNames</span>(<span class="kw">integer</span>(<span class="dv">3</span>), <span class="kw">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="st">&quot;Z&quot;</span>)), <span class="kw">c</span>(<span class="dt">a=</span><span class="dv">1</span>, <span class="dt">b=</span><span class="dv">2</span>, <span class="dt">c=</span><span class="dv">3</span>))</code></pre></div>
+<pre><code>## [1] &quot;`names(c(a = 1, b = 2, c = 3))[3]` should be \&quot;Z\&quot; (is \&quot;c\&quot;)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(<span class="kw">setNames</span>(<span class="kw">integer</span>(<span class="dv">3</span>), <span class="kw">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="st">&quot;Z&quot;</span>)), <span class="kw">c</span>(<span class="dt">a=</span><span class="dv">1</span>, <span class="dt">b=</span><span class="dv">2</span>, <span class="dt">Z=</span><span class="dv">3</span>))</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="dim" class="section level4">
-<h4><code>dim</code></h4>
-<p><code>dim</code> attributes must be identical between <code>target</code> and <code>current</code>, except that if a value of the <code>dim</code> vector is zero in <code>target</code> then the corresponding value in <code>current</code> can be any value. This is how comparisons like the following succeed:</p>
-<pre class="sourceCode r"><code class="sourceCode r">mx.tpl &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>);
-mx.cur &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">nrow=</span><span class="dv">4</span>)
-mx.cur2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span>:<span class="dv">12</span>, <span class="dt">nrow=</span><span class="dv">3</span>)
-<span class="kw">alike</span>(mx.tpl, mx.cur)</code></pre>
+<h4>dim</h4>
+<p><code>dim</code> attributes must be identical between <code>target</code> and <code>current</code>, except that if a value of the <code>dim</code> <em>vector</em> is zero in <code>target</code> then the corresponding value in <code>current</code> can be any value. This is how comparisons like the following succeed:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mx.tpl &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>)                <span class="co"># partially specified matrix</span>
+<span class="kw">alike</span>(mx.tpl, <span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">12</span>), <span class="dt">nrow=</span><span class="dv">4</span>))</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(mx.tpl)    <span class="co"># notice the 0 for the first value in the `dim` vector</span></code></pre>
-<pre><code>## [1] 0 3</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(mx.cur)</code></pre>
-<pre><code>## [1] 4 3</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(mx.tpl, mx.cur2)</code></pre>
-<pre><code>## [1] &quot;column count mismatch: expected 3, but got 4&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(mx.tpl, <span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">12</span>), <span class="dt">nrow=</span><span class="dv">3</span>))        <span class="co"># wrong number of columns</span></code></pre></div>
+<pre><code>## [1] &quot;`matrix(sample(1:12), nrow = 3)` should have 3 columns (has 4)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(mx.tpl)    <span class="co"># notice 0 for 1st dimension</span></code></pre></div>
+<pre><code>##  int[0 , 1:3]</code></pre>
 </div>
 <div id="dimnames" class="section level4">
-<h4><code>dimnames</code></h4>
-<p>Must also be identical, except that if the <code>target</code> value of the <code>dimnames</code> list for a particular dimension is <code>NULL</code>, then the corresponding <code>dimnames</code> value in <code>current</code> may be anything.</p>
-<p>Note that <code>dimnames</code> itself can also have a <code>names</code> attribute. If the <code>names</code> attribute to <code>dimnames</code> is specified in <code>target</code>, then it must be identical in <code>current</code>, with the exception that zero length character values (i.e. <code>&quot;&quot;</code>) in <code>target</code> will match any string in the corresponding name in <code>target</code>:</p>
-<pre class="sourceCode r"><code class="sourceCode r">mx.tpl &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dt">row.id=</span><span class="ot">NULL</span>, <span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;B&quot;</span>)))
-mx.cur &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">0</span>:<span class="dv">255</span>, <span class="dv">12</span>), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dt">row.id=</span><span class="dv">1</span>:<span class="dv">4</span>, <span class="dt">rgb=</span><span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;B&quot;</span>)))
-mx.cur2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">0</span>:<span class="dv">255</span>, <span class="dv">12</span>), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">4</span>, <span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;B&quot;</span>)))
+<h4>dimnames</h4>
+<p>Must also be identical, except that if the <code>target</code> value of the <code>dimnames</code> list for a particular dimension is <code>NULL</code>, then the corresponding <code>dimnames</code> value in <code>current</code> may be anything. As with <code>names</code>, zero character <code>dimname</code> element elements match any name.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mx.tpl &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dt">row.id=</span><span class="ot">NULL</span>, <span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;&quot;</span>)))
+mx.cur &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">0</span>:<span class="dv">255</span>, <span class="dv">12</span>), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dt">row.id=</span><span class="dv">1</span>:<span class="dv">4</span>, <span class="dt">rgb=</span><span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;Blue&quot;</span>)))
+mx.cur2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">0</span>:<span class="dv">255</span>, <span class="dv">12</span>), <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">dimnames=</span><span class="kw">list</span>(<span class="dv">1</span>:<span class="dv">4</span>, <span class="kw">c</span>(<span class="st">&quot;R&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;b&quot;</span>)))
 
-<span class="kw">alike</span>(mx.tpl, mx.cur)</code></pre>
+<span class="kw">alike</span>(mx.tpl, mx.cur)</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(mx.tpl, mx.cur2)</code></pre>
-<pre><code>## [1] &quot;\&quot;dimnames\&quot; _names_ mismatch: type mismatch: expected \&quot;character\&quot;, but got \&quot;NULL\&quot;&quot;</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">names</span>(<span class="kw">dimnames</span>(mx.tpl))</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(mx.tpl, mx.cur2)</code></pre></div>
+<pre><code>## [1] &quot;`names(dimnames(mx.cur2))` should be type \&quot;character\&quot; (is \&quot;NULL\&quot;)&quot;</code></pre>
+<p>Note that <code>dimnames</code> can have a <code>names</code> attribute. This <code>names</code> attributed is treated as described in <a href="#row.names-and-names">row.names and names</a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">names</span>(<span class="kw">dimnames</span>(mx.tpl))</code></pre></div>
 <pre><code>## [1] &quot;row.id&quot; &quot;&quot;</code></pre>
 </div>
 <div id="class" class="section level4">
-<h4><code>class</code></h4>
+<h4>class</h4>
 <p>S3 objects are considered alike if the <code>current</code> class inherits from the <code>target</code> class. Note that “inheritance” here is used in a stricter context than in the typical S3 application:</p>
 <ul>
 <li>Every class present in <code>target</code> must be present in <code>current</code></li>
@@ -229,101 +335,140 @@ mx.cur2 &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class
 <li>The last class in <code>current</code> must be the same as the last class in <code>target</code></li>
 </ul>
 <p>To illustrate:</p>
-<pre class="sourceCode r"><code class="sourceCode r">tpl &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="ot">NULL</span>, <span class="dt">class=</span><span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tpl &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="ot">NULL</span>, <span class="dt">class=</span><span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>))
 cur &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="ot">NULL</span>, <span class="dt">class=</span><span class="kw">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>))
 cur2 &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="ot">NULL</span>, <span class="dt">class=</span><span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;x&quot;</span>))
 
-<span class="kw">alike</span>(tpl, cur)</code></pre>
+<span class="kw">alike</span>(tpl, cur)</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(tpl, cur2)</code></pre>
-<pre><code>## [1] &quot;\&quot;class\&quot; mismatch at class element #2: expected \&quot;a\&quot;, but got \&quot;b\&quot;&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">alike</span>(tpl, cur2)</code></pre></div>
+<pre><code>## [1] &quot;`class(cur2)[2]` should be \&quot;a\&quot; (is \&quot;b\&quot;)&quot;</code></pre>
 </div>
-<div id="s4-and-reference-class-r5-objects" class="section level4">
-<h4>S4 and Reference Class (R5) Objects</h4>
-<p>S4 and RC objects are considered alike if <code>current</code> inherits from <code>class(target)</code>.</p>
+<div id="tsp" class="section level4">
+<h4>tsp</h4>
+<p>The <code>tsp</code> attribute of <code>ts</code> objects behaves similarly to the <a href="#dim"><code>dim</code> attribute</a>. Any component (i.e. start, end, frequency) that is set to zero will act as a wild card. Other components must be identical. It is illegal to set <code>tsp</code> components to zero throught the standard R interface, but you may use <code>abstract</code> as a work-around.</p>
 </div>
-<div id="reference-objects" class="section level4">
-<h4>Reference Objects</h4>
-<p>Attributes containing objects of the following types are actually references to specific memory locations and as such are treated specially:</p>
-<ul>
-<li>Environments</li>
-<li>External Pointers</li>
-<li>Weak References</li>
-<li>Byte codes</li>
-</ul>
-<p>Because <code>identical</code> will return <code>FALSE</code> if the objects don’t point to the same memory location, even if they are technically equivalent, we only require that <code>target</code> and <code>current</code> be of the same type in order to meet the <code>alike</code> requirements. This isn’t ideal, but should lead to reasonable results in most circumstances.</p>
-<p>If you want these attributes to be comapred with <code>identical</code> set <code>attr.mode</code> to 1 or 2.</p>
+<div id="levels" class="section level4">
+<h4>levels</h4>
+<p>Levels are compared like <a href="#row.names-and-names">row.names and names</a>.</p>
+</div>
+<div id="normal-attributes-that-happen-to-have-special-names" class="section level4">
+<h4>Normal Attributes that Happen To Have Special Names</h4>
+<p>If an object contains one of the special attributes, but the attribute value is inconsistent with the standard definition of the attribute, <code>alike</code> will silently treat that attribute as any other normal attribute.</p>
 </div>
 </div>
 </div>
-<div id="objects-that-might-be-treated-differently-in-future" class="section level2">
-<h2>Objects That Might Be Treated Differently in Future</h2>
-<p>The following object types are not handled specially by alike, but might be in the future:</p>
-<ul>
-<li>Language objects (calls)</li>
-<li>Expressions</li>
-<li>Formulas</li>
-</ul>
-<p>Currently they are compared purely on length and internal type.</p>
+<div id="modifying-comparison-behavior" class="section level2">
+<h2>Modifying Comparison Behavior</h2>
+<p><code>.alike</code> is a sister function to <code>alike</code> with some additional options exposed through the <code>settings</code> argument. Among other things, you can modify how attributes and types are compared with the <code>attr.mode</code> and <code>type.mode</code> parameters. See the documentation for those parameters in <code>?alike</code>.</p>
 </div>
-<div id="alike-as-an-s3-generic" class="section level2">
-<h2><code>alike</code> as an S3 generic</h2>
-<p><code>alike</code> is not currently an S3 generic, but will likely become one in the future provided we can create an implementation with and acceptable performance profile.</p>
+<div id="creating-templates" class="section level2">
+<h2>Creating Templates</h2>
+<div id="from-the-ground-up" class="section level3">
+<h3>From The Ground Up</h3>
+<p>You can always create your own templates by manually building R structures:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">int.scalar &lt;-<span class="st"> </span><span class="kw">integer</span>(1L)
+int.mat<span class="fl">.2</span>.by<span class="fl">.4</span> &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">integer</span>(), <span class="dv">2</span>, <span class="dv">4</span>)
+df.chr.num.num &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="kw">list</span>(<span class="kw">character</span>(), <span class="kw">numeric</span>(), <span class="kw">numeric</span>()), <span class="dt">class=</span><span class="st">&quot;data.frame&quot;</span>)  <span class="co"># avoid having to specify column names</span></code></pre></div>
+</div>
+<div id="abstracting-existing-structures" class="section level3">
+<h3>Abstracting Existing Structures</h3>
+<p>Alternatively, you can start with a known structure, and abstract away the instance-specific details. For example, suppose we are sending sample collectors out on the field to record information about iris flowers:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">iris.tpl &lt;-<span class="st"> </span>iris[<span class="dv">0</span>, ]
+<span class="kw">alike</span>(iris.tpl, iris.sample<span class="fl">.1</span>)  <span class="co"># make sure they submit data correctly</span></code></pre></div>
+<p>Or equivalently:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">iris.tpl &lt;-<span class="st"> </span><span class="kw">abstract</span>(iris)</code></pre></div>
+<p><code>abstract</code> is an S3 generic defined by <code>alike</code> along with methods for common objects. <code>abstract</code> primarily sets the <code>length</code> of atomic vectors to zero:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">abstract</span>(<span class="kw">list</span>(<span class="kw">c</span>(<span class="dt">a=</span><span class="dv">1</span>, <span class="dt">b=</span><span class="dv">2</span>, <span class="dt">c=</span><span class="dv">3</span>), letters))</code></pre></div>
+<pre><code>## [[1]]
+## named numeric(0)
+## 
+## [[2]]
+## character(0)</code></pre>
+<p>and also abstracts the <code>dim</code>, <code>dimnames</code>, and <code>tsp</code> attributes if present. Other attributes are left untouched unless a specific <code>abstract</code> method exists for a particular object that also modifies attributes. One example of such a method is <code>abstract.lm</code>, and it does some minor tweaking to the base abstractions to allow us to match models produced by <code>lm</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df.dummy &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">y=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">z=</span><span class="kw">runif</span>(<span class="dv">3</span>))
+mdl.tpl &lt;-<span class="st"> </span><span class="kw">abstract</span>(<span class="kw">lm</span>(y ~<span class="st"> </span>x +<span class="st"> </span>z, df.dummy))
+<span class="kw">alike</span>(mdl.tpl, <span class="kw">lm</span>(Sepal.Length ~<span class="st"> </span>Sepal.Width +<span class="st"> </span>Petal.Width, iris))  <span class="co"># TRUE, expecting bi-variate model</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">alike</span>(mdl.tpl, <span class="kw">lm</span>(Sepal.Length ~<span class="st"> </span>Sepal.Width, iris)))           <span class="co"># `cat` here to make error message legible</span></code></pre></div>
+<pre><code>## `(lm(Sepal.Length ~ Sepal.Width, iris)$terms)[[3]]` should be a call to `+` (is &quot;symbol&quot;)</code></pre>
+<p>The error message is telling us that at index <code>&quot;terms&quot;</code> (i.e. <code>lm(Sepal.Length ~ Sepal.Width, iris)$terms</code>) <code>alike</code> was expecting a call to <code>+</code> instead of a symbol (i.e <code>Sepal.Width + &lt;somevar&gt;</code> instead of <code>Sepal.Width</code>). The message could certainly be more eloquent, but with a little context it should provide enough information to figure out the problem.</p>
+</div>
 </div>
 <div id="performance-considerations" class="section level2">
 <h2>Performance Considerations</h2>
-<div id="overview-3" class="section level3">
-<h3>Overview</h3>
-<p><code>alike</code> is implemented in C and is relatively fast:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(microbenchmark)
+<div id="sample-timings" class="section level3">
+<h3>Sample Timings</h3>
+<p>We have gone to great lengths to make <code>alike</code> fast so that it can be included in other functions without concerns for what overhead. Here are some benchmarks measured on a Intel(R) Core(TM) i7-3667U CPU @@ 2.00GHz MBA running OS X Mavericks and R 3.1.2.:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(microbenchmark)
+type_and_len &lt;-<span class="st"> </span>function(a, b) <span class="kw">typeof</span>(a) ==<span class="st"> </span><span class="kw">typeof</span>(b) &amp;&amp;<span class="st"> </span><span class="kw">length</span>(a) ==<span class="st"> </span><span class="kw">length</span>(b)  <span class="co"># for reference</span>
 <span class="kw">microbenchmark</span>(
-  <span class="kw">all.equal</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>),
-  <span class="kw">identical</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>),
-  <span class="kw">alike</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>),
-  <span class="kw">all.equal</span>(mtcars, mtcars),
+  <span class="kw">identical</span>(rivers, rivers),
+  <span class="kw">alike</span>(rivers, rivers),
+  <span class="kw">type_and_len</span>(rivers, rivers)
+)</code></pre></div>
+<pre><code>## Unit: nanoseconds
+##                          expr  min     lq    mean median     uq    max
+##     identical(rivers, rivers)  937 1086.0 1261.13 1190.0 1349.5   3376
+##         alike(rivers, rivers) 1259 1412.5 2986.77 1506.0 1685.0 118714
+##  type_and_len(rivers, rivers) 1387 1615.5 2494.93 1770.5 1972.0  42490
+##  neval
+##    100
+##    100
+##    100</code></pre>
+<p>While <code>alike</code> is slower than <code>identical</code>, it is competitive and is actually faster than a bare bones R function that checks types and length. As objects grow more complex, <code>identical</code> will obviously pull ahead, though <code>alike</code> should be sufficiently fast for most applications:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">microbenchmark</span>(
   <span class="kw">identical</span>(mtcars, mtcars),
   <span class="kw">alike</span>(mtcars, mtcars)
-)</code></pre>
+)</code></pre></div>
 <pre><code>## Unit: nanoseconds
-##                       expr    min     lq median     uq     max neval
-##      all.equal(1:10, 1:10)  39746  43502  46042  48793  129283   100
-##      identical(1:10, 1:10)   1281   1794   2333   2730   44172   100
-##          alike(1:10, 1:10)   1542   2216   2882   3883    6535   100
-##  all.equal(mtcars, mtcars) 412035 519658 534947 560886 1613267   100
-##  identical(mtcars, mtcars)    873   1424   1766   2033    3729   100
-##      alike(mtcars, mtcars)  14457  15038  16267  17348   28601   100</code></pre>
-<p><code>identical</code> will pull ahead with more complex objects, but <code>alike</code> should remain substantially faster than <code>all.equal</code>.</p>
-</div>
-<div id="alike" class="section level3">
-<h3><code>.alike</code></h3>
-<p><code>.alike</code> does not accept any parameters outside of <code>target</code> and <code>current</code>, but as a result is slightly faster than <code>alike</code>:</p>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(microbenchmark)
-<span class="kw">microbenchmark</span>(
-  <span class="kw">alike</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>),
-  <span class="kw">.alike</span>(<span class="dv">1</span>:<span class="dv">10</span>, <span class="dv">1</span>:<span class="dv">10</span>)
-)</code></pre>
-<pre><code>## Unit: microseconds
-##                expr   min    lq median    uq    max neval
-##   alike(1:10, 1:10) 2.676 2.831  3.029 3.442  52.33   100
-##  .alike(1:10, 1:10) 2.010 2.149  2.250 2.507 251.82   100</code></pre>
-<p>You should use <code>.alike</code> if you don’t require access to the other <code>alike</code> parameters and if you’re looking to minimize overhead, but keep in mind the difference is pretty small.</p>
+##                       expr  min     lq    mean median     uq    max neval
+##  identical(mtcars, mtcars)  956 1150.5 1475.44   1280 1554.0  10596   100
+##      alike(mtcars, mtcars) 3721 3879.0 6367.13   4007 4189.5 220442   100</code></pre>
+<p>In the above example, we are comparing the data frames, their attributes, and the 11 columns individually.</p>
+<p>Keep in mind that the complexity of the <code>alike</code> comparison is driven by the complexity of the template, not the object we are checking, so we can always manage the expense of the <code>alike</code> evaluation.</p>
+<p>Comparisons that succeed will be substantially faster than comparisons that fail as the construction of error messages is non-trivial and we have prioritized optimization in the success case.</p>
+<p>Language object comparison is relatively slow. We intend to optimize this some day.</p>
+<p>Templates with large numbers of attributes (e.g. &gt; 25) may scale non-linearly. We intend to optimize this some day, though in our experience objects with that many attributes are rare (note having multiple objects each with a handful attributes nested in recursive structures is not a problem).</p>
+<p>Large objects will be slower to evaluate. Let us revisit the <code>lm</code> example, though this time we compare our template to itself to ensure that the comparisons succeed for <code>alike</code>, <code>all.equal</code>, and <code>identical</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mdl.tpl &lt;-<span class="st"> </span><span class="kw">abstract</span>(<span class="kw">lm</span>(y ~<span class="st"> </span>x +<span class="st"> </span>z, <span class="kw">data.frame</span>(<span class="dt">x=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">y=</span><span class="kw">runif</span>(<span class="dv">3</span>), <span class="dt">z=</span><span class="kw">runif</span>(<span class="dv">3</span>))))
+mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(<span class="dt">unit=</span><span class="st">&quot;us&quot;</span>,
+  <span class="kw">alike</span>(mdl.tpl, mdl.tpl),       <span class="co"># compare mdl.tpl to itself to ensure success in all three scenarios</span>
+  <span class="kw">all.equal</span>(mdl.tpl, mdl.tpl),   <span class="co"># for reference</span>
+  <span class="kw">identical</span>(mdl.tpl, mdl.tpl)
+)
+<span class="kw">summary</span>(mb)[<span class="dv">1</span>:<span class="dv">4</span>]  <span class="co"># note: in microseconds</span></code></pre></div>
+<pre><code>##                          expr      min        lq      mean
+## 1     alike(mdl.tpl, mdl.tpl)   81.469   88.4115  111.1869
+## 2 all.equal(mdl.tpl, mdl.tpl) 1657.785 1733.4870 2094.1337
+## 3 identical(mdl.tpl, mdl.tpl)    1.025    1.7160    2.6780</code></pre>
+<p>Even with template as large as <code>lm</code> results (check <code>str(mdl.tpl)</code>) we can evaluate <code>alike</code> thousands of times before the overhead becomes noticeable.</p>
 </div>
 <div id="pre-defining-templates" class="section level3">
 <h3>Pre-defining Templates</h3>
 <p>Some fairly innocuous R expressions carry substantial overhead. Consider:</p>
-<pre class="sourceCode r"><code class="sourceCode r">df.tpl &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="kw">integer</span>(), <span class="kw">numeric</span>())
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df.tpl &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">a=</span><span class="kw">integer</span>(), <span class="dt">b=</span><span class="kw">numeric</span>())
 df.cur &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">a=</span><span class="dv">1</span>:<span class="dv">10</span>, <span class="dt">b=</span><span class="dv">1</span>:<span class="dv">10</span> +<span class="st"> </span>.<span class="dv">1</span>)
 
-<span class="kw">library</span>(microbenchmark)
-mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(
+mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(<span class="dt">unit=</span><span class="st">&quot;us&quot;</span>,
   <span class="kw">alike</span>(df.tpl, df.cur),
   <span class="kw">alike</span>(<span class="kw">data.frame</span>(<span class="kw">integer</span>(), <span class="kw">numeric</span>()), df.cur)
 )
-<span class="kw">summary</span>(mb)[<span class="dv">1</span>:<span class="dv">4</span>]</code></pre>
-<pre><code>##                                              expr     min      lq  median
-## 1                           alike(df.tpl, df.cur)   3.654   4.246   4.648
-## 2 alike(data.frame(integer(), numeric()), df.cur) 252.166 257.531 299.694</code></pre>
-<p><code>data.frame</code> is a particularly slow constructor, but in general you are best served by defining your templates outside of your function if you want to keep things at their snappiest.</p>
+<span class="kw">summary</span>(mb)[<span class="dv">1</span>:<span class="dv">4</span>]  <span class="co"># note: in microseconds</span></code></pre></div>
+<pre><code>##                                              expr     min       lq
+## 1                           alike(df.tpl, df.cur)   3.499   4.0925
+## 2 alike(data.frame(integer(), numeric()), df.cur) 368.663 388.3510
+##        mean
+## 1   6.77237
+## 2 457.80745</code></pre>
+<p><code>data.frame</code> is a particularly slow constructor, but in general you are best served by defining your templates (including calls to <code>abstract</code>) outside of your function so they are created on package load rather than every time your function is called.</p>
+</div>
+</div>
+<div id="miscellaneous" class="section level2">
+<h2>Miscellaneous</h2>
+<div id="alike-as-an-s3-generic" class="section level3">
+<h3><code>alike</code> as an S3 generic</h3>
+<p><code>alike</code> is not currently an S3 generic, but will likely one in the future provided we can create an implementation with and acceptable performance profile.</p>
 </div>
 </div>
 

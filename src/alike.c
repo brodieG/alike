@@ -228,7 +228,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
     } else PROTECT(R_NilValue);
     int is_fun = 0;
 
-    if(!err && (is_fun = tar_type == CLOSXP && cur_type == CLOSXP)) {
+    if(!err && (is_fun = isFunction(target) && isFunction(current))) {
       err_fun = ALIKEC_fun_alike_internal(target, current);
       if(err_fun.target[0]) {
         err = 1;

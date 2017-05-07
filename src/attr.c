@@ -934,20 +934,25 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   } else {
     prim_attr = tar_attr;
     sec_attr = cur_attr;
-    if(cur_attr == R_NilValue) {
+    if(
+      cur_attr == R_NilValue &&
+      (
+       set.attr_mode ||
+       // if the only attribute in `tar_attr` is srcref then it is okay that
+       // `cur_attr` is NULL
+       !(
+         !strcmp(CHAR(PRINTNAME(TAG(prim_attr))), "srcref") &&
+         CDR(prim_attr) == R_NilValue
+      ) )
+    ) {
       errs[7].success = 0;
       errs[7].message = PROTECT(
         ALIKEC_res_msg_def(
-          "not have",
+          "have",
           "attributes",
           "has",
-          CSR_smprintf4(
-            ALIKEC_MAX_CHAR, "%s attributes",
-            CSR_len_as_chr(xlength(cur_attr)), "", "", ""
-      ) ) );
-      SET_VECTOR_ELT(
-        errs[7].message, 1, ALIKEC_attr_wrap(TAG(tar_attr), R_NilValue)
-      );
+          "none"
+      ) );
     } else PROTECT(R_NilValue);
   }
   ps++;
@@ -958,11 +963,11 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   set.in_attr++;
 
   /*
-  Loop through all attr combinations; maybe could be made faster by
-  reducing the second loop each time a match is found, though this would require
-  duplication of the attributes (likely faster for items with lots of attributes,
-  but slower for those with few; ideally need a way to duplicate the LISTSXP but
-  not the contents - I guess wouldn't be too hard to implement).
+  Loop through all attr combinations; maybe could be made faster by reducing the
+  second loop each time a match is found, though this would require duplication
+  of the attributes (likely faster for items with lots of attributes, but slower
+  for those with few; ideally need a way to duplicate the LISTSXP but not the
+  contents - I guess wouldn't be too hard to implement).
 
   Alternate: use hash tables, though likely not worth it unless more than 25
   attributes, which should be rare
@@ -1016,11 +1021,15 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
       cur_attr_el = sec_attr_el;
       tar_tag = prim_tag;
     }
-    // No match only matters if target has attrs or in strict mode
+    // No match only matters if target has attrs and is not `srcref`, or in
+    // strict mode
+
+    int is_srcref =
+      tar_tag != R_NilValue && !strcmp(CHAR(PRINTNAME(tar_tag)), "srcref");
     if(
       (
         (tar_attr_el == R_NilValue && set.attr_mode == 2) ||
-        cur_attr_el == R_NilValue
+        (tar_attr_el == R_NilValue && !is_srcref)
       ) && errs[7].success
     ) {
       errs[7].success = 0;
@@ -1034,6 +1043,9 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
           "", ""
       ) );
       ps++;
+    } else if (is_srcref && !set.attr_mode) {
+      // Don't check srcref if in default attribute mode
+      continue;
     }
     cur_attr_el_val = cur_attr_el != R_NilValue ? CAR(cur_attr_el) : R_NilValue;
     tar_attr_el_val = tar_attr_el != R_NilValue ? CAR(tar_attr_el) : R_NilValue;
