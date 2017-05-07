@@ -199,8 +199,6 @@ struct ALIKEC_res ALIKEC_alike_obj(
     const char * msg_actual = "";
 
     if(!res_attr.success) {
-      Rprintf("Attributes failed\n");
-
       // If top level error (class), make sure not overriden by others
       if(res_attr.lvl <= 2) {
         err = 1;
