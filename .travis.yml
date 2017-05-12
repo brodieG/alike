@@ -4,6 +4,8 @@ r:
   - release
   - devel
 
+r_github_packages: brodieG/cstringr
+
 sudo: false
 
 cache: packages
@@ -13,7 +15,6 @@ branches:
     - master
     - development
     - rc
-    - rdevel
 
 after_success:
   - Rscript covr.R
