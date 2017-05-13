@@ -1,12 +1,12 @@
-#' Internal Funs
-#'
-#' R interface for an internal C functions used by \code{alike}.  Provided
-#' primarily for unit testing purposes
-#'
-#' @aliases name_compare class_compare dimname_compare dim_compare ts_compare
-#'   lang_alike fun_alike dep_alike match_call_alike env_track
-#' @keywords internal
-#' @param int_mode
+## Internal Funs
+##
+## R interface for an internal C functions used by \code{alike}.  Provided
+## primarily for unit testing purposes
+##
+## @aliases name_compare class_compare dimname_compare dim_compare ts_compare
+##   lang_alike fun_alike dep_alike match_call_alike env_track
+## @keywords internal
+## @param int_mode
 
 attr_compare <- function(target, current, attr.mode=0L)
   .Call(ALIKEC_compare_attributes, target, current, attr.mode)

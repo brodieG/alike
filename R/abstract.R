@@ -43,6 +43,7 @@ abstract <- function(x, ...) UseMethod("abstract")
 
 abstract.data.frame <- function(x, ...) x[0, ]
 
+#' @importFrom utils modifyList
 #' @rdname abstract
 #' @export
 
