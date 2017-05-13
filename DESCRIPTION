@@ -3,21 +3,26 @@ Title: Compare Object Structure
 Description: Determine whether objects are structurally similar by recursively
     comparing types, lengths, attributes and other structural properties.
 Version: 1.1.1
-Authors@R: c( person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
-    role=c("aut", "cre")), person(family="Paxdiablo", role="cph", comment="Hash
-    table implementation in src/pfhash.h"), person(family="R Core Team",
+Authors@R: c(
+    person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")),
+    person(family="Paxdiablo", role="cph", comment="Hash
+    table implementation in src/pfhash.h"),
+    person(family="R Core Team",
     email="R-core@r-project.org", role="cph", comment="Used/adapted several
-    code snippets from R sources"))
+    code snippets from R sources, see COPYRIGHTS"))
 Depends:
     R (>= 3.2.2)
-JKU
-License: GPL (>=2) | file LICENSE
+License: GPL (>=2)
 LazyData: true
+URL: https://github.com/brodieG/alike
+BugReports: https://github.com/brodieG/alike/issues
 VignetteBuilder: knitr
 Suggests:
     knitr,
     unitizer,
     covr,
-    rmarkdown
+    rmarkdown,
+    microbenchmark
 Imports:
     cstringr
