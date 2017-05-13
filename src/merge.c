@@ -26,7 +26,8 @@ int ALIKEC_merge_comp(const void *p, const void *q) {
 }
 /*
  * Sort a list of 5 length character vectors by the 1st, 2nd, 4th, and 5th
- * elements.
+ * elements.  Use the 3rd element for tie breaks to ensure reproducible
+ * outcomes.
  *
  * Mixed in one length character vectors are also sorted but obviously by their
  * entire value.  No other lenghts are allowed.
@@ -59,10 +60,11 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
       // delimiters to minimize susceptibility to frame shift, but obviously not
       // a guarantee
 
-      sort_string = CSR_smprintf4(
-        ALIKEC_MAX_CHAR, "%s <:> %s <:> %s <:> %s",
+      sort_string = CSR_smprintf6(
+        ALIKEC_MAX_CHAR, "%s <:> %s <:> %s <:> %s <:> %s%s",
         CHAR(STRING_ELT(str_elt, 0)), CHAR(STRING_ELT(str_elt, 1)),
-        CHAR(STRING_ELT(str_elt, 3)), CHAR(STRING_ELT(str_elt, 4))
+        CHAR(STRING_ELT(str_elt, 3)), CHAR(STRING_ELT(str_elt, 4)),
+        CHAR(STRING_ELT(str_elt, 2)), ""
       );
     }
     sort_dat[i] = (struct ALIKEC_sort_dat) {

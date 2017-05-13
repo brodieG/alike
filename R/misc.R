@@ -68,14 +68,10 @@ is_dfish <- function(obj)
 alike_test <- function(obj)
   .Call(ALIKEC_test, substitute(obj))
 
-#' @keywords internal
-
-alike_test2 <- function(target, current)
-  .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
+# alike_test2 <- function(target, current)
+#   .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
 
 syntactic_names <- function(lang) .Call(ALIKEC_syntactic_names, lang)
-
-#' @keywords internal
 
 alike_test3 <- function(target, current)
   .Call(ALIKEC_test2, target, current)
