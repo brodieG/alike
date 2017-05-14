@@ -85,6 +85,8 @@ msg_merge <- function(messages)
 alike_ext_2 <- function(target, current)
   .Call(ALIKEC_alike_ext2, target, current, substitute(current), parent.frame())
 
+hash_test <- function(values, keys) .Call(ALIKEC_hash_test, values, keys);
+
 #' Pre-calculated Precision Level
 #'
 #' Used to limit overhead of calls the require use of

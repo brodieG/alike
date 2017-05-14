@@ -32,6 +32,7 @@ R_CallMethodDef callMethods[] = {
   {"env_track", (DL_FUNC) &ALIKEC_env_track_test, 2},
   {"msg_sort", (DL_FUNC) &ALIKEC_sort_msg, 1},
   {"msg_merge", (DL_FUNC) &ALIKEC_merge_msg, 1},
+  {"hash_test", (DL_FUNC) &pfHashTest, 2},
   {NULL, NULL, 0}
 };
 

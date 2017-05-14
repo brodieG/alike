@@ -40,7 +40,7 @@ lifted directly from: http://powerfield-software.com/?p=615
     c -= a; c -= b; c ^= (b >> 15); \
 }
 
-static uint32_t defaultFnBJ (char *key) {
+static uint32_t defaultFnBJ (const char *key) {
     uint32_t a = 0x9e3779b9;
     uint32_t b = 0x9e3779b9;
     uint32_t c = 0;
@@ -98,7 +98,7 @@ static uint32_t defaultFnBJ (char *key) {
 // If node before is null, it was the first at that
 //   entry.
 
-static void locate (pfHashTable *tbl, char *key,
+static void locate (pfHashTable *tbl, const char *key,
     int *pEntry, pfHashNode **pPrev,
     pfHashNode **pNode)
 {
@@ -122,7 +122,7 @@ static void locate (pfHashTable *tbl, char *key,
 // In case your C implementation doesn't have strdup,
 //   we use this one.
 
-static char *dupstr (char *str) {
+static char *dupstr (const char *str) {
     char *newstr = R_alloc (strlen (str) + 1, sizeof(char));
     if (newstr != NULL)
         strcpy (newstr, str);
@@ -132,7 +132,7 @@ static char *dupstr (char *str) {
 // Create a hash table, giving only the hashing
 //   function.
 
-pfHashTable *pfHashCreate (uint32_t (*fn)(char *)) {
+pfHashTable *pfHashCreate (uint32_t (*fn)(const char *)) {
     // Use default if none given, and get number
     //   of entries allowed.
 
@@ -159,7 +159,7 @@ pfHashTable *pfHashCreate (uint32_t (*fn)(char *)) {
 }
 
 // Destroys a hash table, freeing all data.
-
+/*
 void pfHashDestroy (pfHashTable *tbl) {
     error("hash table destroy disabled as it should be handled by R");
 
@@ -183,11 +183,12 @@ void pfHashDestroy (pfHashTable *tbl) {
         }
     }
 }
+*/
 
 // Set a hash value (key/data), creating it if it doesn't
 //   already exist.
 
-int pfHashSet (pfHashTable *tbl, char *key, char *data) {
+int pfHashSet (pfHashTable *tbl, const char *key, const char *data) {
     int entry;
     pfHashNode *prev, *node;
 
@@ -223,6 +224,7 @@ int pfHashSet (pfHashTable *tbl, char *key, char *data) {
 
 // Delete a hash entry, returning error if not found.
 
+/*
 int pfHashDel (pfHashTable *tbl, char *key) {
     int entry;
     pfHashNode *prev, *node;
@@ -245,11 +247,12 @@ int pfHashDel (pfHashTable *tbl, char *key) {
 
     return 0;
 }
+*/
 
 // Find a hash entry, and return the data. If not found,
 //   returns NULL.
 
-char *pfHashFind (pfHashTable *tbl, char *key) {
+const char *pfHashFind (pfHashTable *tbl, const char *key) {
     int entry;
     pfHashNode *prev, *node;
 
@@ -289,3 +292,33 @@ void pfHashDebug (pfHashTable *tbl, char *desc) {
     }
     Rprintf ("\n");
 }
+/*
+ * Test out the hash scripts
+ */
+
+SEXP pfHashTest(SEXP keys, SEXP values) {
+  pfHashTable * hash = pfHashCreate(NULL);
+
+  if(TYPEOF(keys) != STRSXP) error("Argument `keys` must be a string");
+  if(TYPEOF(values) != STRSXP) error("Argument `values` must be a string");
+  if(XLENGTH(keys) != XLENGTH(values)) error("Arguments must be same length");
+
+  R_xlen_t ki;
+
+  for(ki = 0; ki < XLENGTH(keys); ki++) {
+    const char * key = CHAR(STRING_ELT(keys, ki));
+    const char * value = CHAR(STRING_ELT(values, ki));
+
+    pfHashSet(hash, key, value);
+  }
+  SEXP res = PROTECT(allocVector(STRSXP, XLENGTH(keys)));
+
+  for(ki = 0; ki < XLENGTH(keys); ki++) {
+    SET_STRING_ELT(
+      res, ki, mkChar(pfHashFind(hash, CHAR(STRING_ELT(keys, ki))))
+    );
+  }
+  UNPROTECT(1);
+  return res;
+}
+
