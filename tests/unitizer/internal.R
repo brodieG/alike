@@ -362,3 +362,12 @@ unitizer_sect("Merge messages", {
   )
   alike:::msg_merge(msgs)
 })
+unitizer_sect("Hash", {
+  keys <- vapply(
+    1:26, function(x) paste0(letters[seq(x)], collapse=""), character(1L)
+  )
+  values <- vapply(
+    1:26, function(x) paste0(LETTERS[seq(x)], collapse=""), character(1L)
+  )
+  alike:::hash_test(keys, values)
+})
