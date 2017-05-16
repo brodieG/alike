@@ -10,7 +10,6 @@ unitizer_sect("Name like attributes", {
   alike:::name_compare(c("ab", "hello"), c(NA_character_, "hello"))
   alike:::name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
 } )
-
 unitizer_sect("S3 Classes", {
   class1 <- letters[1:5]
   class2 <- letters[3:5]
@@ -374,4 +373,12 @@ unitizer_sect("Hash", {
     1:26, function(x) paste0(LETTERS[seq(x)], collapse=""), character(1L)
   )
   alike:::hash_test(keys, values)
+})
+unitizer_sect("Mode", {
+  alike:::alike_mode(NULL)
+  alike:::alike_mode(quote(a))
+  alike:::alike_mode(mean)
+  alike:::alike_mode(`+`)
+  alike:::alike_mode(log)
+  alike:::alike_mode(quote(1 + 1))
 })

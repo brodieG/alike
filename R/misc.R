@@ -61,6 +61,9 @@ is_valid_name <- function(name)
 is_dfish <- function(obj)
   .Call(ALIKEC_is_dfish, obj)
 
+alike_mode <- function(obj)
+  .Call(ALIKEC_mode, obj)
+
 #' Used for testing C code
 #'
 #' @keywords internal

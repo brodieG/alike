@@ -4,10 +4,11 @@
 static const
 R_CallMethodDef callMethods[] = {
   {"alike_ext", (DL_FUNC) &ALIKEC_alike_ext, 4},
-  {"alike_ext2", (DL_FUNC) &ALIKEC_alike_ext2, 4},
+  // {"alike_ext2", (DL_FUNC) &ALIKEC_alike_ext2, 4},
   {"alike_fast1", (DL_FUNC) &ALIKEC_alike_fast1, 4},
   {"alike_fast2", (DL_FUNC) &ALIKEC_alike_fast2, 2},
   {"typeof", (DL_FUNC) &ALIKEC_typeof, 1},
+  {"mode", (DL_FUNC) &ALIKEC_mode, 1},
   {"type_alike", (DL_FUNC) &ALIKEC_type_alike, 4},
   {"syntactic_names", (DL_FUNC) &ALIKEC_syntactic_names_exp, 1},
   {"compare_attributes", (DL_FUNC) &ALIKEC_compare_attributes, 3},
@@ -76,9 +77,11 @@ void R_init_alike(DllInfo *info)
   );
   R_RegisterCCallable("alike", "ALIKEC_pad", (DL_FUNC) ALIKEC_pad);
   R_RegisterCCallable("alike", "ALIKEC_alike_ext", (DL_FUNC) ALIKEC_alike_ext);
+  /*
   R_RegisterCCallable(
     "alike", "ALIKEC_alike_ext2", (DL_FUNC) ALIKEC_alike_ext2
   );
+  */
   R_RegisterCCallable("alike", "ALIKEC_deparse", (DL_FUNC) ALIKEC_deparse);
   R_RegisterCCallable(
     "alike", "ALIKEC_merge_msg", (DL_FUNC) ALIKEC_merge_msg_ext
