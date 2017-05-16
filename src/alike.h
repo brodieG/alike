@@ -4,6 +4,11 @@
 #ifndef _ALIKEC_H
 #define _ALIKEC_H
 
+  // - Constants --------------------------------------------------------------
+
+  #define ALIKEC_MAX_CHAR 50000
+  #define ALIKEC_MAX_ENVS 65536
+
   // - Data Structures ---------------------------------------------------------
 
   /*
@@ -99,20 +104,17 @@
     const char * prepend;     // no longer in use
     SEXP env;                 // what envto look for functions to match call in
     int in_attr;
-    int width;                // Tell alike what screen width to assume
+    int width;      // Tell alike what screen width to assume
+    int env_limit;  // how many envs to track when searching for env loop
   };
 
-  // - Constants --------------------------------------------------------------
-
-  #define ALIKEC_MAX_CHAR 50000
-  #define ALIKEC_MAX_ENVS 65536
 
   // - Main Funs --------------------------------------------------------------
 
   SEXP ALIKEC_alike (
     SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode,
     SEXP env, SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode,
-    SEXP width
+    SEXP width, SEXP env_limit
   );
   SEXP ALIKEC_alike_ext(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
   SEXP ALIKEC_alike_ext2(SEXP target, SEXP current, SEXP cur_sub, SEXP env);
@@ -200,9 +202,11 @@
   SEXP ALIKEC_strsxp_or_true(struct ALIKEC_res_fin);
   SEXP ALIKEC_class(SEXP obj, SEXP class);
   SEXP ALIKEC_abstract_ts(SEXP x, SEXP what);
-  int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs);
-  SEXP ALIKEC_env_track_test(SEXP env, SEXP stack_size_init);
-  struct ALIKEC_env_track * ALIKEC_env_set_create(int stack_size_init);
+  int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs, int env_limit);
+  SEXP ALIKEC_env_track_test(SEXP env, SEXP stack_size_init, SEXP env_limit);
+  struct ALIKEC_env_track * ALIKEC_env_set_create(
+    int stack_size_init, int env_limit
+  );
   int ALIKEC_is_valid_name(const char *name);
   SEXP ALIKEC_is_valid_name_ext(SEXP name);
   int ALIKEC_is_dfish(SEXP obj);

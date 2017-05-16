@@ -169,9 +169,9 @@ alike <- function(target, current)
 alike_settings <- function(
   type.mode=0L, attr.mode=0L, lang.mode=0L, rec.mode=0L,
   env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE,
-  width=-1L
+  width=-1L, env.limit=65536L
 )
   list(
     type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode,
-    width
+    width, env.limit
   )

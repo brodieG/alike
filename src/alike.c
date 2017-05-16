@@ -24,7 +24,8 @@ struct ALIKEC_settings ALIKEC_set_def(const char * prepend) {
     .env = R_NilValue,
     .prepend = prepend,
     .width = -1,
-    .in_attr = 0
+    .in_attr = 0,
+    .env_limit = ALIKEC_MAX_ENVS
   };
 }
 /*
@@ -140,18 +141,24 @@ struct ALIKEC_res ALIKEC_alike_obj(
       SEXP s, t;
 
       klass = getAttrib(target, R_ClassSymbol);
-      if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP)
+      if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP) {
+        // nocov start
         error(
           "Logic Error: unexpected S4 class \"class\" attribute %s%s",
           "of length != 1 or type not character vector; ",
           "contact package maintainer"
         );
+        // nocov end
+      }
       klass_attrib = getAttrib(klass, ALIKEC_SYM_package);
-      if(xlength(klass_attrib) != 1 || TYPEOF(klass_attrib) != STRSXP)
+      if(xlength(klass_attrib) != 1 || TYPEOF(klass_attrib) != STRSXP) {
+        // nocov start
         error(
           "Logic Error: unexpected S4 class \"class\" %s",
           "attribute does not have `package` attribute in expected structure"
         );
+        // nocov end
+      }
 
       // Construct call to `inherits`; we evaluate in base env since class
       // definitions should still be visible and this way unlikely that
@@ -448,9 +455,11 @@ struct ALIKEC_res ALIKEC_alike_rec(
       // in attributes as othrewise we could get inifinite recursion since
       // rec tracking is specific to each call to ALIKEC_alike_internal
 
-      if(!res.rec.envs) res.rec.envs = ALIKEC_env_set_create(16);
+      if(!res.rec.envs) res.rec.envs =
+        ALIKEC_env_set_create(16, set.env_limit);
 
-      int env_stack_status = ALIKEC_env_track(target, res.rec.envs);
+      int env_stack_status =
+        ALIKEC_env_track(target, res.rec.envs, set.env_limit);
       if(!res.rec.envs->no_rec)
         res.rec.envs->no_rec = !env_stack_status;
       if(env_stack_status  < 0 && !set.suppress_warnings) {
@@ -472,10 +481,13 @@ struct ALIKEC_res ALIKEC_alike_rec(
           SEXP tar_names = PROTECT(R_lsInternal(target, TRUE));
           R_xlen_t tar_name_len = XLENGTH(tar_names), i;
 
-          if(tar_name_len != tar_len)
+          if(tar_name_len != tar_len) {
+            // nocov start
             error(
-              "Logic Error: mismatching name-env lengths; contact maintainer"
+              "Internal Error: mismatching name-env lengths; contact maintainer"
             );
+            // nocov end
+          }
           for(i = 0; i < tar_len; i++) {
             const char * var_name_chr = CHAR(STRING_ELT(tar_names, i));
             SEXP var_name = PROTECT(install(var_name_chr));
@@ -686,11 +698,12 @@ SEXP ALIKEC_alike_fast1(
 ) {
   if(settings == R_NilValue) {
     return ALIKEC_alike_fast2(target, current);
-  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 7) {
+  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 8) {
     return ALIKEC_alike(
       target, current, curr_sub, VECTOR_ELT(settings, 0),
       VECTOR_ELT(settings, 1), VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3),
-      VECTOR_ELT(settings, 4), VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6)
+      VECTOR_ELT(settings, 4), VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6),
+      VECTOR_ELT(settings, 7)
     );
   }
   error("Argument `settings` is not a length 6 list as expected");
@@ -750,13 +763,15 @@ SEXP ALIKEC_alike_ext2(
 Semi-internal interface; used to be the main external one but no longer as we
 changed the interface, we now access this function via ALIKEC_alike_fast
 */
-SEXP ALIKEC_alike (
+SEXP ALIKEC_alike(
   SEXP target, SEXP current, SEXP curr_sub, SEXP type_mode, SEXP attr_mode,
   SEXP env, SEXP fuzzy_int_max_len, SEXP suppress_warnings, SEXP lang_mode,
-  SEXP width
+  SEXP width, SEXP env_limit
 ) {
-  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type, lang_mod_type, width_type;
-  int supp_warn = 0, type_int = 0, attr_int = 0, lang_int = 0, width_int = -1;
+  SEXPTYPE int_mod_type, fuzzy_type, attr_mod_type, lang_mod_type, width_type,
+    env_limit_type;
+  int supp_warn = 0, type_int = 0, attr_int = 0, lang_int = 0, width_int = -1,
+    env_limit_int;
   R_xlen_t fuzzy_int_max_len_int;
 
   int_mod_type = TYPEOF(type_mode);
@@ -764,6 +779,7 @@ SEXP ALIKEC_alike (
   lang_mod_type = TYPEOF(lang_mode);
   fuzzy_type = TYPEOF(fuzzy_int_max_len);
   width_type = TYPEOF(width);
+  env_limit_type = TYPEOF(env_limit);
 
   if(
     (int_mod_type != INTSXP && int_mod_type != REALSXP) ||
@@ -801,6 +817,17 @@ SEXP ALIKEC_alike (
     XLENGTH(width) != 1 || (width_int = asInteger(width)) == NA_INTEGER
   )
     error("Argument `width` must be an integer one length vector");
+  if(
+    (env_limit_type != INTSXP && env_limit_type != REALSXP) ||
+    XLENGTH(env_limit) != 1 ||
+    (env_limit_int = asInteger(env_limit)) == NA_INTEGER ||
+    env_limit_int < 1
+  )
+    error(
+      "%s%s",
+      "Argument `env_limit` must be a strictly positive ",
+      "an integer one length vector"
+    );
 
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.type_mode = type_int;
@@ -810,6 +837,7 @@ SEXP ALIKEC_alike (
   set.suppress_warnings = supp_warn;
   set.env = env;
   set.width = width_int;
+  set.env_limit = env_limit_int;
 
   return ALIKEC_string_or_true(
     ALIKEC_alike_wrap(target, current, curr_sub, set)

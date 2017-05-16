@@ -313,6 +313,10 @@ unitizer_sect("Env Track", {
   el.2 <- el.1[c(1, 1, 2, 3, 4, 1, 2, 3, 5, 1)]
   alike:::env_track(el.1, 1L)  # first env a freebie, so should be 1
   alike:::env_track(el.2, 1L)
+
+  # Overwhelm env stack, though not that satifying a test
+
+  alike:::env_track(el.1, 1L, 3L)
 } )
 unitizer_sect("valid names", {
   alike:::is_valid_name("hello")

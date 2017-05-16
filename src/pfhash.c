@@ -265,7 +265,7 @@ const char *pfHashFind (pfHashTable *tbl, const char *key) {
 }
 
 // Output debugging info about the hash table.
-
+/*
 void pfHashDebug (pfHashTable *tbl, char *desc) {
     // Get size first.
 
@@ -292,6 +292,7 @@ void pfHashDebug (pfHashTable *tbl, char *desc) {
     }
     Rprintf ("\n");
 }
+*/
 /*
  * Test out the hash scripts
  */

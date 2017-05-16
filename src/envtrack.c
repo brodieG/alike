@@ -11,23 +11,26 @@ Return 0 for failure, 1 for normal success, 2 for success requiring
 re-allocation, 3 for success requiring re-allocation and copying
 */
 
-int ALIKEC_env_stack_alloc(struct ALIKEC_env_track * envs) {
+int ALIKEC_env_stack_alloc(
+  struct ALIKEC_env_track * envs, int env_limit
+) {
   int success = 1;
   if(envs->stack_size <= envs->stack_ind) {
     int stack_size_old = envs->stack_size;
     envs->stack_size = envs->stack_size_init * 1 << envs->stack_mult;
-    if(envs->stack_size > ALIKEC_MAX_ENVS) return 0;
+    if(envs->stack_size > env_limit) return 0;
 
     SEXP * env_stack_tmp = (SEXP *) R_alloc(envs->stack_size, sizeof(SEXP));
 
     success = 2;
     if(envs->env_stack == 0) {
       envs->env_stack = env_stack_tmp;
-    }
-    else if(envs->stack_mult) { // Prev allocation happened, need to copy pointers
+    } else if(envs->stack_mult) {
+      // Prev allocation happened, need to copy pointers
       for(int i = 0; i < stack_size_old; i++)
         env_stack_tmp[i] = envs->env_stack[i];
-      envs->env_stack = env_stack_tmp; // ideally would free env_stack before repointing...
+      // ideally would free env_stack before repointing...
+      envs->env_stack = env_stack_tmp;
       success = 3;
     }
     envs->stack_mult++;
@@ -37,7 +40,9 @@ int ALIKEC_env_stack_alloc(struct ALIKEC_env_track * envs) {
 /*
 Initialize our stack tracking object
 */
-struct ALIKEC_env_track * ALIKEC_env_set_create(int stack_size_init) {
+struct ALIKEC_env_track * ALIKEC_env_set_create(
+  int stack_size_init, int env_limit
+) {
   if(stack_size_init < 0)
     error("`alike` env stack size init should be greater than zero");
   struct ALIKEC_env_track * envs =
@@ -47,7 +52,7 @@ struct ALIKEC_env_track * ALIKEC_env_set_create(int stack_size_init) {
   envs->env_stack = 0;
   envs->no_rec = 0;
   envs->stack_size_init = stack_size_init;
-  int res = ALIKEC_env_stack_alloc(envs);
+  int res = ALIKEC_env_stack_alloc(envs, env_limit);
   if(!res) error("Unable to allocate `alike` environment stack");
   return envs;
 }
@@ -71,9 +76,11 @@ Returns
   * -1 if we are out of space in the env stack
 */
 
-int ALIKEC_env_track(SEXP env, struct ALIKEC_env_track * envs) {
+int ALIKEC_env_track(
+  SEXP env, struct ALIKEC_env_track * envs, int env_limit
+) {
   int alloc_res;
-  if(!(alloc_res = ALIKEC_env_stack_alloc(envs))) return -1;
+  if(!(alloc_res = ALIKEC_env_stack_alloc(envs, env_limit))) return -1;
   int env_found = 0;
   for(int i = 0; i < envs->stack_ind; i++) {
     if(env == envs->env_stack[i]) {
@@ -90,13 +97,18 @@ External interface purely for testing whether our environment hashing
 is working
 */
 
-SEXP ALIKEC_env_track_test(SEXP env_list, SEXP stack_size_init) {
+SEXP ALIKEC_env_track_test(SEXP env_list, SEXP stack_size_init, SEXP env_limit) {
   int stack_init_int = asInteger(stack_size_init);
   if(stack_init_int == NA_INTEGER || stack_init_int < 0)
     error("Logic Error: stack_size_init must be positive");
   if(TYPEOF(env_list) != VECSXP)
     error("Logic Error: expected a list for argument `env_list`");
-  struct ALIKEC_env_track * envs = ALIKEC_env_set_create(stack_init_int);
+  if(TYPEOF(env_limit) != INTSXP)
+    error("Logic Error: expected an integer for argument `env_limit`");
+
+  int env_limit_int = asInteger(env_limit);
+  struct ALIKEC_env_track * envs =
+    ALIKEC_env_set_create(stack_init_int, env_limit_int);
 
   R_xlen_t len = XLENGTH(env_list);
   SEXP res = PROTECT(allocVector(INTSXP, len));
@@ -106,8 +118,11 @@ SEXP ALIKEC_env_track_test(SEXP env_list, SEXP stack_size_init) {
   for(i = 0; i < len; i++) {
     SEXP env = VECTOR_ELT(env_list, i);
     if(TYPEOF(env) != ENVSXP)
-      error("All contents of `env_list` should be environments; error at item %d\n", i + 1);
-    res_int[i] = ALIKEC_env_track(env, envs);
+      error(
+        "All contents of `env_list` %s at item %d\n",
+        "should be environments; error ", i + 1
+      );
+    res_int[i] = ALIKEC_env_track(env, envs, env_limit_int);
   }
   UNPROTECT(1);
   return res;

@@ -194,6 +194,22 @@ unitizer_sect("Environments / Pairlists", {
 
   alike(env7, env8)   # pass
   alike(env7, env9)   # fail
+
+  # Overwhelm env nesting
+
+  env.nest.1 <- env.nest.1.cpy <- new.env()
+  env.nest.2 <- env.nest.2.cpy <- new.env()
+  for(i in 1:26) {
+    env.nest.1.cpy[[letters[i]]] <- new.env();
+    env.nest.1.cpy <- env.nest.1.cpy[[letters[i]]]
+    env.nest.2.cpy[[letters[i]]] <- new.env();
+    env.nest.2.cpy <- env.nest.2.cpy[[letters[i]]]
+  }
+  .alike(env.nest.1, env.nest.2, settings=alike_settings(env.limit=16))
+
+  # Global env test
+
+  alike(.GlobalEnv, env.nest.1)
 })
 unitizer_sect("Calls / Formulas", {
   alike(quote(1 + 1), quote(x + y))
@@ -386,3 +402,9 @@ unitizer_sect("Examples", {
   alike(quote(x + y), quote(a - b))   # FALSE, different function
   alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 } )
+unitizer_sect("Raw", {
+  # check for warning, in the future if we properly support RAW then this will
+  # no longer produce a warning.  Really just looking for a valid STRSXP type.
+
+  alike(as.raw(integer(3)), as.raw(integer(3)))
+})

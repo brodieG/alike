@@ -52,8 +52,8 @@ pad_or_quote <- function(obj, width=-1L, syntactic=-1L)
 match_call_alike <- function(call, env)
   .Call(ALIKEC_match_call, call, quote(match.call(NULL, quote(NULL))), env)
 
-env_track <- function(env, size_init = 32)
-  .Call(ALIKEC_env_track, env, size_init)
+env_track <- function(env, size_init = 32, env_limit=65536L)
+  .Call(ALIKEC_env_track, env, size_init, env_limit)
 
 is_valid_name <- function(name)
   .Call(ALIKEC_is_valid_name_ext, name)

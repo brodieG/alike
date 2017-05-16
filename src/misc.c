@@ -75,12 +75,16 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
 }
 // - Testing Function ----------------------------------------------------------
 SEXP ALIKEC_test(SEXP obj) {
+  // nocov start
   return mkString(CHAR(asChar(obj)));
+  // nocov end
 }
 SEXP ALIKEC_test2(
     SEXP target, SEXP current
 ) {
+  // nocov start
   return R_NilValue;
+  // nocov end
 }
 /*
 Run deparse command and return character vector with results
