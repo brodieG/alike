@@ -32,9 +32,9 @@ SEXP ALIKEC_skip_paren(SEXP lang) {
         error(
           "Internal Error: %s; contact maintainer.",
           "exceeded language recursion depth when skipping parens"
-        )
+        );
         // nocov end
-      };
+      }
   } }
   SET_VECTOR_ELT(res, 0, lang);
   SET_VECTOR_ELT(res, 1, ScalarInteger(i));
@@ -52,9 +52,13 @@ hash the hash table
 varnum used to generate the anonymized variable name
 */
 
-char * ALIKEC_symb_abstract(SEXP symb, pfHashTable * hash, size_t * varnum) {
+const char * ALIKEC_symb_abstract(
+  SEXP symb, pfHashTable * hash, size_t * varnum
+) {
   const char * symb_chr = CHAR(PRINTNAME(symb));
-  char * symb_abs = pfHashFind(hash, (char *) symb_chr);  // really shouldn't have to do this, but can't be bothered re-defining the hash library
+  // really shouldn't have to do this, but can't be bothered re-defining the
+  // hash library
+  const char * symb_abs = pfHashFind(hash, (char *) symb_chr);
   if(symb_abs == NULL) {
     symb_abs = CSR_smprintf4(
       ALIKEC_MAX_CHAR, "a%s", CSR_len_as_chr(*varnum), "", "", ""
@@ -156,10 +160,10 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   if(target == R_NilValue) {// NULL matches anything
     res.success = 1;
   } else if(tsc_type == SYMSXP && csc_type == SYMSXP) {
-    char * tar_abs = ALIKEC_symb_abstract(target, tar_hash, tar_varnum);
-    char * cur_abs = ALIKEC_symb_abstract(current, cur_hash, cur_varnum);
+    const char * tar_abs = ALIKEC_symb_abstract(target, tar_hash, tar_varnum);
+    const char * cur_abs = ALIKEC_symb_abstract(current, cur_hash, cur_varnum);
     // reverse hash to get what symbol should be in case of error
-    char * rev_symb = pfHashFind(rev_hash, tar_abs);
+    const char * rev_symb = pfHashFind(rev_hash, tar_abs);
     const char * csc_text = CHAR(PRINTNAME(current));
     if(rev_symb == NULL) {
       rev_symb = (char *) csc_text;
