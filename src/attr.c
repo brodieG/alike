@@ -436,12 +436,12 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
     R_xlen_t cur_len, tar_len, i;
 
     // should have been handled previously
-    if(tar_type != cur_type) error("Logic Error 266");
+    if(tar_type != cur_type) error("Internal Error 266");  // nocov
     else if (!(tar_len = XLENGTH(target))) {
       // zero len match to anything
     } else if ((cur_len = XLENGTH(current)) != tar_len) {
       // should have been handled previously
-      error("Logic error 268");
+      error("Internal Error 268");   // nocov
     } else if (tar_type == INTSXP) {
       if(!R_compute_identical(target, current, 16)){
         res_sub.success = 0;
@@ -481,8 +481,11 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
             UNPROTECT(2);
             break;
       } } }
-    } else
-      error("Logic Error in compare_special_char_attrs; contact maintainer");
+    } else {
+      // nocov start
+      error("Internal Error in compare_special_char_attrs; contact maintainer");
+      // nocov end
+    }
   }
   UNPROTECT(1);
   return res_sub;
@@ -667,10 +670,11 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
           switch(attr_i) {
             case (R_xlen_t) 0: SETCAR(wrap_call, R_RowNamesSymbol); break;
             case (R_xlen_t) 1: SETCAR(wrap_call, ALIKEC_SYM_colnames); break;
-            default:
-             error(
-               "Logic Error: dimnames dimension mismatch; contact maintainer."
-             );
+            default: {
+              // nocov start
+              error("Internal Error: dimnames dimension; contact maintainer.");
+              // nocov end
+            }
           }
         } else {
           wrap_call = PROTECT(
@@ -1004,10 +1008,13 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
     sec_attr_el = sec_attr_el_tmp;
 
     if(prim_attr_el == R_NilValue) { // NULL attrs shouldn't be possible
+      // nocov start
       error(
-        "Logic Error: attribute %s is NULL for `%s`", tx,
+        "Internal Error: attribute %s is NULL for `%s`", tx,
         rev ? "current" : "target"
-    );}
+      );
+      // nocov end
+    }
 
     // Undo reverse now that we've gone through double loop
 
@@ -1181,8 +1188,13 @@ struct ALIKEC_res_sub ALIKEC_compare_attributes_internal(
   }
   // Now determine which error to throw, if any
 
-  if(!set.in_attr)
-    error("Logic Error: attribute depth counter corrupted; contact maintainer");
+  if(!set.in_attr) {
+    // nocov start
+    error(
+      "Internal Error: attribute depth counter corrupted; contact maintainer"
+    );
+    // nocov end
+  }
   set.in_attr--;
 
   int i;

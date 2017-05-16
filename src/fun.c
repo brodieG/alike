@@ -120,10 +120,13 @@ struct ALIKEC_res_strings ALIKEC_fun_alike_internal(SEXP target, SEXP current) {
       } else if(cur_mismatch) {
         arg_mod = "not ";
         arg_name = CHAR(PRINTNAME(TAG(cur_form)));
-      } else
+      } else {
+        // nocov start
         error(
-          "Logic Error: unexpected closure arg outcome; contact maintainer"
+          "Internal Error: unexpected closure arg outcome; contact maintainer"
         );
+        // nocov end
+      }
       res.tar_pre =
         CSR_smprintf4(ALIKEC_MAX_CHAR, "%shave", arg_mod, "", "", "");
       res.target =  CSR_smprintf4(

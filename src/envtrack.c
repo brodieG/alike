@@ -99,13 +99,21 @@ is working
 
 SEXP ALIKEC_env_track_test(SEXP env_list, SEXP stack_size_init, SEXP env_limit) {
   int stack_init_int = asInteger(stack_size_init);
-  if(stack_init_int == NA_INTEGER || stack_init_int < 0)
-    error("Logic Error: stack_size_init must be positive");
-  if(TYPEOF(env_list) != VECSXP)
-    error("Logic Error: expected a list for argument `env_list`");
-  if(TYPEOF(env_limit) != INTSXP)
-    error("Logic Error: expected an integer for argument `env_limit`");
-
+  if(stack_init_int == NA_INTEGER || stack_init_int < 0) {
+    // nocov start
+    error("Internal Error: stack_size_init must be positive");
+    // nocov end
+  }
+  if(TYPEOF(env_list) != VECSXP) {
+    // nocov start
+    error("Internal Error: expected a list for argument `env_list`");
+    // nocov end
+  }
+  if(TYPEOF(env_limit) != INTSXP) {
+    // nocov start
+    error("Internal Error: expected an integer for argument `env_limit`");
+    // nocov end
+  }
   int env_limit_int = asInteger(env_limit);
   struct ALIKEC_env_track * envs =
     ALIKEC_env_set_create(stack_init_int, env_limit_int);

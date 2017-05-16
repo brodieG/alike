@@ -49,10 +49,13 @@ SEXP ALIKEC_sort_msg(SEXP msgs) {
     if(
       TYPEOF(str_elt) != STRSXP ||
       (XLENGTH(str_elt) != 5 && XLENGTH(str_elt) != 1)
-    )
+    ) {
+      // nocov start
       error(
         "Internal Error: unexpected string format to merge; contact maintainer"
       );
+      // nocov end
+    }
     const char * sort_string = "";
     if(XLENGTH(str_elt) == 1) {
       sort_string = CHAR(asChar(str_elt));

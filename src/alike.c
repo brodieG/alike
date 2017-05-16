@@ -144,7 +144,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(xlength(klass) != 1 || TYPEOF(klass) != STRSXP) {
         // nocov start
         error(
-          "Logic Error: unexpected S4 class \"class\" attribute %s%s",
+          "Internal Error: unexpected S4 class \"class\" attribute %s%s",
           "of length != 1 or type not character vector; ",
           "contact package maintainer"
         );
@@ -154,7 +154,7 @@ struct ALIKEC_res ALIKEC_alike_obj(
       if(xlength(klass_attrib) != 1 || TYPEOF(klass_attrib) != STRSXP) {
         // nocov start
         error(
-          "Logic Error: unexpected S4 class \"class\" %s",
+          "Internal Error: unexpected S4 class \"class\" %s",
           "attribute does not have `package` attribute in expected structure"
         );
         // nocov end
@@ -617,7 +617,7 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
     curr_sub != R_NilValue
   )
-    error("Logic Error; `curr_sub` must be language.");
+    error("Internal Error; `curr_sub` must be language."); // nocov
 
   struct ALIKEC_res res = ALIKEC_alike_internal(target, current, set);
   PROTECT(res.message);
@@ -716,18 +716,25 @@ SEXP ALIKEC_alike_ext(
   SEXP target, SEXP current, SEXP curr_sub, SEXP env
 ) {
   if(TYPEOF(env) != ENVSXP) {
+    // nocov start
     error(
-      "Logic Error; `env` argument should be environment, is %d; contact maintainer.", TYPEOF(env)
+      "%s %s%s",
+      "Internal Error; `env` argument should be environment, is",
+      type2char(TYPEOF(env)), "; contact maintainer.",
     );
+    // nocov end
   }
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
     !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
     curr_sub != R_NilValue
-  )
+  ) {
+    // nocov start
     error(
-      "Logic Error; `curr_sub` must be language."
+      "Internal Error; `curr_sub` must be language."
     );
+    // nocov end
+  }
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
   return ALIKEC_string_or_true(
@@ -741,18 +748,21 @@ SEXP ALIKEC_alike_ext2(
   SEXP target, SEXP current, SEXP curr_sub, SEXP env
 ) {
   if(TYPEOF(env) != ENVSXP) {
+    // nocov start
     error(
-      "Logic Error; `env` argument should be environment, is %d; contact maintainer.", TYPEOF(env)
+      "%s %s%s",
+      "Internal Error; `env` argument should be environment, is",
+      type2char(TYPEOF(env)), "; contact maintainer."
     );
+    // nocov end
   }
   if(
     TYPEOF(curr_sub) != LANGSXP && TYPEOF(curr_sub) != SYMSXP &&
     !(isVectorAtomic(curr_sub) && XLENGTH(curr_sub) == 1) &&
     curr_sub != R_NilValue
   )
-    error(
-      "Logic Error; `curr_sub` must be language."
-    );
+    error("Internal Error; `curr_sub` must be language.");  // nocov
+
   struct ALIKEC_settings set = ALIKEC_set_def("");
   set.env = env;
   return ALIKEC_strsxp_or_true(

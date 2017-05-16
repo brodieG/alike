@@ -52,8 +52,11 @@ SEXP ALIKEC_getopt(const char * opt) {
 sets the select `tsp` values to zero
 */
 SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
-  if(TYPEOF(attr) != REALSXP || XLENGTH(attr) != 3)
-    error("Logic Error: incorrect format for tsp attr, contact maintainer");
+  if(TYPEOF(attr) != REALSXP || XLENGTH(attr) != 3) {
+    // nocov start
+    error("Internal Error: incorrect format for tsp attr, contact maintainer");
+    // nocov end
+  }
   SEXP x_cp = PROTECT(duplicate(x));
 
   // Get to last attribute, and make sure tsp is not set
@@ -63,8 +66,11 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
     attrs_last = attrs_cpy;
     if(TAG(attrs_cpy) == R_TspSymbol) break;
   }
-  if(attrs_cpy != R_NilValue)
-    error("Logic Error: object already has a `tsp` attribute");
+  if(attrs_cpy != R_NilValue) {
+    // nocov start
+    error("Internal Error: object already has a `tsp` attribute");
+    // nocov end
+  }
 
   // Illegally append non-kosher tsp attribute
 
@@ -118,9 +124,9 @@ const char * ALIKEC_deparse_oneline(
     SEXP obj, size_t max_chars, size_t keep_at_end
 ) {
   if(max_chars < 8)
-    error("Logic Error: argument `max_chars` must be >= 8");
+    error("Internal Error: argument `max_chars` must be >= 8");  // nocov
   if(keep_at_end > max_chars - 2)
-    error("Logic Error: arg `keep_at_end` too large");
+    error("Internal Error: arg `keep_at_end` too large");  // nocov
 
   const char * res, * dep_line = CHAR(asChar(ALIKEC_deparse_core(obj, 500)));
   size_t dep_len = CSR_strmlen(dep_line, ALIKEC_MAX_CHAR);
@@ -145,8 +151,11 @@ const char * ALIKEC_deparse_oneline(
 SEXP ALIKEC_deparse_oneline_ext(SEXP obj, SEXP max_chars, SEXP keep_at_end) {
   int char_int = asInteger(max_chars);
   int keep_int = asInteger(keep_at_end);
-  if(char_int < 0 || keep_int < 0)
-    error("Logic Error: arg max_chars and keep_at_end must be positive");
+  if(char_int < 0 || keep_int < 0) {
+    // nocov start
+    error("Internal Error: arg max_chars and keep_at_end must be positive");
+    // nocov end
+  }
   return mkString(
     ALIKEC_deparse_oneline(obj, (size_t) char_int, (size_t) keep_int)
   );
@@ -183,12 +192,12 @@ Pad a character vector
 */
 const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
   if(TYPEOF(obj) != STRSXP)
-    error("Logic Error: argument `obj` should be STRSXP");
+    error("Internal Error: argument `obj` should be STRSXP");  // nocov
   R_xlen_t line_max = XLENGTH(obj), i;
   if(!line_max) return "";
   for(i = 0; i < line_max; i++)
     if(STRING_ELT(obj, i) == NA_STRING)
-      error("Logic Error: argument `obj` contains NAs");
+      error("Internal Error: argument `obj` contains NAs"); // nocov
 
   if(lines < 0) lines = line_max;
 
@@ -336,8 +345,11 @@ const char * ALIKEC_pad_or_quote(SEXP lang, int width, int syntactic) {
     case -1: syntactic = ALIKEC_syntactic_names(lang); break;
     case 0:
     case 1: break;
-    default:
-      error("Logic Error: unexpected `syntactic` value; contat maintainer");
+    default: {
+      // nocov start
+      error("Internal Error: unexpected `syntactic` value; contat maintainer");
+      // nocov end
+    }
   }
   SEXP lang_dep = PROTECT(ALIKEC_deparse_width(lang, width));
 

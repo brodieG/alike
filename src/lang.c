@@ -27,10 +27,14 @@ SEXP ALIKEC_skip_paren(SEXP lang) {
     ) {
       lang = CADR(lang);
       i++;
-      if(i < 0) error(
-        "Logic Error: %s; contact maintainer.",
-        "exceeded language recursion depth when skipping parens"
-      );
+      if(i < 0) {
+        // nocov start
+        error(
+          "Internal Error: %s; contact maintainer.",
+          "exceeded language recursion depth when skipping parens"
+        )
+        // nocov end
+      };
   } }
   SET_VECTOR_ELT(res, 0, lang);
   SET_VECTOR_ELT(res, 1, ScalarInteger(i));
@@ -319,11 +323,14 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
         tar_sub = CDR(tar_sub), cur_sub = CDR(cur_sub), prev_tag = cur_sub_tag,
         arg_num++
       ) {
-        if(arg_num_prev > arg_num)
+        if(arg_num_prev > arg_num) {
+          // nocov start
           error(
-            "Logic Error: %s; contact maintainer.",
+            "Internal Error: %s; contact maintainer.",
             "exceeded allowable call length"
           );
+          // nocov end
+        }
         // Check tags are compatible; NULL tag in target allows any tag in current
 
         cur_sub_tag = TAG(cur_sub);

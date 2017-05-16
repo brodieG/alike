@@ -78,19 +78,25 @@ decrementing happens via ALIKEC_rec_ind_set
 struct ALIKEC_rec_track ALIKEC_rec_inc(struct ALIKEC_rec_track rec) {
   size_t lvl_old = rec.lvl;
   rec.lvl++;
-  if(rec.lvl < lvl_old)
+  if(rec.lvl < lvl_old) {
+    // nocov start
     error(
-      "Logic Error: %s; contact maintainer.",
+      "Internal Error: %s; contact maintainer.",
       "max recursion depth exceeded, this really shouldn't happen"
     );
+    // nocov end
+  }
   return rec;
 }
 struct ALIKEC_rec_track ALIKEC_rec_dec(struct ALIKEC_rec_track rec) {
-  if(!rec.lvl)
+  if(!rec.lvl) {
+    // nocov start
     error(
-      "Logic Error: %s; contact maintainer.",
+      "Internal Error: %s; contact maintainer.",
       "tried to decrement rec counter below zero"
     );
+    // nocov end
+  }
   rec.lvl--;
   return rec;
 }
@@ -117,10 +123,12 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
           ind_size = CSR_strmlen(rec.indices[i].ind.chr, ALIKEC_MAX_CHAR) + 2;
           break;
         default: {
+          // nocov start
           error(
-            "Logic Error: unexpected index type %d; contact maintainer.",
+            "Internal Error: unexpected index type %d; contact maintainer.",
             rec.indices[i].type
           );
+          // nocov end
         }
       }
       if(ind_size > ind_size_max) ind_size_max = ind_size;
@@ -153,10 +161,13 @@ const char * ALIKEC_rec_ind_as_chr(struct ALIKEC_rec_track rec) {
             }
           }
           break;
-        default:
+        default: {
+          // nocov start
           error(
-            "Logic Error: unexpected index type (2) %d", rec.indices[i].type
+            "Internal Error: unexpected index type (2) %d", rec.indices[i].type
           );
+          // nocov end
+        }
       }
       // Used to leave off last index for possible different treatment if
       // dealing with a DF, but giving that up for now
@@ -200,10 +211,13 @@ SEXP ALIKEC_rec_ind_as_lang(struct ALIKEC_rec_track rec) {
             setAttrib(res, ALIKEC_SYM_syntacticnames, ScalarLogical(0));
           break;
         default: {
+          // nocov start
           error(
-            "Logic Error: unexpected index type %d; contact maintainer.",
+            "Internal Error: unexpected index type %d; contact maintainer.",
             rec.indices[j].type
-      );} }
+          );
+          // nocov end
+      } }
       SETCAR(lang, index_call);
       UNPROTECT(1);
       lang = CDR(index_call);
