@@ -48,6 +48,10 @@ unitizer_sect("lists", {
   alike(lst.5.1, lst.6.1)
   alike(lst.6.1, lst.5.1)
 
+  # Pair lists
+
+  alike(pairlist(a=1, b="character"), pairlist(a=1, b=letters))
+  alike(pairlist(1, "character"), pairlist(1, letters))
 })
 unitizer_sect("NULL values as wildcards", {
   alike(NULL, 1:3)                  # not a wild card at top level
@@ -130,7 +134,6 @@ unitizer_sect("Time Series", {
 
   alike(ts.5, ts.6)
   alike(ts.5, matrix(runif(24 * 3), ncol=3))
-
 })
 unitizer_sect("Factors", {
   f1 <- factor(letters[1:5])
@@ -365,7 +368,10 @@ unitizer_sect("Examples", {
 
   iris.fake <- transform(iris, Species=as.character(Species))
   alike(iris, iris.fake)
-  iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
+  iris.fake2 <- transform(
+    iris,
+    Species=factor(Species, levels="[[<-"(levels(Species), 3, "americana"))
+  )
   alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 
   # We can use partially specified objects as templates
