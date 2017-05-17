@@ -40,7 +40,7 @@ fun_alike <- function(target, current)
 dep_alike <- function(obj, width.cutoff=60L)
   .Call(ALIKEC_deparse, obj, width.cutoff)
 
-dep_oneline<- function(obj, max.chars=20L, keep.at.end=0L)
+dep_oneline <- function(obj, max.chars=20L, keep.at.end=0L)
   .Call(ALIKEC_deparse_oneline, obj, max.chars, keep.at.end)
 
 pad <- function(obj, lines=-1, pad=-1)

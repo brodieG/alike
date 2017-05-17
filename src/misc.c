@@ -214,10 +214,12 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
 
     if(
       TYPEOF(prompt_val) != STRSXP || TYPEOF(prompt_continue) != STRSXP ||
-      asChar(prompt_val) != NA_STRING || asChar(prompt_continue) != NA_STRING
+      asChar(prompt_val) == NA_STRING || asChar(prompt_continue) == NA_STRING
     ) {
+      // nocov start not possible to actually set these as options
       dep_prompt = "> ";
       dep_continue = "+ ";
+      // nocov end
     } else {
       dep_prompt = CHAR(asChar(prompt_val));
       dep_continue = CHAR(asChar(prompt_continue));

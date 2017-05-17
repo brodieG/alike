@@ -113,6 +113,9 @@ unitizer_sect("Deparse", {
   # manip the deparse
 
   alike:::pad(dep.txt)
+  old.opt <- options(prompt=">>", continue=" |")
+  alike:::pad(dep.txt)
+  options(old.opt)
   alike:::pad(dep.txt, pad=4)
   alike:::pad(dep.txt, pad=4, lines=2)
 
@@ -121,4 +124,5 @@ unitizer_sect("Deparse", {
   alike:::dep_oneline(quote(1 + 1 + 3 + 944254235), 10)
   alike:::dep_oneline(quote(1 + 1 + 3), 10)
   alike:::dep_oneline(quote(1 + 1 + 3), "hello")
+  alike:::dep_oneline(quote(1 + 1 + 3 - (mean(1:10) + 3)), 15, 1L)
 })
