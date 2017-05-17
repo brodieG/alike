@@ -221,7 +221,10 @@ nullify.default <- function (obj, index) {
   } else if (is.character(index)) {
     ind.match <- index %in% names(obj)
     if(!all(ind.match)) {
-      stop("Argument `index` contains values not present in names of `obj` (", paste(index[ind.match], collapse=", "), ").")
+      stop(
+        "Argument `index` contains values not present in names of `obj` (",
+        paste(index[!ind.match], collapse=", "), ")."
+      )
     }
     vec.subset <- names(obj) %in% index
   }

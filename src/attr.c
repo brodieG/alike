@@ -54,11 +54,17 @@ This function modifies `wrap` and does not return
 */
 void ALIKEC_wrap_around(SEXP wrap, SEXP call) {
   if(TYPEOF(wrap) != VECSXP && xlength(wrap) != 2)
-    error("Unexpected format for wrap object");
+    error("Internal Error: Unexpected format for wrap object");  // nocov
   SEXP w1 = VECTOR_ELT(wrap, 0);
   SEXP w2 = VECTOR_ELT(wrap, 1);
   if(w1 != R_NilValue && TYPEOF(w1) != LANGSXP)
-    error("First element of wrap object must be NULL or language");
+    // nocov start
+    error(
+      "%s%s",
+      "Internal Error: First element of wrap object ",
+      "must be NULL or  language"
+    );
+    // nocov end
 
   if(w1 == R_NilValue) {
     // unintialized
@@ -267,7 +273,7 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
   const char * class_err_actual = "";
 
   if(target_len_cap > 1 && isVectorAtomic(tar_obj)) {
-    if(current == R_NilValue) {  // current is matrix/array
+    if(current == R_NilValue) {  // current should be matrix/array
       class_err_target = target_len_cap > 2 ? "array" : "matrix";
       class_err_actual = CHAR(asChar(ALIKEC_mode(cur_obj)));
     } else if(isVectorAtomic(cur_obj) && current_len_cap != target_len_cap) {
@@ -275,7 +281,10 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
       class_err_target = target_len_cap > 2 ? "array" : "matrix";
       class_err_actual = current_len_cap == 2 ?
         "matrix" : (current_len_cap == 1 ? "vector" : "array");
-    } else if(!isVectorAtomic(current)) {
+    } else if(!isVectorAtomic(cur_obj)) {
+      // In this case, target is atomic, but current is not, would normally be
+      // caught by earlier type comparisons so shouldn't get here unless testing
+      // explicitly
       class_err_target = CHAR(asChar(ALIKEC_mode(tar_obj)));
       class_err_actual = type2char(TYPEOF(cur_obj));
     }
@@ -337,9 +346,13 @@ struct ALIKEC_res_sub ALIKEC_compare_dims(
           case (R_xlen_t) 0: err_dimtmp = "row%s"; break;
           case (R_xlen_t) 1: err_dimtmp = "column%s"; break;
           default:
+            // nocov start
             error(
-              "Logic error: inconsistent matrix dimensions; contact maintainer."
+              "%s%s",
+              "Internal Error: inconsistent matrix dimensions; contact  ",
+              "maintainer."
             );
+            // nocov end
         }
         err_dim2 = (char *) CSR_smprintf4(
           ALIKEC_MAX_CHAR, err_dimtmp, tar_dim_val == 1 ? "" : "s", "", "", ""
@@ -430,7 +443,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
     res_sub.success = 0;
     res_sub.message = res.message;
   } else {
-    // But also have contraints on values
+    // But also have constraints on values
 
     SEXPTYPE cur_type = TYPEOF(current), tar_type = TYPEOF(target);
     R_xlen_t cur_len, tar_len, i;
@@ -494,7 +507,7 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
 
 SEXP ALIKEC_compare_special_char_attrs(SEXP target, SEXP current) {
   struct ALIKEC_res_sub res = ALIKEC_compare_special_char_attrs_internal(
-      target, current, ALIKEC_set_def(""), 0
+    target, current, ALIKEC_set_def(""), 0
   );
   PROTECT(res.message);
   SEXP res_sexp = PROTECT(ALIKEC_res_sub_as_sxp(res));
