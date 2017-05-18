@@ -398,9 +398,10 @@ int ALIKEC_are_special_char_attrs_internal(SEXP target, SEXP current) {
   R_xlen_t tar_len;
   tar_type = TYPEOF(target);
   cur_type = TYPEOF(current);
+  tar_len = XLENGTH(target);
 
-  return tar_type != cur_type || tar_type != STRSXP || tar_type != INTSXP ||
-    ((tar_len = XLENGTH(target)) && tar_len != XLENGTH(current));
+  return tar_type == cur_type && (tar_type == STRSXP || tar_type == INTSXP) &&
+    tar_len == XLENGTH(current);
 }
 /*
 Implements comparing character vectors element for element:
@@ -553,23 +554,28 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
   SEXPTYPE prim_type = TYPEOF(prim);
   if( // not a standard dimnames attribute
     prim_type != TYPEOF(sec) || prim_type != VECSXP ||
-    ((prim_len = XLENGTH(prim)) && prim_len != (sec_len = XLENGTH(sec))) ||
     (
       prim_names != R_NilValue &&
       !ALIKEC_are_special_char_attrs_internal(prim_names, sec_names)
-    )
+    ) ||
+    ((prim_len = XLENGTH(prim)) && prim_len != (sec_len = XLENGTH(sec)))
   ) {
     struct ALIKEC_res res_tmp = ALIKEC_alike_internal(prim, sec, set);
     PROTECT(res_tmp.message);
     if(!res_tmp.success) {
+      // Need to re-wrap the original error message
       res.success = 0;
       res.message = res_tmp.message;
+      SEXP res_wrap_old = VECTOR_ELT(res.message, 1);
       SEXP res_call = PROTECT(lang2(R_DimNamesSymbol, R_NilValue));
-      SEXP res_wrap = PROTECT(allocVector(VECSXP, 2));
-      SET_VECTOR_ELT(res_wrap, 0, res_call);
-      SET_VECTOR_ELT(res_wrap, 1, CDR(res_call));
-      SET_VECTOR_ELT(res.message, 1, res_wrap);
-      UNPROTECT(2);
+
+      if(VECTOR_ELT(res_wrap_old, 1) == R_NilValue) {
+        SET_VECTOR_ELT(res_wrap_old, 0, res_call);
+      } else {
+        SETCAR(VECTOR_ELT(res_wrap_old, 1), res_call);
+      }
+      SET_VECTOR_ELT(res_wrap_old, 1, CDR(res_call));
+      UNPROTECT(1);
     }
     UNPROTECT(1);
     return res;

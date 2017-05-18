@@ -9,6 +9,10 @@ unitizer_sect("Name like attributes", {
   alike:::name_compare(c(NA_character_, "hello"), c("abc", "hello"))
   alike:::name_compare(c("ab", "hello"), c(NA_character_, "hello"))
   alike:::name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
+
+  # mess with values
+
+  alike:::name_compare(1:3, 3:1)
 } )
 unitizer_sect("S3 Classes", {
   class1 <- letters[1:5]
@@ -52,6 +56,12 @@ unitizer_sect("Dimnames", {
   dimn12 <- matrix(letters[1:9], nrow=3)
   dimn13 <- `attr<-`(dimn2, "bar", "yowza")
   dimn14 <- `attr<-`(dimn2, "bar", "yowz")
+  dimn15 <- list(a=letters[1:3], b=letters[1:3])
+  dimn16 <- list(a=letters[1:3], b=letters[1:3])
+  attr(dimn15, "a") <- 1:2
+  attr(dimn16, "a") <- 1:3
+  dimn17 <- list(a=letters[1:3])
+  dimn18 <- list(a=letters[1:2], b=letters[1:3])
 
   # baseline cases
 
@@ -87,6 +97,14 @@ unitizer_sect("Dimnames", {
   alike:::dimname_compare(dimn13, dimn2)
   alike:::dimname_compare(dimn13, dimn14)
   alike:::dimname_compare(dimn14, dimn13)
+
+  # dimanames with attributes other than names that are not alike
+
+  alike:::dimname_compare(dimn15, dimn16)
+
+  # Mismatched lengths
+
+  alike:::dimname_compare(dimn17, dimn18)
 })
 unitizer_sect("Dims", {
   dim1 <- rep(2L, 2)
@@ -113,11 +131,17 @@ unitizer_sect("Dims", {
   alike:::dim_compare(dim8, dim6)  # fail
   alike:::dim_compare(dim6, dim9)  # works
 
+  # really a corner case that shouldn't come about
+
+  alike:::dim_compare(9L, NULL)
+
   # With non atomic objects
 
   alike:::dim_compare(dim1, dim2, list())          # fail
   alike:::dim_compare(dim1, dim2, cur_obj=list())  # fail
   alike:::dim_compare(dim1, dim2, list(), list())  # fail
+
+  alike:::dim_compare(dim1, dim2, integer(), list())  # fail
 
   # Errors
 
