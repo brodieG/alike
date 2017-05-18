@@ -69,21 +69,6 @@ const char * ALIKEC_symb_abstract(
   return symb_abs;
 }
 /*
-Marks current symbol in langsxp
-*/
-void ALIKEC_symb_mark(SEXP obj) {
-  if(obj != R_NilValue) {
-    SEXPTYPE obj_type = TYPEOF(obj);
-    if(obj_type != LANGSXP && obj_type != LISTSXP) error("Unexpected argument");
-
-    const char * car_dep = ALIKEC_deparse_chr(CAR(obj), -1);
-    SETCAR(
-      obj,
-      install(CSR_smprintf4(ALIKEC_MAX_CHAR, "{%s}", car_dep, "", "", ""))
-    );
-  }
-}
-/*
 Try to find function in env and return function if it exists, R_NilValue
 otherwise
 
@@ -98,7 +83,8 @@ SEXP ALIKEC_get_fun(SEXP call, SEXP env) {
       break;
     case SYMSXP:
       {
-        SEXP fun_def = ALIKEC_findFun(fun, env);  // Assuming no GC happens in next couple of steps
+        // Assuming no GC happens in next couple of steps
+        SEXP fun_def = ALIKEC_findFun(fun, env);
         if(TYPEOF(fun_def) == CLOSXP) return fun_def;
       }
       break;
@@ -288,7 +274,7 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
 
     // Actual fun call must match exactly, unless NULL
 
-    if(tar_fun != R_NilValue && tar_fun != cur_fun) {
+    if(tar_fun != R_NilValue && !R_compute_identical(tar_fun, cur_fun, 16)) {
       res.success = 0;
       res.rec = ALIKEC_rec_ind_num(res.rec, 1);
 

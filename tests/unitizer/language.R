@@ -42,6 +42,16 @@ unitizer_sect("Calls", {
   alike:::lang_alike(cb, ca, NULL)      # false, different error
   alike:::lang_alike(ca, cb)            # TRUE, should match
 
+  # Actually use a function (and not just name of fun)
+
+  ca.1 <- ca
+  cb.1 <- cb
+
+  ca.1[[1]] <- fun
+  cb.1[[1]] <- fun
+
+  alike:::lang_alike(ca.1, cb.1)         # TRUE, should match
+
   # test nested match.call
 
   cc <- quote(fun(a, b, fun(b=1)))
