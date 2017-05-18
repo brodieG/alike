@@ -23,6 +23,10 @@ unitizer_sect("Calls", {
   c10 <- quote(fun(1))
   c11 <- quote(fun(1, 2))
 
+  c12 <- quote(a + b + c)
+  c13 <- quote((a + b) + c)
+  c14 <- quote(a + (b + c))
+
   alike:::lang_alike(c0, c1, NULL)  # TRUE
   alike:::lang_alike(c0, c2, NULL)  # no, inconsistent
   alike:::lang_alike(c0, c3, NULL)  # no, wrong fun name
@@ -32,6 +36,14 @@ unitizer_sect("Calls", {
   alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
   alike:::lang_alike(c5, c9, NULL)  # TRUE
   alike:::lang_alike(c11, c10, NULL)# Length mismatch
+
+  # Parens
+
+  alike:::lang_alike(c12, c13)   # equivalent
+  alike:::lang_alike(c12, c14)   # not equivalent
+  alike:::lang_alike(c13, c14)   # not equivalent
+
+  # with defined fun
 
   fun <- function(abc, bcd, efg) NULL
 

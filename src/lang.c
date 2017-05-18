@@ -135,7 +135,12 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   SEXP cur_skip_paren = PROTECT(ALIKEC_skip_paren(current));
   SEXP tar_skip_paren = PROTECT(ALIKEC_skip_paren(target));
 
+  // Need to reset all variables so we work on the paren less version
+
   current = VECTOR_ELT(cur_skip_paren, 0);
+  SEXP cur_par_dup = PROTECT(duplicate(cur_par));
+  SETCAR(cur_par_dup, current);
+
   int i, i_max = asInteger(VECTOR_ELT(cur_skip_paren, 1));
   for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
   target = VECTOR_ELT(tar_skip_paren, 0);
@@ -195,8 +200,8 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
     // Note how we pass cur_par and not current so we can modify cur_par
     // this should be changed since we don't use that feature any more
     res = ALIKEC_lang_alike_rec(
-      target, cur_par, tar_hash, cur_hash, rev_hash, tar_varnum,
-      cur_varnum, formula, match_call, match_env, set, rec
+      target, cur_par_dup, tar_hash, cur_hash, rev_hash, tar_varnum,
+      cur_varnum, formula, match_call, match_env, set, res.rec
     );
   } else if(tsc_type == SYMSXP || csc_type == SYMSXP) {
     res.msg_strings.tar_pre = "be";
@@ -226,7 +231,7 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
       res.rec = ALIKEC_rec_dec(res.rec);
     }
   }
-  UNPROTECT(2);
+  UNPROTECT(3);
   return res;
 }
 
