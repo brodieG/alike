@@ -464,8 +464,8 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
         );
       }
     } else if (tar_type == STRSXP) {
-      // Only determine what name is wrong if we know there is a mismatch since we
-      // have to loop thorugh each value.  Zero length targets match anything
+      // Only determine what name is wrong if we know there is a mismatch since
+      // we have to loop thorugh each value.  Zero length targets match anything
       // unless in strict mode
 
       if(!R_compute_identical(target, current, 16)) {
@@ -473,7 +473,8 @@ struct ALIKEC_res_sub ALIKEC_compare_special_char_attrs_internal(
           const char * cur_name_val = CHAR(STRING_ELT(current, i));
           const char * tar_name_val = CHAR(STRING_ELT(target, i));
           if(         // check dimnames names match
-            (strict || tar_name_val[0]) && strcmp(tar_name_val, cur_name_val) != 0
+            (strict || tar_name_val[0]) &&
+            strcmp(tar_name_val, cur_name_val) != 0
           ) {
             res_sub.success=0;
             res_sub.message = PROTECT(
@@ -655,7 +656,19 @@ struct ALIKEC_res_sub ALIKEC_compare_dimnames(
         lang2(R_NamesSymbol, lang2(R_DimNamesSymbol, R_NilValue))
       );
       if(VECTOR_ELT(wrap, 0) == R_NilValue) {
-        SET_VECTOR_ELT(wrap, 0, wrap_call);
+        // nocov start
+        // All of these errors are going to have some `[x]` accessor, only way
+        // would be if were using integer names, but that is not actually
+        // supported here (might be with rownames); also, malformed names are
+        // handled earlier in this function
+        error(
+          "Internal Error: %s%s",
+          "it should not be possible to generate a `names(dimnames())` error ",
+          "that doesn't involve some other call componenet"
+        );
+        // If we did hit this case, then the following would be how to handle it
+        // SET_VECTOR_ELT(wrap, 0, wrap_call);
+        // nocov end
       } else {
         SETCAR(VECTOR_ELT(wrap, 1), wrap_call);
       }
