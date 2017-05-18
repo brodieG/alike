@@ -20,6 +20,7 @@ BugReports: https://github.com/brodieG/alike/issues
 VignetteBuilder: knitr
 Suggests:
     knitr,
+    rmarkdown,
     unitizer,
     covr,
     rmarkdown,
