@@ -577,9 +577,9 @@ struct ALIKEC_res ALIKEC_alike_internal(
   SEXP target, SEXP current, struct ALIKEC_settings set
 ) {
   if(set.type_mode < 0 || set.type_mode > 2)
-    error("Argument `type.mode` must be in 0:2");
+    error("Interal Error: argument `type.mode` must be in 0:2");  // nocov
   if(set.attr_mode < 0 || set.attr_mode > 2)
-    error("Argument `attr.mode` must be in 0:2");
+    error("Interal Error: `attr.mode` must be in 0:2");           // nocov
 
   struct ALIKEC_res res = ALIKEC_res_def();
 

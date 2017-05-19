@@ -12,6 +12,8 @@ unitizer_sect("Atomic", {
   alike(integer(4L), letters[1:4])
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
 
+  alike(integer(), NULL)    # FALSE, corner case test
+
   alike(c(a=1, b=2), 3)         # Length mismatch
   alike(c(a=1, b=2), c(1, 2))   # Names
 } )
@@ -219,20 +221,31 @@ unitizer_sect("Calls / Formulas", {
   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
   alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
 
+  # Need to add parens in error messages, which we will illustrate with an
+  # operator
+
+  "%plusq%" <- function(x, y) call("+", substitute(x), substitute(y))
+  alike(quote(1 + 1), 1 %plusq% b)
+
+  # With defined fun
+
   fun <- function(a, b, c) NULL
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  # TRUE, since constants including NULL match any constants
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))
   .alike(  # FALSE, match.call disabled
     quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
     alike_settings(lang.mode=1)
   )
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
+  # FALSE, mismatch
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)))
   alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
 
   alike(quote(fun(1, 2)), quote(fun(1)))   # FALSE
   alike(quote(fun(1)), quote(fun(1, 2)))   # FALSE
 
   alike(quote(fun(1, 2)), quote(fun2(1, 2)))            # FALSE, fun mismatch
-  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))  # FALSE, fun mismatch, nested
+  # FALSE, fun mismatch, nested
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))
 
   # zero len matches anything
 
