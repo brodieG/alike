@@ -335,9 +335,19 @@ unitizer_sect(".alike", {
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=1L))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=2L))  # FALSE
   fun <- function(a, b, c) NULL
-  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), alike_settings(env=NULL))   # FALSE
-  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))                             # TRUE
+  # FALSE
+  .alike(
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
+    alike_settings(env=NULL)
+  )
+  # TRUE
+  .alike(
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))
+  )
   .alike(`&&`, function() NULL, alike_settings(type.mode=1))   # FALSE
+  # Error
+
+  .alike(1, 2, NULL)
 } )
 # These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks
@@ -426,4 +436,14 @@ unitizer_sect("Raw", {
   # no longer produce a warning.  Really just looking for a valid STRSXP type.
 
   alike(as.raw(integer(3)), as.raw(integer(3)))
+})
+unitizer_sect("Errors", {
+  .alike(NULL, NULL, settings=alike_settings(type.mode=3))
+  .alike(NULL, NULL, settings=alike_settings(attr.mode=letters))
+  .alike(NULL, NULL, settings=alike_settings(lang.mode=letters))
+  .alike(NULL, NULL, settings=alike_settings(fuzzy.int.max.len=NA_integer_))
+  .alike(NULL, NULL, settings=alike_settings(suppress.warnings=NA))
+  .alike(NULL, NULL, settings=alike_settings(env=letters))
+  .alike(NULL, NULL, settings=alike_settings(width=letters))
+  .alike(NULL, NULL, settings=alike_settings(env.limit=-1L))
 })

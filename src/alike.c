@@ -696,18 +696,16 @@ settings
 SEXP ALIKEC_alike_fast1(
   SEXP target, SEXP current, SEXP curr_sub, SEXP settings
 ) {
-  if(settings == R_NilValue) {
-    return ALIKEC_alike_fast2(target, current);
-  } else if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 8) {
-    return ALIKEC_alike(
+  SEXP res;
+  if (TYPEOF(settings) == VECSXP && XLENGTH(settings) == 8) {
+    res = ALIKEC_alike(
       target, current, curr_sub, VECTOR_ELT(settings, 0),
       VECTOR_ELT(settings, 1), VECTOR_ELT(settings, 2), VECTOR_ELT(settings, 3),
       VECTOR_ELT(settings, 4), VECTOR_ELT(settings, 5), VECTOR_ELT(settings, 6),
       VECTOR_ELT(settings, 7)
     );
-  }
-  error("Argument `settings` is not a length 6 list as expected");
-  return R_NilValue;
+  } else error("Argument `settings` is not a length 8 list as expected");
+  return res;
 }
 /*
 Main external interface, no settings
@@ -837,7 +835,7 @@ SEXP ALIKEC_alike(
   )
     error(
       "%s%s",
-      "Argument `env_limit` must be a strictly positive ",
+      "Argument `env.limit` must be a strictly positive ",
       "an integer one length vector"
     );
 

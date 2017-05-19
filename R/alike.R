@@ -158,11 +158,6 @@ alike <- function(target, current)
 .alike <- function(target, current, settings=alike_settings(env=parent.frame()))
   .Call(ALIKEC_alike_fast1, target, current, substitute(current), settings)
 
-#' @keywords internal
-
-.alike2 <- function(target, current)
-  .Call(ALIKEC_alike_fast2, target, current)
-
 #' @rdname alike
 #' @export
 
