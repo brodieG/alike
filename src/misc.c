@@ -281,6 +281,21 @@ int ALIKEC_is_an_op(SEXP lang) {
   return is_an_op;
 }
 /*
+ * Checks whether the innermost part of a call is an OP, in which case if the
+ * object that will be inserted in there is an op we probably want to wrap it in
+ * parens
+ */
+int ALIKEC_is_an_op_inner(SEXP lang) {
+  SEXP lang_cpy=lang, lang_next;
+
+  // Advance through language object until the first argument is no longer a
+  // language object
+
+  while(TYPEOF(lang_next = CADR(lang_cpy)) == LANGSXP) {lang_cpy = lang_next;}
+
+  return ALIKEC_is_an_op(lang_cpy);
+}
+/*
  * Check whether a language call is to an operator or to other special symbols
  * that are not syntactic but don't require escaping
  */

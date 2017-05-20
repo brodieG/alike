@@ -538,12 +538,6 @@ struct ALIKEC_res_sub ALIKEC_lang_alike_internal(
     SEXP lang_ind = VECTOR_ELT(lang_res, 3);
     SEXP lang_ind_sub = VECTOR_ELT(lang_res, 4);
 
-    // Formulas need to be wrapped in parens for indexing to make sense
-
-    if(TYPEOF(target) == LANGSXP && CAR(target) == ALIKEC_SYM_tilde) {
-      SETCAR(lang_ind_sub, lang2(ALIKEC_SYM_paren_open, CAR(lang_ind_sub)));
-      lang_ind_sub = CDR(CAR(lang_ind_sub));
-    }
     SEXP wrap = VECTOR_ELT(res.message, 1);
     SET_VECTOR_ELT(wrap, 0, lang_ind);
     SET_VECTOR_ELT(wrap, 1, lang_ind_sub);

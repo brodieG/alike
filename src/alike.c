@@ -640,29 +640,34 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
     res_out.actual = CHAR(STRING_ELT(VECTOR_ELT(res.message, 0), 3));
 
     SEXP rec_ind = PROTECT(ALIKEC_rec_ind_as_lang(res.rec));
+    SEXP wrap = VECTOR_ELT(res.message, 1);
+
+    // Need to check if our call could become ambigous with the indexing
+    // element (e.g. `1 + x[[1]][[2]]` should be `(1 + x)[[1]][[2]]`
+
+    // Condition is a wee bit sloppy, we're assuming that rec_ind is either an
+    // operator or nothing, b/c if a function then we don't need to use parens
+    // even if wrap is an op.  I'm pretty sure this is always true though.
+    if(
+      ALIKEC_is_an_op(curr_sub) &&
+      (
+        ALIKEC_is_an_op(VECTOR_ELT(rec_ind, 0)) ||
+        ALIKEC_is_an_op_inner(VECTOR_ELT(wrap, 0))
+      )
+    ) {
+      curr_sub = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
+    } else {
+      PROTECT(R_NilValue);
+    }
+    // Extra recursion index needed: this should be applied before the wrap
 
     if(TYPEOF(VECTOR_ELT(rec_ind, 0)) == LANGSXP) {
-      // Need to check if our call could become ambigous with the indexing
-      // element (e.g. `1 + x[[1]][[2]]` should be `(1 + x)[[1]][[2]]`
-
-      // Handle case where expression is a binary operator; in these cases we
-      // need to wrap calls in parens so that any subsequent indices we use make
-      // sense, though in reality we need to improve this so that we only use
-      // parens when strictly needed
-
-      if(ALIKEC_is_an_op(curr_sub)) {
-        curr_sub = PROTECT(lang2(ALIKEC_SYM_paren_open, curr_sub));
-      } else {
-        PROTECT(R_NilValue);
-      }
       SETCAR(VECTOR_ELT(rec_ind, 1), curr_sub);
-      UNPROTECT(1);
       curr_sub = VECTOR_ELT(rec_ind, 0);
     }
     // Merge the wrap call with the original call so we can get stuff like
     // `names(curr_sub)`
 
-    SEXP wrap = VECTOR_ELT(res.message, 1);
     if(VECTOR_ELT(wrap, 0) != R_NilValue) {
       SETCAR(VECTOR_ELT(wrap, 1), curr_sub);
       curr_sub = VECTOR_ELT(wrap, 0);
@@ -673,21 +678,10 @@ struct ALIKEC_res_fin ALIKEC_alike_wrap(
       curr_sub, set.width,
       asLogical(getAttrib(rec_ind, ALIKEC_SYM_syntacticnames))
     );
-    UNPROTECT(1);
+    UNPROTECT(2);
   }
   UNPROTECT(1);
   return res_out;
-}
-/*
-"fast" version doesn't allow messing with optional parameters to avoid arg
-evaluations in R; this is basically deprecated now though still accessible
-through the non-exported `.alike2` R function
-*/
-SEXP ALIKEC_alike_fast2(SEXP target, SEXP current) {
-  struct ALIKEC_settings set = ALIKEC_set_def("");
-  return ALIKEC_string_or_true(
-    ALIKEC_alike_wrap(target, current, ALIKEC_SYM_current, set)
-  );
 }
 /*
 Originally the "fast" version, but is now the version that allows us to specify
