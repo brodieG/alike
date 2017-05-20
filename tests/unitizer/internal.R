@@ -378,16 +378,26 @@ unitizer_sect("Merge messages", {
   # third element plays no role in sort
   alike:::msg_sort(list(c("a", "a", "a", "z", "b"), c("a", "a", "z", "b", "b")))
 
+  # corner cases
+
+  alike:::msg_sort(list(letters[5:1]))
+  alike:::msg_sort(as.list(letters[5:1]))
+  alike:::msg_sort(list(letters[1:5], NULL))
+  alike:::msg_sort(letters)
+
   msgs <- list(
-    c("`my_var`", "be", "integer", "is", "character"),
-    c("`my_var`", "have", "3 columns", "has", "1"),
-    c("`length(names(my_var))`", "be", "2", "is", "4"),
-    c("`my_var`", "be", "\"NULL\"", "is", "character"),
-    c("`attr(my_var)`", "be", "\"NULL\"", "is", "list"),
-    c("`my_var`", "be", "matrix", "is", "character"),
-    c("`length(names(my_var))`", "be", "3", "is", "4")
+    c("`my_var` ", "be", "integer", "is", "character"),
+    c("`my_var` ", "have", "3 columns", "has", "1"),
+    c("`length(names(my_var))` ", "be", "2", "is", "4"),
+    c("`my_var` ", "be", "\"NULL\"", "is", "character"),
+    c("`attr(my_var)` ", "be", "\"NULL\"", "is", "list"),
+    c("`my_var` ", "be", "matrix", "is", "character"),
+    c("`length(names(my_var))` ", "be", "3", "is", "4")
   )
   alike:::msg_merge(msgs)
+  alike:::msg_merge(msgs[1:3])  # no merging required here
+
+  alike:::msg_merge_ext(msgs)
 })
 unitizer_sect("Hash", {
   keys <- vapply(
@@ -405,4 +415,9 @@ unitizer_sect("Mode", {
   alike:::alike_mode(`+`)
   alike:::alike_mode(log)
   alike:::alike_mode(quote(1 + 1))
+})
+unitizer_sect("Find funs", {
+  fun <- function(x, y) NULL
+  alike:::find_fun(quote(fun), environment())
+  alike:::find_fun(quote(asdhfqwerasdfasdf), environment())
 })

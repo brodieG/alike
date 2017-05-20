@@ -219,8 +219,8 @@ const char * ALIKEC_pad(SEXP obj, R_xlen_t lines, int pad) {
       // nocov start not possible to actually set these as options
       dep_prompt = "> ";
       dep_continue = "+ ";
-      // nocov end
     } else {
+      // nocov end
       dep_prompt = CHAR(asChar(prompt_val));
       dep_continue = CHAR(asChar(prompt_continue));
     }
@@ -436,6 +436,10 @@ The code is copied almost verbatim from src/main/envir.c:findFun()
 */
 
 SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
+  if(TYPEOF(symbol) != SYMSXP)
+    error("Internal Error: `symbol` must be symbol");
+  if(TYPEOF(rho) != ENVSXP)
+    error("Internal Error: `rho` must be environment");
   SEXP vl;
   while (rho != R_EmptyEnv) {
     vl = findVarInFrame3(rho, symbol, TRUE);
@@ -455,6 +459,11 @@ SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
     rho = ENCLOS(rho);
   }
   return R_UnboundValue;
+}
+SEXP ALIKEC_findFun_ext(SEXP symbol, SEXP rho) {
+  SEXP res = ALIKEC_findFun(symbol, rho);
+  if(res == R_UnboundValue) return R_NilValue;
+  return res;
 }
 
 /*
@@ -476,23 +485,6 @@ SEXP ALIKEC_string_or_true(struct ALIKEC_res_fin res) {
     return(mkString(res_str));
   }
   return(ScalarLogical(1));
-}
-/*
- * variation on ALIKEC_string_or_true that returns the full vector so we can use
- * it with ALIKEC_merge_msg
- */
-
-SEXP ALIKEC_strsxp_or_true(struct ALIKEC_res_fin res) {
-  if(res.target[0]) {
-    SEXP res_fin = PROTECT(allocVector(STRSXP, 5));
-    SET_STRING_ELT(res_fin, 0, mkChar(res.call));
-    SET_STRING_ELT(res_fin, 1, mkChar(res.tar_pre));
-    SET_STRING_ELT(res_fin, 2, mkChar(res.target));
-    SET_STRING_ELT(res_fin, 3, mkChar(res.act_pre));
-    SET_STRING_ELT(res_fin, 4, mkChar(res.actual));
-    UNPROTECT(1);
-    return(res_fin);
-  } else return(ScalarLogical(1));
 }
 /*
 Basic checks that `obj` could be a data frame; does not check class, only that

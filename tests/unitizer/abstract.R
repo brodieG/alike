@@ -73,4 +73,6 @@ unitizer_sect("nullify", {
   nullify(iris[1:10, ], 4)
 
   nullify(letters, 5)
+
+  nullify(structure(letters[1:2], class='xqwer892jahaksdf'), 2)
 })

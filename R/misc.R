@@ -85,6 +85,12 @@ msg_sort <- function(messages)
 msg_merge <- function(messages)
   .Call(ALIKEC_msg_merge, messages)
 
+msg_merge_ext <- function(messages)
+  .Call(ALIKEC_msg_merge_ext, messages)
+
+find_fun <- function(fun.name, env)
+  .Call(ALIKEC_find_fun, fun.name, env)
+
 alike_ext_2 <- function(target, current)
   .Call(ALIKEC_alike_ext2, target, current, substitute(current), parent.frame())
 
