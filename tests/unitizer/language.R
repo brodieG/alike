@@ -80,6 +80,13 @@ unitizer_sect("Calls", {
   alike:::lang_alike(cc, ce)  # FALSE
   alike:::lang_alike(ce, cc)  # TRUE
 
+  # mismatched functions
+
+  da <- quote(ff(a=1, b=2, c=3))
+  db <- quote(ff(a=1, d=2, c=3))
+
+  alike:::lang_alike(da, db)
+
   # Errors
 
   alike:::lang_alike(cc, 1:10)

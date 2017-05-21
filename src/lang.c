@@ -305,14 +305,19 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
       // know that target and current must be the same fun; we shouldn't need
       // to retrieve it twice as we do now
 
+      int use_names = 1;
       if(match_env != R_NilValue && set.lang_mode != 1) {
         target = PROTECT(ALIKEC_match_call(target, match_call, match_env));
         current = PROTECT(ALIKEC_match_call(current, match_call, match_env));
         SETCAR(cur_par, current);  // ensures original call is matched
+        // Can't be sure that names will match up with call as originally
+        // submitted
+        use_names = 0;
       } else {
         PROTECT(PROTECT(R_NilValue)); // stack balance
       }
-      SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag, prev_tag = R_UnboundValue;
+      SEXP tar_sub, cur_sub, cur_sub_tag, tar_sub_tag,
+        prev_tag = R_UnboundValue;
       R_xlen_t arg_num, arg_num_prev = 0;
 
       for(
@@ -329,10 +334,13 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
           );
           // nocov end
         }
-        // Check tags are compatible; NULL tag in target allows any tag in current
+        // Check tags are compatible; NULL tag in target allows any tag in
+        // current
 
         cur_sub_tag = TAG(cur_sub);
         tar_sub_tag = TAG(tar_sub);
+
+        int update_rec_ind = 0;
 
         if(tar_sub_tag != R_NilValue && tar_sub_tag != cur_sub_tag) {
           char * prev_tag_msg = "as first argument";
@@ -354,6 +362,14 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             ALIKEC_MAX_CHAR, "argument `%s` %s",
             CHAR(PRINTNAME(TAG(tar_sub))), prev_tag_msg, "", ""
           );
+          res.msg_strings.act_pre = "has";
+          if(TAG(cur_sub) == R_NilValue) {
+            res.msg_strings.actual = "unnamed argument";
+          } else {
+            res.msg_strings.actual = CSR_smprintf4(
+              ALIKEC_MAX_CHAR, "`%s`", CHAR(PRINTNAME(TAG(cur_sub))), "", "", ""
+            );
+          }
         } else {
           // Note that `lang_obj_compare` kicks off recursion as well, and
           // skips parens
@@ -363,17 +379,20 @@ struct ALIKEC_res_lang ALIKEC_lang_alike_rec(
             tar_sub_car, cur_sub, tar_hash, cur_hash, rev_hash,
             tar_varnum, cur_varnum, formula, match_call, match_env, set, res.rec
           );
+          update_rec_ind = 1;
         }
         // Update recursion indices and exit loop; keep in mind that this is a
         // call so first element is fun, hence `arg_num + 2`
 
         if(!res.success) {
-          if(cur_sub_tag != R_NilValue)
-            res.rec =
-              ALIKEC_rec_ind_chr(res.rec, CHAR(PRINTNAME(cur_sub_tag)));
-          else
-            res.rec =
-              ALIKEC_rec_ind_num(res.rec, arg_num + 2);
+          if(update_rec_ind) {
+            if(cur_sub_tag != R_NilValue && use_names)
+              res.rec =
+                ALIKEC_rec_ind_chr(res.rec, CHAR(PRINTNAME(cur_sub_tag)));
+            else
+              res.rec =
+                ALIKEC_rec_ind_num(res.rec, arg_num + 2);
+          }
           break;
         }
         arg_num_prev = arg_num;
