@@ -12,7 +12,7 @@ alike(target, current)
 
 alike_settings(type.mode = 0L, attr.mode = 0L, lang.mode = 0L,
   rec.mode = 0L, env = parent.frame(), fuzzy.int.max.len = 100L,
-  suppress.warnings = FALSE, width = -1L)
+  suppress.warnings = FALSE, width = -1L, env.limit = 65536L)
 }
 \arguments{
 \item{target}{the template to compare the object to}
@@ -54,6 +54,11 @@ testing language objects}
 
 \item{width}{to use when deparsing expressions; defaults to
 \code{getOption("width")}}
+
+\item{env.limit}{integer(1L) maximum number of nested environments to recurse
+through; these are tracked to make sure we do not get into an infinite
+recursion loop, but because they are tracked we keep a limit on how many
+we will go through.}
 }
 \value{
 TRUE if target and current are alike, character(1L) describing why

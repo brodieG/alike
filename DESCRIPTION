@@ -23,7 +23,6 @@ Suggests:
     rmarkdown,
     unitizer,
     covr,
-    rmarkdown,
     microbenchmark
 Imports:
     cstringr

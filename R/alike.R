@@ -64,6 +64,10 @@
 #' @param suppress.warnings logical(1L)
 #' @param width to use when deparsing expressions; defaults to
 #'   \code{getOption("width")}
+#' @param env.limit integer(1L) maximum number of nested environments to recurse
+#'   through; these are tracked to make sure we do not get into an infinite
+#'   recursion loop, but because they are tracked we keep a limit on how many
+#'   we will go through.
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
 #' @examples
