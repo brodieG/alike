@@ -142,7 +142,9 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
   SETCAR(cur_par_dup, current);
 
   int i, i_max = asInteger(VECTOR_ELT(cur_skip_paren, 1));
-  for(i = 0; i < i_max; i++) res.rec = ALIKEC_rec_inc(res.rec);
+  for(i = 0; i < i_max; i++) {
+    res.rec = ALIKEC_rec_inc(res.rec);
+  }
   target = VECTOR_ELT(tar_skip_paren, 0);
 
   SEXPTYPE tsc_type = TYPEOF(target), csc_type = TYPEOF(current);
@@ -223,11 +225,12 @@ struct ALIKEC_res_lang ALIKEC_lang_obj_compare(
 
   } else res.success = 1;
 
-  // Deal with index implications of skiping parens
+  // Deal with index implications of skiping parens, note + 2 because we need
+  // +1 for zero index, and then another +1 to reference contents of parens
 
   if(!res.success) {
     for(i = 0; i < i_max; i++) {
-      res.rec = ALIKEC_rec_ind_num(res.rec, i + 1);
+      res.rec = ALIKEC_rec_ind_num(res.rec, i + 2);
       res.rec = ALIKEC_rec_dec(res.rec);
     }
   }

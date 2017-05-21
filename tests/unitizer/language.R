@@ -43,6 +43,8 @@ unitizer_sect("Calls", {
   alike:::lang_alike(c12, c14)   # not equivalent
   alike:::lang_alike(c13, c14)   # not equivalent
 
+  alike:::lang_alike(c14, c13)   # not equivalent
+
   # with defined fun
 
   fun <- function(abc, bcd, efg) NULL
