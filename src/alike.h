@@ -126,7 +126,6 @@
   );
   SEXP ALIKEC_typeof(SEXP object);
   SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len);
-  SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current);
 
   // - Internal Funs ----------------------------------------------------------
 

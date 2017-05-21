@@ -18,23 +18,26 @@ struct ALIKEC_res_strings ALIKEC_type_alike_internal(
 
   if(tar_type_raw == cur_type_raw) return res;
 
-  if(
-    mode == 0 && (
-      (
+  tar_type = tar_type_raw;
+  cur_type = cur_type_raw;
+
+  if(mode == 0) {
+    if(
         tar_type_raw == INTSXP && (
           max_len < 0 ||
           (xlength(target) <= max_len && xlength(current) <= max_len)
-      ) ) || (
+      )
+    ) {
+      int_like = 1;
+    }
+    if(int_like || (
         tar_type_raw == CLOSXP || tar_type_raw == SPECIALSXP ||
         tar_type_raw == BUILTINSXP
-    ) )
-  ) {
-    tar_type = ALIKEC_typeof_internal(target);
-    cur_type = ALIKEC_typeof_internal(current);
-    int_like = 1;
-  } else {
-    tar_type = tar_type_raw;
-    cur_type = cur_type_raw;
+      )
+    ) {
+      tar_type = ALIKEC_typeof_internal(target);
+      cur_type = ALIKEC_typeof_internal(current);
+    }
   }
   if(tar_type == cur_type) return res;
   if(
@@ -73,20 +76,13 @@ SEXP ALIKEC_type_alike(SEXP target, SEXP current, SEXP mode, SEXP max_len) {
   if((mod_type != INTSXP && mod_type != REALSXP) || XLENGTH(mode) != 1)
     error("Argument `mode` must be a one length integer like vector");
   if((max_len_type != INTSXP && max_len_type != REALSXP) || XLENGTH(max_len) != 1)
-    error("Argument `mode` must be a one length integer like vector");
+    error(
+      "Argument `fuzzy.int.max.len` must be a one length integer like vector"
+    );
 
   res = ALIKEC_type_alike_internal(
     target, current, asInteger(mode), asInteger(max_len)
   );
-  if(res.target[0]) {
-    return(ALIKEC_res_strings_to_SEXP(res));
-  } else {
-    return ScalarLogical(1);
-  }
-}
-SEXP ALIKEC_type_alike_fast(SEXP target, SEXP current) {
-  struct ALIKEC_res_strings res;
-  res = ALIKEC_type_alike_internal(target, current, 0, 100);
   if(res.target[0]) {
     return(ALIKEC_res_strings_to_SEXP(res));
   } else {
