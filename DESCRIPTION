@@ -1,25 +1,29 @@
 Package: alike
-Title: Determine Whether Two Objects Are Similar
-Description: Compares object structures rather than values.  This is
-    particularly useful when a user has an object template (e.g.
-    matrix(integer(), ncol=3)) that they wish to compare other objects against
-    (e.g. three column integer matrices).
-Version: 1.0.0
-Authors@R: c( person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
-    role=c("aut", "cre")), person(family="Paxdiablo", role="cph", comment="Hash
-    table implementation in src/pfhash.h"), person(family="R Core Team",
+Title: Compare Object Structure
+Description: Determine whether objects are structurally similar by recursively
+    comparing types, lengths, attributes and other structural properties.
+Version: 1.1.1
+Authors@R: c(
+    person("Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")),
+    person(family="Paxdiablo", role="cph", comment="Hash
+    table implementation in src/pfhash.h"),
+    person(family="R Core Team",
     email="R-core@r-project.org", role="cph", comment="Used/adapted several
-    code snippets from R sources"))
+    code snippets from R sources, see COPYRIGHTS"))
 Depends:
-    R (>= 3.1.2)
-License: GPL (>=2) | file LICENSE
+    R (>= 3.2.2)
+License: GPL (>=2)
 LazyData: true
+URL: https://github.com/brodieG/alike
+BugReports: https://github.com/brodieG/alike/issues
 VignetteBuilder: knitr
-Imports:
-    cstringr
 Suggests:
     knitr,
-    microbenchmark,
+    rmarkdown,
     unitizer,
-    ggplot2,
-    data.table
+    covr,
+    microbenchmark
+Imports:
+    cstringr
+RoxygenNote: 6.0.1

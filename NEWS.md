@@ -1,3 +1,18 @@
+alike 1.2.0
+===========
+
+* Deprecation
+* Fixes related to function comparison (#38, #37) and other misc (#36)
+
+alike 1.1.0
+===========
+
+* Improvements to error message so that user can just copy paste relevant part 
+  of error message in prompt and see what the problem object is (fix 
+  issues #26, #32, #35)
+    * Use substituted `current` expression
+    * Use accessor functions to problem item (e.g. `names(abc$b[[1]])`)
+
 alike 1.0.0
 ===========
 
@@ -16,6 +31,7 @@ Behavior Changes:
   expressions are now recursed through, with `alike` applied recursively to each
   elemment therein; this mirrors the previous treatment for lists (the VECSXP
   type)
+* Levels are compared like names (#23)
 * Improved comparison of language objects (calls, symbols, formulas, and
   functions); see docs for explanations of what makes language objects alike
   (#10, #11, #14, #16)
@@ -24,6 +40,11 @@ Behavior Changes:
 * Added `abstract` functions to assist in the creation of template objects (#9)
 * `ts` class objects now have specialized comparison
 * Error messages generally tweaked
+
+Other:
+
+* Documentation updates
+* Vignette overhaul
 
 Internal Changes:
 

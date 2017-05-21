@@ -9,8 +9,11 @@ unitizer_sect("Name like attributes", {
   alike:::name_compare(c(NA_character_, "hello"), c("abc", "hello"))
   alike:::name_compare(c("ab", "hello"), c(NA_character_, "hello"))
   alike:::name_compare(c(NA_character_, "hello"), c(NA_character_, "hello"))
-} )
 
+  # mess with values
+
+  alike:::name_compare(1:3, 3:1)
+} )
 unitizer_sect("S3 Classes", {
   class1 <- letters[1:5]
   class2 <- letters[3:5]
@@ -53,6 +56,12 @@ unitizer_sect("Dimnames", {
   dimn12 <- matrix(letters[1:9], nrow=3)
   dimn13 <- `attr<-`(dimn2, "bar", "yowza")
   dimn14 <- `attr<-`(dimn2, "bar", "yowz")
+  dimn15 <- list(a=letters[1:3], b=letters[1:3])
+  dimn16 <- list(a=letters[1:3], b=letters[1:3])
+  attr(dimn15, "a") <- 1:2
+  attr(dimn16, "a") <- 1:3
+  dimn17 <- list(a=letters[1:3])
+  dimn18 <- list(a=letters[1:2], b=letters[1:3])
 
   # baseline cases
 
@@ -88,6 +97,14 @@ unitizer_sect("Dimnames", {
   alike:::dimname_compare(dimn13, dimn2)
   alike:::dimname_compare(dimn13, dimn14)
   alike:::dimname_compare(dimn14, dimn13)
+
+  # dimanames with attributes other than names that are not alike
+
+  alike:::dimname_compare(dimn15, dimn16)
+
+  # Mismatched lengths
+
+  alike:::dimname_compare(dimn17, dimn18)
 })
 unitizer_sect("Dims", {
   dim1 <- rep(2L, 2)
@@ -114,11 +131,17 @@ unitizer_sect("Dims", {
   alike:::dim_compare(dim8, dim6)  # fail
   alike:::dim_compare(dim6, dim9)  # works
 
+  # really a corner case that shouldn't come about
+
+  alike:::dim_compare(9L, NULL)
+
   # With non atomic objects
 
   alike:::dim_compare(dim1, dim2, list())          # fail
   alike:::dim_compare(dim1, dim2, cur_obj=list())  # fail
   alike:::dim_compare(dim1, dim2, list(), list())  # fail
+
+  alike:::dim_compare(dim1, dim2, integer(), list())  # fail
 
   # Errors
 
@@ -210,135 +233,83 @@ unitizer_sect("All Attributes, default", {
   )
 } )
 unitizer_sect("All attributes, strict", {
-  alike:::attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch, but passes because comparison is `alike`
-  alike:::attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
-  alike:::attr_compare(                                                         # dimnames mismatch, but alike so passes
+  # dim mismatch, but passes because comparison is `alike`
+  alike:::attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)
+  # TRUE
+  alike:::attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)
+  # dimnames mismatch, but alike so passes
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # dimnames mismatch, but passes because target has NULL names
+  # dimnames mismatch, but passes because target has NULL names
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # dimnames mismatch, but here fails because target has them but current doesnt
+  # dimnames mismatch, but here fails because target has them but current doesnt
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # actually passes because both have 2 length character name attrs, which are alike
+  # actually passes because both have 2 length character name attrs, which are
+  # alike
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # TRUE
+  # TRUE
+  alike:::attr_compare(
     structure(list(integer(), character())),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # TRUE
+  # TRUE
+  alike:::attr_compare(
     structure(list(integer(), character()), class="data.frame"),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # Class mismatch
+  # Class mismatch
+  alike:::attr_compare(
     structure(list(), class=letters[2:4]),
     structure(list("hello"), class=letters[1:4]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # Too many attrs
+  # Too many attrs
+  alike:::attr_compare(
     structure(list(integer(), character())),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Too many attrs
+  # Too many attrs
+  alike:::attr_compare(
     structure(list(integer(), character()), class="data.frame"),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Missing attr
+  # Missing attr
+  alike:::attr_compare(
     structure(list(), welp=list(NULL, 1:3), belp=1:3),
     structure(list("hello"), welp=list(NULL, 1:3)),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Missing attr, but attr count same
+  # Missing attr, but attr count same
+  alike:::attr_compare(
     structure(list(), welp=list(NULL, 1:3), belp=1:3),
     structure(list("hello"), welp=list(NULL, 1:3), kelp=20),
     attr.mode=2
   )
 } )
-unitizer_sect("Match Calls", {
-  alike:::match_call_alike(quote(var(y=1:10, runif(10))), baseenv())
-  env0 <- new.env()
-  env0$var <- function(yollo, zambia) NULL
-  alike:::match_call_alike(quote(var(y=1:10, runif(10))), env0)
-})
-unitizer_sect("Calls", {
-  c0 <- quote(fun(a, b, a, 25))
-  c1 <- quote(fun(x, y, x, "hello"))
-  c2 <- quote(fun(x, y, z, "hello"))
-  c3 <- quote(FUN(x, y, x, 1.01))
-  c4 <- quote(fun(x, y, x, z))
-  c5 <- quote(fun(a + b + a, FUN(z, a + 1)))
-  c6 <- quote(fun(x + y + x, FUN(w, x + 2)))
-  c7 <- quote(fun(x + y + x, FUN(w, y + 2)))
-  c8 <- quote(fun(x + y + x, FUN(w, x - 2)))
-  c9 <- quote(fun(x + y + x, FUN(w, x + "hello")))
-
-  alike:::lang_alike(c0, c1, NULL)  # TRUE
-  alike:::lang_alike(c0, c2, NULL)  # no, inconsistent
-  alike:::lang_alike(c0, c3, NULL)  # no, wrong fun name
-  alike:::lang_alike(c0, c4, NULL)  # extra symbol
-  alike:::lang_alike(c5, c6, NULL)  # TRUE
-  alike:::lang_alike(c5, c7, NULL)  # inconsistent
-  alike:::lang_alike(c5, c8, NULL)  # wrong call `-`
-  alike:::lang_alike(c5, c9, NULL)  # TRUE
-
-  fun <- function(abc, bcd, efg) NULL
-
-  ca <- quote(fun(a, b, a))
-  cb <- quote(fun(x, e=x, y))
-
-  alike:::lang_alike(ca, cb, NULL)      # shouldn't match without match.call
-  alike:::lang_alike(cb, ca, NULL)      # false, different error
-  alike:::lang_alike(ca, cb)            # TRUE, should match
-
-  # test nested match.call
-
-  cc <- quote(fun(a, b, fun(b=1)))
-  cd <- quote(fun(a, b, fun(c=1)))
-
-  alike:::lang_alike(cc, cd)
-
-  # NULL in target matches anything
-
-  ce <- quote(fun(a, b, NULL))
-
-  alike:::lang_alike(cc, ce)  # FALSE
-  alike:::lang_alike(ce, cc)  # TRUE
-
-  # Formulas
-
-  f0 <- y ~ x + 1
-  f1 <- a ~ b + 1
-  f2 <- a ~ b + 2
-  f3 <- y ~ x + log(x) + z - 1
-  f4 <- a ~ b + log(b) + c - 1
-  f5 <- a ~ b + log(c) + b - 1
-  f6 <- a ~ b + ln(b) + c - 1
-  f7 <- a ~ b + log(b) + c + 1
-
-  alike:::lang_alike(f0, f1, NULL)        # TRUE
-  alike:::lang_alike(f0, f2, NULL)        # FALSE
-  alike:::lang_alike(f3, f4, NULL)        # TRUE
-  alike:::lang_alike(f3, f5, NULL)        # FALSE
-  alike:::lang_alike(f3, f6, NULL)        # FALSE
-  alike:::lang_alike(f3, f7, NULL)        # FALSE
-})
 unitizer_sect("Closures", {
-  alike:::fun_alike(print, print.data.frame)  # TRUE, methods should always match generics
-  alike:::fun_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
+  # TRUE, methods should always match generics
+  alike:::fun_alike(print, print.data.frame)
+  # FALSE, but generics won't match methods with more arguments
+  alike:::fun_alike(print.data.frame, print)
   alike:::fun_alike(summary, summary.lm)
   alike:::fun_alike(summary.lm, summary)
 
@@ -358,13 +329,16 @@ unitizer_sect("Closures", {
   alike:::fun_alike(fn4, fn1)  # FALSE, dots must be matched
   alike:::fun_alike(fn0, fn2)  # FALSE
   alike:::fun_alike(fn0, fn3)  # TRUE
-  alike:::fun_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
+  # FALSE - defaults in target must be specified in current as well
+  alike:::fun_alike(fn3, fn0)
   alike:::fun_alike(fn4, fn5)  # FALSE dots in target must exit in current
   alike:::fun_alike(fn4, fn6)  # TRUE
   alike:::fun_alike(fn4, fn7)  # TRUE
-  alike:::fun_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
+  # FALSE - all arguments in target must be in current, even with dots
+  alike:::fun_alike(fn7, fn4)
   alike:::fun_alike(fn7, fn8)  # TRUE
-  alike:::fun_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
+  # FALSE - extra arguments in current must be adjacent to dots
+  alike:::fun_alike(fn7, fn9)
 
   # Try some builtins / specials
 
@@ -375,23 +349,111 @@ unitizer_sect("Closures", {
   alike:::fun_alike(on.exit, substitute)  # FALSE, specials
   alike:::fun_alike(`[`, substitute)      # FALSE, argless specials
   alike:::fun_alike(`[`, `&&`)          # TRUE, argless specials
-})
-unitizer_sect("Deparse", {
-  l0 <- quote(
-    a + b + fun(x + funz(
-      matrix_over[25, 32]) + transform(iris, x = Sepal.Width * 3) /
-      the_donkey_ate_a_carrot %in% {
-        paste0(
-          match(letter, LETTERS),
-          c("hello there")
-  ) } ) )
-  alike:::dep_alike(l0, -1)
-  alike:::dep_alike(l0, 1)
-  alike:::dep_alike(l0, 2)
+
+  # Errors
+
+  alike:::fun_alike(identity, 10)
+  alike:::fun_alike(10, identity)
 })
 unitizer_sect("Env Track", {
   el.1 <- replicate(5, new.env())
   el.2 <- el.1[c(1, 1, 2, 3, 4, 1, 2, 3, 5, 1)]
   alike:::env_track(el.1, 1L)  # first env a freebie, so should be 1
   alike:::env_track(el.2, 1L)
+
+  # Overwhelm env stack, though not that satifying a test
+
+  alike:::env_track(el.1, 1L, 3L)
+
+  # Error
+
+  alike:::env_track(list(1, 2, 3), 1L, 3L)
 } )
+unitizer_sect("valid names", {
+  alike:::is_valid_name("hello")
+  alike:::is_valid_name(".hello")
+  alike:::is_valid_name("123")
+  alike:::is_valid_name("hello there")
+  alike:::is_valid_name("h1ello")
+  alike:::is_valid_name("_hello")
+  alike:::is_valid_name(".1fail")
+  alike:::is_valid_name("NULL")
+  alike:::is_valid_name("FALSE")
+
+  alike:::is_valid_name(letters)
+} )
+unitizer_sect("Is dfish", {
+  df1 <- list(a=1:10, b=letters[1:10])
+  df2 <- list(a=1:10, b=letters[1:9])
+  alike:::is_dfish(df1)
+  alike:::is_dfish(df2)
+  alike:::is_dfish(1:10)
+} )
+unitizer_sect("syntactic", {
+  alike:::syntactic_names(quote(hello))
+  alike:::syntactic_names(quote(`hello there`))
+  alike:::syntactic_names(quote(1 + 1))
+  alike:::syntactic_names(quote(1 %hello there% 1))
+  alike:::syntactic_names(quote(1 + `hello there`))
+  alike:::syntactic_names(quote(-(1:3)))
+  alike:::syntactic_names(quote(c(-1:1, NA_integer_)))
+  alike:::syntactic_names(quote(a == 25))
+  alike:::syntactic_names(quote(all(-1:1 > 0)))
+})
+unitizer_sect("Pad or Quote", {
+  alike:::pad_or_quote(quote(1 + 1))
+  alike:::pad_or_quote(quote(!anyNA(1 + 1)))
+})
+unitizer_sect("Merge messages", {
+  alike:::msg_sort(list(letters[5:1], letters[1:5]))
+  # third element plays no role in sort
+  alike:::msg_sort(list(c("a", "a", "a", "z", "b"), c("a", "a", "z", "b", "b")))
+
+  # corner cases
+
+  alike:::msg_sort(list(letters[5:1]))
+  alike:::msg_sort(as.list(letters[5:1]))
+  alike:::msg_sort(list(letters[1:5], NULL))
+  alike:::msg_sort(letters)
+
+  msgs <- list(
+    c("`my_var` ", "be", "integer", "is", "character"),
+    c("`my_var` ", "have", "3 columns", "has", "1"),
+    c("`length(names(my_var))` ", "be", "2", "is", "4"),
+    c("`my_var` ", "be", "\"NULL\"", "is", "character"),
+    c("`attr(my_var)` ", "be", "\"NULL\"", "is", "list"),
+    c("`my_var` ", "be", "matrix", "is", "character"),
+    c("`length(names(my_var))` ", "be", "3", "is", "4")
+  )
+  alike:::msg_merge(msgs)
+  alike:::msg_merge(msgs[1:3])  # no merging required here
+  alike:::msg_merge(msgs[1])    # no merging required here
+
+  alike:::msg_merge_ext(msgs)
+})
+unitizer_sect("Hash", {
+  keys <- vapply(
+    1:26, function(x) paste0(letters[seq(x)], collapse=""), character(1L)
+  )
+  values <- vapply(
+    1:26, function(x) paste0(LETTERS[seq(x)], collapse=""), character(1L)
+  )
+  alike:::hash_test(keys, values)
+})
+unitizer_sect("Mode", {
+  alike:::alike_mode(NULL)
+  alike:::alike_mode(quote(a))
+  alike:::alike_mode(mean)
+  alike:::alike_mode(`+`)
+  alike:::alike_mode(log)
+  alike:::alike_mode(quote(1 + 1))
+})
+unitizer_sect("Find funs", {
+  fun <- function(x, y) NULL
+  alike:::find_fun(quote(fun), environment())
+  alike:::find_fun(quote(asdhfqwerasdfasdf), environment())
+
+  fun2 <- function(x) alike:::find_fun(quote(x), environment())
+  # corner case
+  fun2()
+})

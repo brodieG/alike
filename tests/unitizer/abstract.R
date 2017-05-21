@@ -10,12 +10,8 @@ unitizer_sect("Standard Methods", {
   alike(abstract(iris), iris[1:10, ])
   alike(abstract(iris), iris[1:10, 1:3])
   alike(abstract(iris), transform(iris, Species=as.character(Species)))
-
-
 })
-
 unitizer_sect("Time Series", {
-
   y <- ts(runif(12), start=1970, freq=12)
   attr(abstract(y), "ts")
   attr(abstract(y, "start"), "ts")
@@ -50,7 +46,6 @@ unitizer_sect("lm", {
 })
 unitizer_sect("ggplot", {
   # Rather experimental
-
   library(ggplot2)
   df1 <- data.frame(x=runif(20), y=runif(20))
   df2 <- data.frame(x=runif(20), y=runif(20), z=rep(c("a", "b"), 10))
@@ -67,5 +62,17 @@ unitizer_sect("ggplot", {
 })
 unitizer_sect("nullify", {
   nullify(list(1, 2, 3), 2)
+  nullify(list(1, 2, 3), -2)
+  nullify(list(1, 2, 3, 4), c(TRUE, FALSE))
+  nullify(list(1, 2, 3, 4), c(TRUE, FALSE, FALSE))
+  nullify(list(1, 2, 3, 4), c(rep(FALSE, 4), TRUE))
+  nullify(list(a=1, b=2, 3, 4), c("a", "b"))
+  nullify(list(1, 2, 3, 4), "hello")
+
+  nullify(list(1, 2, 3), 4)
   nullify(iris[1:10, ], 4)
+
+  nullify(letters, 5)
+
+  nullify(structure(letters[1:2], class='xqwer892jahaksdf'), 2)
 })

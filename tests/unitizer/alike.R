@@ -12,6 +12,8 @@ unitizer_sect("Atomic", {
   alike(integer(4L), letters[1:4])
   alike(letters[1:4], c("hello", "goodbye", "ba", "da"))  # TRUE
 
+  alike(integer(), NULL)    # FALSE, corner case test
+
   alike(c(a=1, b=2), 3)         # Length mismatch
   alike(c(a=1, b=2), c(1, 2))   # Names
 } )
@@ -34,7 +36,25 @@ unitizer_sect("lists", {
 
   alike(lst.4, lst)     # should match
   alike(lst, lst.4)     # should not match because template has more detail
-} )
+
+  # Named lists
+
+  lst.5 <- list(1, list(a = 1, b = 2, c = list(d = 1)))
+  lst.6 <- list(1, list(a = 1, b = 2, c = list(d = "hello")))
+  lst.5.1 <- list(1, list(a = 1, b = 2, `c d` = list(d = 1)))
+  lst.6.1 <- list(1, list(a = 1, b = 2, `c d` = list(d = "hello")))
+
+  alike(lst.5, lst.6)
+  alike(lst.6, lst.5)
+
+  alike(lst.5.1, lst.6.1)
+  alike(lst.6.1, lst.5.1)
+
+  # Pair lists
+
+  alike(pairlist(a=1, b="character"), pairlist(a=1, b=letters))
+  alike(pairlist(1, "character"), pairlist(1, letters))
+})
 unitizer_sect("NULL values as wildcards", {
   alike(NULL, 1:3)                  # not a wild card at top level
   alike(list(NULL), list(1:3))      # but yes when nested
@@ -116,7 +136,6 @@ unitizer_sect("Time Series", {
 
   alike(ts.5, ts.6)
   alike(ts.5, matrix(runif(24 * 3), ncol=3))
-
 })
 unitizer_sect("Factors", {
   f1 <- factor(letters[1:5])
@@ -180,26 +199,53 @@ unitizer_sect("Environments / Pairlists", {
 
   alike(env7, env8)   # pass
   alike(env7, env9)   # fail
+
+  # Overwhelm env nesting
+
+  env.nest.1 <- env.nest.1.cpy <- new.env()
+  env.nest.2 <- env.nest.2.cpy <- new.env()
+  for(i in 1:26) {
+    env.nest.1.cpy[[letters[i]]] <- new.env();
+    env.nest.1.cpy <- env.nest.1.cpy[[letters[i]]]
+    env.nest.2.cpy[[letters[i]]] <- new.env();
+    env.nest.2.cpy <- env.nest.2.cpy[[letters[i]]]
+  }
+  .alike(env.nest.1, env.nest.2, settings=alike_settings(env.limit=16))
+
+  # Global env test
+
+  alike(.GlobalEnv, env.nest.1)
 })
 unitizer_sect("Calls / Formulas", {
   alike(quote(1 + 1), quote(x + y))
   alike(quote(fun(1 + 1)), quote(fun(x + y, 9)))
   alike(quote(fun(x + y, 9)), quote(fun(1 + 1)))
 
+  # Need to add parens in error messages, which we will illustrate with an
+  # operator
+
+  "%plusq%" <- function(x, y) call("+", substitute(x), substitute(y))
+  alike(quote(1 + 1), 1 %plusq% b)
+
+  # With defined fun
+
   fun <- function(a, b, c) NULL
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))) # TRUE, since constants including NULL match any constants
+  # TRUE, since constants including NULL match any constants
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))
   .alike(  # FALSE, match.call disabled
     quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
     alike_settings(lang.mode=1)
   )
-  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1))) # FALSE, mismatch
+  # FALSE, mismatch
+  alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(fun2(a, b), NULL, 1)))
   alike(quote(fun(a=1)), quote(fun(b=1)))  # FALSE, name mismatch
 
   alike(quote(fun(1, 2)), quote(fun(1)))   # FALSE
   alike(quote(fun(1)), quote(fun(1, 2)))   # FALSE
 
   alike(quote(fun(1, 2)), quote(fun2(1, 2)))            # FALSE, fun mismatch
-  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))  # FALSE, fun mismatch, nested
+  # FALSE, fun mismatch, nested
+  alike(quote(fun(1, fun2(3))), quote(fun(1, fun(3))))
 
   # zero len matches anything
 
@@ -264,7 +310,18 @@ unitizer_sect("Functions", {
   alike(print, print.data.frame)              # TRUE
   alike(print.data.frame, print)              # FALSE
   alike(`&&`, function() NULL)                # TRUE
+
+  # check srcref issues
+
+  fun <- fun2 <- function() NULL
+  attributes(fun2) <- NULL
+
+  alike(fun, fun2)   # TRUE
+  .alike(fun, fun2, settings=alike_settings(attr.mode=2L))
+  .alike(fun2, fun, settings=alike_settings(attr.mode=1L))
+  .alike(fun2, fun, settings=alike_settings(attr.mode=2L))
 })
+
 # Subset of tests for version with settings
 
 unitizer_sect(".alike", {
@@ -278,9 +335,19 @@ unitizer_sect(".alike", {
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=1L))
   .alike(list(a=1:10), data.frame(a=1:10), alike_settings(attr.mode=2L))  # FALSE
   fun <- function(a, b, c) NULL
-  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), alike_settings(env=NULL))   # FALSE
-  .alike(quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)))                             # TRUE
+  # FALSE
+  .alike(
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)),
+    alike_settings(env=NULL)
+  )
+  # TRUE
+  .alike(
+    quote(fun(b=fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1))
+  )
   .alike(`&&`, function() NULL, alike_settings(type.mode=1))   # FALSE
+  # Error
+
+  .alike(1, 2, NULL)
 } )
 # These are also part of the examples, but here as well so that issues are
 # detected during development and not the last minute package checks
@@ -324,7 +391,10 @@ unitizer_sect("Examples", {
 
   iris.fake <- transform(iris, Species=as.character(Species))
   alike(iris, iris.fake)
-  iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
+  iris.fake2 <- transform(
+    iris,
+    Species=factor(Species, levels="[[<-"(levels(Species), 3, "americana"))
+  )
   alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 
   # We can use partially specified objects as templates
@@ -361,3 +431,19 @@ unitizer_sect("Examples", {
   alike(quote(x + y), quote(a - b))   # FALSE, different function
   alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
 } )
+unitizer_sect("Raw", {
+  # check for warning, in the future if we properly support RAW then this will
+  # no longer produce a warning.  Really just looking for a valid STRSXP type.
+
+  alike(as.raw(integer(3)), as.raw(integer(3)))
+})
+unitizer_sect("Errors", {
+  .alike(NULL, NULL, settings=alike_settings(type.mode=3))
+  .alike(NULL, NULL, settings=alike_settings(attr.mode=letters))
+  .alike(NULL, NULL, settings=alike_settings(lang.mode=letters))
+  .alike(NULL, NULL, settings=alike_settings(fuzzy.int.max.len=NA_integer_))
+  .alike(NULL, NULL, settings=alike_settings(suppress.warnings=NA))
+  .alike(NULL, NULL, settings=alike_settings(env=letters))
+  .alike(NULL, NULL, settings=alike_settings(width=letters))
+  .alike(NULL, NULL, settings=alike_settings(env.limit=-1L))
+})

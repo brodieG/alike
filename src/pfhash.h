@@ -14,32 +14,32 @@ lifted directly from: http://powerfield-software.com/?p=615 under license:
 > article.
 */
 
+#include <R.h>
+#include <Rinternals.h>
+#include <ctype.h>
+#include <stdint.h>
+
 #ifndef _PFHASH_H
 #define _PFHASH_H
 
-    #include <R.h>
-    #include <Rinternals.h>
-/*
-    #include <ctype.h>
-    #include <stdint.h>
-*/
 
     typedef struct sPfHashNode {
-        char *key;
-        char *data;
+        const char *key;
+        const char *data;
         struct sPfHashNode *next;
     } pfHashNode;
 
     typedef struct {
-        uint32_t (*fn) (char *);
+        uint32_t (*fn) (const char *);
         pfHashNode *lookup[];
     } pfHashTable;
 
-    pfHashTable *pfHashCreate (uint32_t(*)(char*));
-    void pfHashDestroy (pfHashTable*);
-    int pfHashSet (pfHashTable*,char*,char*);
-    int pfHashDel (pfHashTable*,char*);
-    char *pfHashFind (pfHashTable*,char*);
+    pfHashTable *pfHashCreate (uint32_t(*)(const char*));
+    // void pfHashDestroy (pfHashTable*);
+    int pfHashSet (pfHashTable*,const char*,const char*);
+    // int pfHashDel (pfHashTable*,char*);
+    const char *pfHashFind (pfHashTable*,const char*);
     void pfHashDebug (pfHashTable*,char*);
+    SEXP pfHashTest(SEXP keys, SEXP values);
 
 #endif

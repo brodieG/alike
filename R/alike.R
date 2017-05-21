@@ -10,26 +10,26 @@
 #' determined by \code{\link{type_alike}}) and length.  Attributes on the
 #' objects are required to be recursively \code{alike}, though the following
 #' attributes are treated specially: \code{class}, \code{dim}, \code{dimnames},
-#' \code{names}, \code{row.names}, \code{levels}, and \code{tsp}.
+#' \code{names}, \code{row.names}, \code{levels}, \code{tsp}, and \code{srcref}.
 #'
 #' Exactly what makes two objects \code{alike} is complex, but should be
 #' intuitive.  The best way to understand "alikeness" is to review the examples.
 #' For a thorough exposition see \href{../doc/alike.html}{the vignette}.
 #'
+#' Note that the semantics of alikeness for language objects, formulas, and
+#' functions may change in the future.
+#'
 #' @section \code{.alike}:
 #'
 #' \code{.alike} is identical to \code{alike}, except that it exposes the
 #' \code{settings} parameter that modifies certain aspects of how "alikeness" is
-#' computed. See
-#' \href{../doc/alike.html#modifying-comparison-behavior}{the vignette} for
-#' details.  There is only one \code{settings} parameter to minimize the
+#' computed. There is only one \code{settings} parameter to minimize the
 #' overhead associated with \code{.alike}.  If you intend to run \code{.alike}
 #' as part of a process that runs many times, consider defining the value for
 #' \code{settings} outside of the function call once:\preformatted{
 #'   sets <- alike_settings(...)                  # specify settings once
 #'   for(i in 1e5) .alike(x[[i]], y[[i]], sets)   # re-use settings 1e5 times
 #' }
-#'
 #' @export
 #' @import cstringr
 #' @useDynLib alike, .registration=TRUE, .fixes="ALIKEC_"
@@ -43,11 +43,13 @@
 #'   \code{\link{type_alike}}
 #' @param attr.mode integer(1L) in 0:2 determines strictness of attribute
 #'   comparison: \itemize{
-#'     \item \code{0} only checks attributes that are present in target, and uses special
-#'       comparisons for the special attributes (\code{class}, \code{dim},
-#'       \code{dimnames}, \code{names}, \code{row.names}, \code{levels}, and
-#'       \code{tsp}) while requiring other attributes to be \code{alike}
-#'     \item \code{1} is like \code{0}, except all atributes must be \code{alike}
+#'     \item \code{0} only checks attributes that are present in target, and
+#'       uses special comparisons for the special attributes (\code{class},
+#'       \code{dim}, \code{dimnames}, \code{names}, \code{row.names},
+#'       \code{levels}, \code{srcref}, and \code{tsp}) while requiring other
+#'       attributes to be \code{alike}
+#'     \item \code{1} is like \code{0}, except all atributes must be
+#'       \code{alike}
 #'     \item \code{2} requires all attributes to be present in \code{target} and
 #'       \code{current} and to be alike
 #'   }
@@ -60,32 +62,36 @@
 #'   used only when looking up functions to \code{\link{match.call}} when
 #'   testing language objects
 #' @param suppress.warnings logical(1L)
+#' @param width to use when deparsing expressions; defaults to
+#'   \code{getOption("width")}
+#' @param env.limit integer(1L) maximum number of nested environments to recurse
+#'   through; these are tracked to make sure we do not get into an infinite
+#'   recursion loop, but because they are tracked we keep a limit on how many
+#'   we will go through.
 #' @return TRUE if target and current are alike, character(1L) describing why
 #'   they are not if they are not
 #' @examples
-#' # Type comparison
-#'
+#' ## Type comparison
 #' alike(1L, 1.0)         # TRUE, because 1.0 is integer-like
 #' alike(1L, 1.1)         # FALSE, 1.1 is not integer-like
 #' alike(1.1, 1L)         # TRUE, by default, integers are always considered real
 #'
 #' alike(1:100, 1:100 + 0.0)  # TRUE
-#' alike(1:101, 1:101 + 0.0)  # FALSE, we do not check numerics for integerness if longer than 100
 #'
-#' # Scalarness can now be checked at same time as type
+#' ## We do not check numerics for integerness if longer than 100
+#' alike(1:101, 1:101 + 0.0)
 #'
+#' ## Scalarness can now be checked at same time as type
 #' alike(integer(1L), 1)            # integer-like and length 1?
 #' alike(logical(1L), TRUE)         # logical and length 1?
 #' alike(integer(1L), 1:3)
 #' alike(logical(1L), c(TRUE, TRUE))
 #'
-#' # Zero length match any length of same type
-#'
+#' ## Zero length match any length of same type
 #' alike(integer(), 1:10)
 #' alike(1:10, integer())   # but not the other way around
 #'
-#' # Recursive objects compared recursively
-#'
+#' ## Recursive objects compared recursively
 #' alike(
 #'   list(integer(), list(character(), logical(1L))),
 #'   list(1:10, list(letters, TRUE))
@@ -94,37 +100,41 @@
 #'   list(integer(), list(character(), logical(1L))),
 #'   list(1:10, list(letters, c(TRUE, FALSE)))
 #' )
-#' # `NULL` is a wild card when nested within recursive objects
 #'
+#' ## `NULL` is a wild card when nested within recursive objects
 #' alike(list(NULL, NULL), list(iris, mtcars))
 #' alike(NULL, mtcars)    # but not at top level
 #'
-#' # Since `data.frame` are lists, we can compare them recursively:
-#'
+#' ## Since `data.frame` are lists, we can compare them recursively:
 #' iris.fake <- transform(iris, Species=as.character(Species))
 #' alike(iris, iris.fake)
-#' iris.fake2 <- transform(iris, Species=factor(Species, levels=`[[<-`(levels(Species), 3, "americana")))
-#' alike(iris, iris.fake2)  # we even check attributes (factor levels must match)!
 #'
-#' # We can use partially specified objects as templates
+#' ## we even check attributes (factor levels must match)!
+#' iris.fake2 <- iris.fake
+#' levels(iris.fake2$Species) <- c("setosa", "versicolor", "africana")
+#' alike(iris, iris.fake2)
 #'
+#' ## We can use partially specified objects as templates
 #' iris.tpl <- abstract(iris)
 #' str(iris.tpl)
 #' alike(iris.tpl, iris)
-#' alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])    # any row sample of iris matches our iris template
-#' alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])              # but column order matters
+#' ## any row sample of iris matches our iris template
+#' alike(iris.tpl, iris[sample(1:nrow(iris), 10), ])
+#' ## but column order matters
+#' alike(iris.tpl, iris[c(2, 1, 3, 4, 5)])
 #'
-#' # Also works with matrices / arrays
-#'
-#' alike(matrix(integer(), 3, 3), matrix(1:9, nrow=3))         # 3 x 3 integer
-#' alike(matrix(integer(), 3, 3), matrix(runif(9), nrow=3))    # 3 x 3, but not integer!
-#' alike(matrix(integer(), 3), matrix(1:12, nrow=3))           # partial spec, any 3 row integer matrix
+#' ## 3 x 3 integer
+#' alike(matrix(integer(), 3, 3), matrix(1:9, nrow=3))
+#' ## 3 x 3, but not integer!
+#' alike(matrix(integer(), 3, 3), matrix(runif(9), nrow=3))
+#' ## partial spec, any 3 row integer matrix
+#' alike(matrix(integer(), 3), matrix(1:12, nrow=3))
 #' alike(matrix(integer(), 3), matrix(1:12, nrow=4))
-#' alike(matrix(logical()), array(rep(TRUE, 8), rep(2, 3)))    # Any logical matrix (but not arrays)
+#' ## Any logical matrix (but not arrays)
+#' alike(matrix(logical()), array(rep(TRUE, 8), rep(2, 3)))
 #'
-#' # In order for objects to be alike, they must share a family tree, not just
-#' # a common class
-#'
+#' ## In order for objects to be alike, they must share a family
+#' ## tree, not just a common class
 #' obj.tpl <- structure(TRUE, class=letters[1:3])
 #' obj.cur.1 <-  structure(TRUE, class=c("x", letters[1:3]))
 #' obj.cur.2 <-  structure(TRUE, class=c(letters[1:3], "x"))
@@ -132,35 +142,35 @@
 #' alike(obj.tpl, obj.cur.1)
 #' alike(obj.tpl, obj.cur.2)
 #'
-#' # You can compare language objects; these are alike if they are self
-#' # consistent; we don't care what the symbols are, so long as they are used
-#' # consistently across target and current:
+#' ## You can compare language objects; these are alike if they are self
+#' ## consistent; we don't care what the symbols are, so long as they are used
+#' ## consistently across target and current:
 #'
-#' alike(quote(x + y), quote(a + b))   # TRUE, symbols are consistent (adding two different symbols)
-#' alike(quote(x + y), quote(a - b))   # FALSE, different function
-#' alike(quote(x + y), quote(a + a))   # FALSE, inconsistent symbols
+#' ## TRUE, symbols are consistent (adding two different symbols)
+#' alike(quote(x + y), quote(a + b))
+#' ## FALSE, different function
+#' alike(quote(x + y), quote(a - b))
+#' ## FALSE, inconsistent symbols
+#' alike(quote(x + y), quote(a + a))
 
 alike <- function(target, current)
-  .Call(ALIKEC_alike_ext, target, current, parent.frame())
+  .Call(ALIKEC_alike_ext, target, current, substitute(current), parent.frame())
 
 #' @rdname alike
 #' @export
 
 .alike <- function(target, current, settings=alike_settings(env=parent.frame()))
-  .Call(ALIKEC_alike_fast1, target, current, settings)
-
-#' @keywords internal
-
-.alike2 <- function(target, current)
-  .Call(ALIKEC_alike_fast2, target, current)
+  .Call(ALIKEC_alike_fast1, target, current, substitute(current), settings)
 
 #' @rdname alike
 #' @export
 
 alike_settings <- function(
   type.mode=0L, attr.mode=0L, lang.mode=0L, rec.mode=0L,
-  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE
+  env=parent.frame(), fuzzy.int.max.len=100L, suppress.warnings=FALSE,
+  width=-1L, env.limit=65536L
 )
   list(
-    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode
+    type.mode, attr.mode, env, fuzzy.int.max.len, suppress.warnings, lang.mode,
+    width, env.limit
   )

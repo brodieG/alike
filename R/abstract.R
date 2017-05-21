@@ -43,6 +43,7 @@ abstract <- function(x, ...) UseMethod("abstract")
 
 abstract.data.frame <- function(x, ...) x[0, ]
 
+#' @importFrom utils modifyList
 #' @rdname abstract
 #' @export
 
@@ -104,8 +105,8 @@ abstract.lm <- function(x, ...) {
 #' Experimental Abstraction Method for GGPlot
 #'
 #' Not entirely sure this can ever work well since so much of \code{ggplot} is
-#' done with \code{proto} objects and those do not really use meta data, which makes
-#' \code{alike} rather useless.
+#' done with \code{proto} objects and those do not really use meta data, which
+#' makes \code{alike} rather useless.
 #'
 #' @keywords internal
 #' @export
@@ -118,7 +119,7 @@ abstract.ggplot <- function(x, ...) {
 #' @rdname abstract
 #' @export
 
-abstract.environment <- function(x, ...) if(!is.object(x)) emptyenv() else x
+abstract.environment <- function(x, ...) x
 
 #' Abstract Time Series
 #'
@@ -220,7 +221,10 @@ nullify.default <- function (obj, index) {
   } else if (is.character(index)) {
     ind.match <- index %in% names(obj)
     if(!all(ind.match)) {
-      stop("Argument `index` contains values not present in names of `obj` (", paste(index[ind.match], collapse=", "), ").")
+      stop(
+        "Argument `index` contains values not present in names of `obj` (",
+        paste(index[!ind.match], collapse=", "), ")."
+      )
     }
     vec.subset <- names(obj) %in% index
   }

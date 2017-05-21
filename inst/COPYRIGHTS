@@ -11,11 +11,14 @@ which is:
 
 Code was originally copied from: http://powerfield-software.com/?p=615
 
-Assorted Code and Code Patterns from R Sources
+Code from R Sources
 --------------------------------------------------------------------------------
 
-I used the R sources to learn how to write C extensions for R, and as such I
-borrowed patterns and methods from them liberally.
+We copied and adapted some snippets of code from R source:
+
+ * src/main/util.c@1324
+ * src/main/gram.c@4915
+ * src/main/envir.c:findFun()
 
 Code was downloaded from: http://cran.r-project.org/sources.html
 
