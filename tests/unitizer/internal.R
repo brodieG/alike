@@ -233,67 +233,83 @@ unitizer_sect("All Attributes, default", {
   )
 } )
 unitizer_sect("All attributes, strict", {
-  alike:::attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)        # dim mismatch, but passes because comparison is `alike`
-  alike:::attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)     # TRUE
-  alike:::attr_compare(                                                         # dimnames mismatch, but alike so passes
+  # dim mismatch, but passes because comparison is `alike`
+  alike:::attr_compare(matrix(integer(), 3), matrix(integer(), 3, 3), 1)
+  # TRUE
+  alike:::attr_compare(matrix(integer(), 3, 3), matrix(integer(), 3, 3), 1)
+  # dimnames mismatch, but alike so passes
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(NULL, letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # dimnames mismatch, but passes because target has NULL names
+  # dimnames mismatch, but passes because target has NULL names
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # dimnames mismatch, but here fails because target has them but current doesnt
+  # dimnames mismatch, but here fails because target has them but current doesnt
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(LETTERS[1:3], letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # actually passes because both have 2 length character name attrs, which are alike
+  # actually passes because both have 2 length character name attrs, which are
+  # alike
+  alike:::attr_compare(
     matrix(integer(), 3, 3, dimnames=list(A=LETTERS[1:3], letters[1:3])),
     matrix(integer(), 3, 3, dimnames=list(a=LETTERS[1:3], b=letters[1:3])),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # TRUE
+  # TRUE
+  alike:::attr_compare(
     structure(list(integer(), character())),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # TRUE
+  # TRUE
+  alike:::attr_compare(
     structure(list(integer(), character()), class="data.frame"),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # Class mismatch
+  # Class mismatch
+  alike:::attr_compare(
     structure(list(), class=letters[2:4]),
     structure(list("hello"), class=letters[1:4]),
     attr.mode=1
   )
-  alike:::attr_compare(                                                         # Too many attrs
+  # Too many attrs
+  alike:::attr_compare(
     structure(list(integer(), character())),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Too many attrs
+  # Too many attrs
+  alike:::attr_compare(
     structure(list(integer(), character()), class="data.frame"),
     data.frame(a=1:10, b=letters[1:10]),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Missing attr
+  # Missing attr
+  alike:::attr_compare(
     structure(list(), welp=list(NULL, 1:3), belp=1:3),
     structure(list("hello"), welp=list(NULL, 1:3)),
     attr.mode=2
   )
-  alike:::attr_compare(                                                         # Missing attr, but attr count same
+  # Missing attr, but attr count same
+  alike:::attr_compare(
     structure(list(), welp=list(NULL, 1:3), belp=1:3),
     structure(list("hello"), welp=list(NULL, 1:3), kelp=20),
     attr.mode=2
   )
 } )
 unitizer_sect("Closures", {
-  alike:::fun_alike(print, print.data.frame)  # TRUE, methods should always match generics
-  alike:::fun_alike(print.data.frame, print)  # FALSE, but generics won't match methods with more arguments
+  # TRUE, methods should always match generics
+  alike:::fun_alike(print, print.data.frame)
+  # FALSE, but generics won't match methods with more arguments
+  alike:::fun_alike(print.data.frame, print)
   alike:::fun_alike(summary, summary.lm)
   alike:::fun_alike(summary.lm, summary)
 
@@ -313,13 +329,16 @@ unitizer_sect("Closures", {
   alike:::fun_alike(fn4, fn1)  # FALSE, dots must be matched
   alike:::fun_alike(fn0, fn2)  # FALSE
   alike:::fun_alike(fn0, fn3)  # TRUE
-  alike:::fun_alike(fn3, fn0)  # FALSE - defaults in target must be specified in current as well
+  # FALSE - defaults in target must be specified in current as well
+  alike:::fun_alike(fn3, fn0)
   alike:::fun_alike(fn4, fn5)  # FALSE dots in target must exit in current
   alike:::fun_alike(fn4, fn6)  # TRUE
   alike:::fun_alike(fn4, fn7)  # TRUE
-  alike:::fun_alike(fn7, fn4)  # FALSE - all arguments in target must be in current, even with dots
+  # FALSE - all arguments in target must be in current, even with dots
+  alike:::fun_alike(fn7, fn4)
   alike:::fun_alike(fn7, fn8)  # TRUE
-  alike:::fun_alike(fn7, fn9)  # FALSE - extra arguments in current must be adjacent to dots
+  # FALSE - extra arguments in current must be adjacent to dots
+  alike:::fun_alike(fn7, fn9)
 
   # Try some builtins / specials
 
@@ -330,6 +349,11 @@ unitizer_sect("Closures", {
   alike:::fun_alike(on.exit, substitute)  # FALSE, specials
   alike:::fun_alike(`[`, substitute)      # FALSE, argless specials
   alike:::fun_alike(`[`, `&&`)          # TRUE, argless specials
+
+  # Errors
+
+  alike:::fun_alike(identity, 10)
+  alike:::fun_alike(10, identity)
 })
 unitizer_sect("Env Track", {
   el.1 <- replicate(5, new.env())
@@ -340,6 +364,10 @@ unitizer_sect("Env Track", {
   # Overwhelm env stack, though not that satifying a test
 
   alike:::env_track(el.1, 1L, 3L)
+
+  # Error
+
+  alike:::env_track(list(1, 2, 3), 1L, 3L)
 } )
 unitizer_sect("valid names", {
   alike:::is_valid_name("hello")
@@ -351,6 +379,8 @@ unitizer_sect("valid names", {
   alike:::is_valid_name(".1fail")
   alike:::is_valid_name("NULL")
   alike:::is_valid_name("FALSE")
+
+  alike:::is_valid_name(letters)
 } )
 unitizer_sect("Is dfish", {
   df1 <- list(a=1:10, b=letters[1:10])
@@ -420,4 +450,8 @@ unitizer_sect("Find funs", {
   fun <- function(x, y) NULL
   alike:::find_fun(quote(fun), environment())
   alike:::find_fun(quote(asdhfqwerasdfasdf), environment())
+
+  fun2 <- function(x) alike:::find_fun(quote(x), environment())
+  # corner case
+  fun2()
 })

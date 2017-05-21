@@ -77,6 +77,11 @@ unitizer_sect("Calls", {
 
   alike:::lang_alike(cc, ce)  # FALSE
   alike:::lang_alike(ce, cc)  # TRUE
+
+  # Errors
+
+  alike:::lang_alike(cc, 1:10)
+  alike:::lang_alike(ce, cc, match.call.env=1:10)
 })
 unitizer_sect("Calls as char", {
   alike:::lang_alike_chr(c0, c1, NULL)  # TRUE

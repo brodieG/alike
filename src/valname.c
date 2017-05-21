@@ -19,7 +19,7 @@ size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
     /* This gets called from the menu setup in RGui */
     // if (!R_Is_Running) return (size_t)-1;
     /* let's try to print out a readable version */
-    error("invalid multibyte string at");
+    error("Internal Error: invalid multibyte string at");  // nocov
   }
   return used;
 }
@@ -51,11 +51,13 @@ int ALIKEC_is_valid_name(const char *name)
     }
     if (*p != '\0') return 0;
   } else {
+    // nocov start current local has MB_CUR_MAX > 1, so this never runs
     int c = 0xff & *p++;
     if (c != '.' && !isalpha(c) ) return 0;
     if (c == '.' && isdigit(0xff & (int)*p)) return 0;
     while ( c = 0xff & *p++, (isalnum(c) || c == '.' || c == '_') ) ;
     if (c != '\0') return 0;
+    // nocov end
   }
 
   if (strcmp(name, "...") == 0) return 1;

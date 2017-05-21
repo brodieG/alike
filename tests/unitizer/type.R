@@ -36,6 +36,10 @@ unitizer_sect("type_alike", {
   type_alike(NULL, NULL)
   type_alike(1/0, NA)
 
+  # errors
+
+  type_alike(1, 1.1, mode=1:2)
+  type_alike(1, 1.1, fuzzy.int.max.len=1:2)
 } )
 unitizer_sect("functions", {
   type_alike(sd, var)     # clo-clo
@@ -44,6 +48,8 @@ unitizer_sect("functions", {
   type_alike(sum, sd)     # blt-clo
   type_alike(sum, c)      # blt-blt
   type_alike(`&&`, `[`)   # spe-spe
+
+  type_alike(sd, 1:3)
 
   type_alike(sd, var, mode=1)     # clo-clo
   type_alike(`&&`, sd, mode=1)    # spe-clo

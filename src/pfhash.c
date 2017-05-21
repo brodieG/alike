@@ -145,8 +145,7 @@ pfHashTable *pfHashCreate (uint32_t (*fn)(const char *)) {
 
     pfHashTable *tbl = (void *) R_alloc (1, sizeof (pfHashTable)
         + numEntries * sizeof (pfHashNode*));
-    if (tbl == NULL)
-        return NULL;
+    if (tbl == NULL) return NULL;  // nocov
 
     // Store function and set hash entries to empty.
 
@@ -197,7 +196,7 @@ int pfHashSet (pfHashTable *tbl, const char *key, const char *data) {
     if (node != NULL) {
         char *newdata = dupstr (data);
         if (newdata == NULL)
-            return -1;
+            return -1;  // nocov
         // free (node->data);
         node->data = newdata;
         return 0;
@@ -205,7 +204,7 @@ int pfHashSet (pfHashTable *tbl, const char *key, const char *data) {
 
     node = (void *) R_alloc (1, sizeof (pfHashNode));
     if (node == NULL)
-        return -1;
+        return -1;  // nocov
 
     node->key = dupstr (key);
     node->data = dupstr (data);
@@ -213,7 +212,7 @@ int pfHashSet (pfHashTable *tbl, const char *key, const char *data) {
         // free (node->key);
         // free (node->data);
         // free (node);
-        return -1;
+        return -1;  // nocov
     }
 
     node->next = tbl->lookup[entry];

@@ -428,11 +428,11 @@ SEXP ALIKEC_lang_alike_core(
 ) {
   SEXP match_env = set.env;
   SEXPTYPE tar_type = TYPEOF(target), cur_type = TYPEOF(current);
-  if(
-    !
-    (tar_type == LANGSXP || tar_type == SYMSXP || tar_type == NILSXP) &&
-    (cur_type == LANGSXP || cur_type == SYMSXP || cur_type == NILSXP)
-  )
+  int tar_is_lang =
+    tar_type == LANGSXP || tar_type == SYMSXP || tar_type == NILSXP;
+  int cur_is_lang =
+    cur_type == LANGSXP || cur_type == SYMSXP || cur_type == NILSXP;
+  if(!(tar_is_lang && cur_is_lang))
     error("Arguments must be LANGSXP, SYMSXP, or R_NilValue");
 
   if(TYPEOF(match_env) != ENVSXP && match_env != R_NilValue)

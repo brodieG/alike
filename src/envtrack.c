@@ -43,8 +43,13 @@ Initialize our stack tracking object
 struct ALIKEC_env_track * ALIKEC_env_set_create(
   int stack_size_init, int env_limit
 ) {
-  if(stack_size_init < 0)
-    error("`alike` env stack size init should be greater than zero");
+  if(stack_size_init < 0) {
+    // nocov start
+    error(
+      "Internal Error: `alike` env stack size init should be greater than zero"
+    );
+    // nocov end
+  }
   struct ALIKEC_env_track * envs =
     (struct ALIKEC_env_track *)
       R_alloc(1, sizeof(struct ALIKEC_env_track));
@@ -127,7 +132,7 @@ SEXP ALIKEC_env_track_test(SEXP env_list, SEXP stack_size_init, SEXP env_limit) 
     SEXP env = VECTOR_ELT(env_list, i);
     if(TYPEOF(env) != ENVSXP)
       error(
-        "All contents of `env_list` %s at item %d\n",
+        "All contents of `env` %s at item %d\n",
         "should be environments; error ", i + 1
       );
     res_int[i] = ALIKEC_env_track(env, envs, env_limit_int);

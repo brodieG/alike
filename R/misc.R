@@ -68,16 +68,13 @@ alike_mode <- function(obj)
 #'
 #' @keywords internal
 #' @export
-alike_test <- function(obj)
-  .Call(ALIKEC_test, substitute(obj))
+
+alike_test <- function(obj) .Call(ALIKEC_test, substitute(obj)) # nocov
 
 # alike_test2 <- function(target, current)
 #   .Call(ALIKEC_test, target, current, sys.frame(sys.nframe()))
 
 syntactic_names <- function(lang) .Call(ALIKEC_syntactic_names, lang)
-
-alike_test3 <- function(target, current)
-  .Call(ALIKEC_test2, target, current)
 
 msg_sort <- function(messages)
   .Call(ALIKEC_msg_sort, messages)
@@ -90,9 +87,6 @@ msg_merge_ext <- function(messages)
 
 find_fun <- function(fun.name, env)
   .Call(ALIKEC_find_fun, fun.name, env)
-
-alike_ext_2 <- function(target, current)
-  .Call(ALIKEC_alike_ext2, target, current, substitute(current), parent.frame())
 
 hash_test <- function(values, keys) .Call(ALIKEC_hash_test, values, keys);
 

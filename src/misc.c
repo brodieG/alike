@@ -437,9 +437,9 @@ The code is copied almost verbatim from src/main/envir.c:findFun()
 
 SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
   if(TYPEOF(symbol) != SYMSXP)
-    error("Internal Error: `symbol` must be symbol");
+    error("Internal Error: `symbol` must be symbol");  // nocov
   if(TYPEOF(rho) != ENVSXP)
-    error("Internal Error: `rho` must be environment");
+    error("Internal Error: `rho` must be environment");// nocov
   SEXP vl;
   while (rho != R_EmptyEnv) {
     vl = findVarInFrame3(rho, symbol, TRUE);
@@ -454,8 +454,9 @@ SEXP ALIKEC_findFun(SEXP symbol, SEXP rho) {
         TYPEOF(vl) == SPECIALSXP
       )
         return (vl);
-      if (vl == R_MissingArg) return R_UnboundValue;
-    }
+      if (vl == R_MissingArg) {
+        return R_UnboundValue;
+    } }  // nocov
     rho = ENCLOS(rho);
   }
   return R_UnboundValue;
