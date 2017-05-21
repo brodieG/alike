@@ -387,6 +387,7 @@ unitizer_sect("Is dfish", {
   df2 <- list(a=1:10, b=letters[1:9])
   alike:::is_dfish(df1)
   alike:::is_dfish(df2)
+  alike:::is_dfish(1:10)
 } )
 unitizer_sect("syntactic", {
   alike:::syntactic_names(quote(hello))
@@ -426,6 +427,7 @@ unitizer_sect("Merge messages", {
   )
   alike:::msg_merge(msgs)
   alike:::msg_merge(msgs[1:3])  # no merging required here
+  alike:::msg_merge(msgs[1])    # no merging required here
 
   alike:::msg_merge_ext(msgs)
 })

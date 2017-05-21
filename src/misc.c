@@ -82,18 +82,16 @@ SEXP ALIKEC_abstract_ts(SEXP x, SEXP attr) {
   return x_cp;
 }
 // - Testing Function ----------------------------------------------------------
+// nocov start
 SEXP ALIKEC_test(SEXP obj) {
-  // nocov start
   return mkString(CHAR(asChar(obj)));
-  // nocov end
 }
 SEXP ALIKEC_test2(
     SEXP target, SEXP current
 ) {
-  // nocov start
   return R_NilValue;
-  // nocov end
 }
+// nocov end
 /*
 Run deparse command and return character vector with results
 
@@ -505,7 +503,9 @@ int ALIKEC_is_dfish(SEXP obj) {
           res = 0;
           break;
     } } }
-  } else res = 0;
+  } else {
+    res = 0;
+  }
   return res;
 }
 SEXP ALIKEC_is_dfish_ext(SEXP obj) {

@@ -273,9 +273,10 @@ struct ALIKEC_res ALIKEC_alike_obj(
       R_xlen_t tar_len, cur_len, tar_first_el_len, cur_first_el_len;
       // if attribute error is not class, override with col count error
       // zero lengths match any length
+      int err_tmp_1 = (!err || (is_df && err_lvl > 0));
+      int err_tmp_2 = (tar_len = xlength(target)) > 0;
       if(
-        (!err || (is_df && err_lvl > 0)) && (tar_len = xlength(target)) > 0 &&
-        tar_len != (cur_len = xlength(current))
+        err_tmp_1 && err_tmp_2 && tar_len != (cur_len = xlength(current))
       ) {
         err = 1;
         err_tok1 = CSR_len_as_chr(tar_len);
